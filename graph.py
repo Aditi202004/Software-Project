@@ -1,5 +1,3 @@
-
-
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox,filedialog
@@ -288,8 +286,136 @@ if __name__=="__main__":
     ## Graph ##  
     graph=Grapher(graph_tab)
     graph.frame.pack(side=TOP,fill="both",expand=True,pady=(10,0))
-    
 
+    # CTC Setup
+    # ctc_tab = ttk.Frame(ControlPanel)
+    # ControlPanel.add(ctc_tab, text=' CTC\n Setup ')
+
+    # # Define custom style for the frames
+    # root.tk.call('source', 'azure.tcl')         # Load the ttk frame if necessary
+    # root.tk.call('ttk::style', 'configure', 'My.TFrame', background=tab_bg)
+
+    # Input Selection
+    input_label = Label(ctc_tab, text='Input:', bg=tab_bg, fg='white')
+    input_label.grid(row=0, column=10, columnspan=2, padx=10, pady=(20, 5), sticky='w')
+
+    input_options = ['In 1', 'In 2', 'In 3']
+    input_var = StringVar()
+    input_dropdown = ttk.Combobox(ctc_tab, textvariable=input_var, values=input_options, state='readonly')
+    input_dropdown.grid(row=0, column=11, padx=10, pady=(20, 5), sticky='w')
+    input_dropdown.current(0)
+
+    # Output Selection
+    output_label = Label(ctc_tab, text='Output:', bg=tab_bg, fg='white')
+    output_label.grid(row=1, column=10, columnspan=2, padx=10, pady=5, sticky='w')
+
+    output_options = ['Out 1', 'Out 2']
+    output_var = StringVar()
+    output_dropdown = ttk.Combobox(ctc_tab, textvariable=output_var, values=output_options, state='readonly')
+    output_dropdown.grid(row=1, column=11, padx=10, pady=5, sticky='w')
+    output_dropdown.current(0)
+
+    # Limits and Increments
+    limits_frame = LabelFrame(ctc_tab, text='Limits and Increments', fg='white', bg=tab_bg)
+    limits_frame.grid(row=2, column=10, columnspan=2, pady=(20, 10), padx=10, sticky='w')
+
+    # Low Limit
+    low_limit_label = Label(limits_frame, text='Low Limit:', bg=tab_bg, fg='white')
+    low_limit_label.grid(row=0, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    low_limit_entry = Entry(limits_frame, font=(10), width=15)
+    low_limit_entry.grid(row=0, column=1, pady=5, padx=(0, 10))
+
+    # High Limit
+    high_limit_label = Label(limits_frame, text='High Limit:', bg=tab_bg, fg='white')
+    high_limit_label.grid(row=1, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    high_limit_entry = Entry(limits_frame, font=(10), width=15)
+    high_limit_entry.grid(row=1, column=1, pady=5, padx=(0, 10))
+
+    # Increase By
+    increase_by_label = Label(limits_frame, text='Increase By:', bg=tab_bg, fg='white')
+    increase_by_label.grid(row=2, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    increase_by_entry = Entry(limits_frame, font=(10), width=15)
+    increase_by_entry.grid(row=2, column=1, pady=5, padx=(0, 10))
+
+    # Max Limit
+    max_limit_label = Label(limits_frame, text='Max Limit:', bg=tab_bg, fg='white')
+    max_limit_label.grid(row=3, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    max_limit_entry = Entry(limits_frame, font=(10), width=15)
+    max_limit_entry.grid(row=3, column=1, pady=5, padx=(0, 10))
+
+    # PID Box
+    pid_frame = LabelFrame(ctc_tab, text='PID', fg='white', bg=tab_bg)
+    pid_frame.grid(row=3, column=10, columnspan=2, pady=(20, 10), padx=10, sticky='w')
+
+    # P
+    p_label = Label(pid_frame, text='P:', bg=tab_bg, fg='white')
+    p_label.grid(row=0, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    p_entry = Entry(pid_frame, font=(10), width=15)
+    p_entry.grid(row=0, column=1, pady=5, padx=(0, 10))
+
+    # I
+    i_label = Label(pid_frame, text='I:', bg=tab_bg, fg='white')
+    i_label.grid(row=1, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    i_entry = Entry(pid_frame, font=(10), width=15)
+    i_entry.grid(row=1, column=1, pady=5, padx=(0, 10))
+
+    # D
+    d_label = Label(pid_frame, text='D:', bg=tab_bg, fg='white')
+    d_label.grid(row=2, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    d_entry = Entry(pid_frame, font=(10), width=15)
+    d_entry.grid(row=2, column=1, pady=5, padx=(0, 10))
+
+    # End PID Box Design
+
+    # Start Temp, Stop Temp, and Intervals
+    temp_frame = LabelFrame(ctc_tab, text='Start/Stop/Interval Temp', fg='white', bg=tab_bg)
+    temp_frame.grid(row=4, column=10, columnspan=2, pady=(20, 10), padx=10, sticky='w')
+
+    # Start Temp
+    start_temp_label = Label(temp_frame, text='Start Temp:', bg=tab_bg, fg='white')
+    start_temp_label.grid(row=0, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    start_temp_entry = Entry(temp_frame, font=(10), width=15)
+    start_temp_entry.grid(row=0, column=1, pady=5, padx=(0, 10))
+
+    # Stop Temp
+    stop_temp_label = Label(temp_frame, text='Stop Temp:', bg=tab_bg, fg='white')
+    stop_temp_label.grid(row=1, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    stop_temp_entry = Entry(temp_frame, font=(10), width=15)
+    stop_temp_entry.grid(row=1, column=1, pady=5, padx=(0, 10))
+
+    # Interval Temp
+    interval_temp_label = Label(temp_frame, text='Interval Temp:', bg=tab_bg, fg='white')
+    interval_temp_label.grid(row=2, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    interval_temp_entry = Entry(temp_frame, font=(10), width=15)
+    interval_temp_entry.grid(row=2, column=1, pady=5, padx=(0, 10))
+
+    # Tolerance Level, Delay Time
+    other_frame = LabelFrame(ctc_tab, text='Tolerance Level and Delay Time', fg='white', bg=tab_bg)
+    other_frame.grid(row=5, column=10, columnspan=2, pady=(20, 10), padx=10, sticky='w')
+
+    # Tolerance Level
+    tolerance_label = Label(other_frame, text='Tolerance Level:', bg=tab_bg, fg='white')
+    tolerance_label.grid(row=0, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    tolerance_entry = Entry(other_frame, font=(10), width=15)
+    tolerance_entry.grid(row=0, column=1, pady=5, padx=(0, 10))
+
+    # Delay Time
+    delay_time_label = Label(other_frame, text='Delay Time:', bg=tab_bg, fg='white')
+    delay_time_label.grid(row=1, column=0, padx=(10, 5), pady=5, sticky='w')
+
+    delay_time_entry = Entry(other_frame, font=(10), width=15)
+    delay_time_entry.grid(row=1, column=1, pady=5, padx=(0, 10))
 
     # title #
     title_lframe=LabelFrame(wayne_tab,text="Title",fg="white",bg=tab_bg)

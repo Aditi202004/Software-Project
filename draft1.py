@@ -112,7 +112,7 @@ class Grapher: # this class controls the graph & it's ploting
         
         self.frame=Frame(r)
         self.fig = Figure(figsize=(8, 5), dpi=100)
-        self.triggered=False``
+        self.triggered=False
         
         self.ax=self.fig.add_subplot(1,1,1)
         self._clear()
