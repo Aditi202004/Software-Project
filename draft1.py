@@ -319,6 +319,7 @@ def trigger(): # the actual algorithm for varying temp and reciving data
                 resistance_vals = []
                 curr_DC = start_DC_current
                 while(not to_abort_trigger and reading < 5):
+                    #Switch on the instruments before...
                     ## Send a command to AC/DC souce to set the current to curr_DC
                     # Write the code....
 
