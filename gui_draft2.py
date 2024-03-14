@@ -159,14 +159,14 @@ def show_info_popup(re_query=False): # shows popup containing both device names
         else:
             messagebox.showinfo("Alert! ", "Not able to connect instruments... check code")
 ### graph functions ###
-NavigationToolbar2.toolitems = ( # to hide pan an zoom options (auto enabled by default)
-('Home', 'Reset original view', 'home', 'home'),
-('Back', 'Back to  previous view', 'back', 'back'),
-('Forward', 'Forward to next view', 'forward', 'forward'),
-(None, None, None, None),
-(None, None, None, None),
-('Subplots','Configure subplots','subplots','configure_subplots'), # (None, None, None, None),
-('Save', 'Save the figure', 'filesave', 'save_figure'))
+# NavigationToolbar2.toolitems = ( # to hide pan an zoom options (auto enabled by default)
+# ('Home', 'Reset original view', 'home', 'home'),
+# ('Back', 'Back to  previous view', 'back', 'back'),
+# ('Forward', 'Forward to next view', 'forward', 'forward'),
+# (None, None, None, None),
+# (None, None, None, None),
+# ('Subplots','Configure subplots','subplots','configure_subplots'), # (None, None, None, None),
+# ('Save', 'Save the figure', 'filesave', 'save_figure'))
 
 class Grapher: # this class controls the graph & it's ploting
     def __init__(self,r):
@@ -517,7 +517,7 @@ if __name__=="__main__":
     root.geometry(center_geo(root_width,root_height))
     root.minsize(root_width,root_height)
 
-    CONNECT_INSTRUMENTS()
+    # CONNECT_INSTRUMENTS()
 
     # connect_device()
     SET_DEFAULT_DIR()

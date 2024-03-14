@@ -143,6 +143,7 @@ def show_settings_popup(): #shows settings popup
 def show_info_popup(re_query=False): # shows popup containing both device names
     try:
         d_info="Nanovoltmeter Device: "+"BACKEND CODE TO CONNECT"+ "\nCurrent Source Device:" + "BACKEND CODE TO CONNECT"+ "\nCTC Device: "
+
         try:
             d_info+="BACKEND CODE TO CONNECT"
         except:
