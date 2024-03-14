@@ -102,7 +102,7 @@ def GET_PRESENT_TEMPERATURE_OF_CTC():
 
 
 # Function to Achieve and Stabilize required temperature...
-def ACHIVE_AND_STABILIZE_TEMPERATURE(required_temperature): 
+def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature): 
     global HIGH_POWER_LIMIT_OF_CTC 
     print("===> Achieving ", required_temperature, "K...")
 
@@ -146,7 +146,7 @@ def ACHIVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                     temperature_before_stabilizing = present_temperature
 
             else:
-                raise Exception("Cannot achive all the temperatures by given Maximum limit of Power")
+                raise Exception("Cannot ACHIEVe all the temperatures by given Maximum limit of Power")
             
     print("*************************************************************************")
     print("===> Stabilizing at ", required_temperature, "K...")
@@ -241,7 +241,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     while(present_temperature * direction < end_temperature * direction):
 
         # Achieving the current temperature... This function is defined above...
-        ACHIVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
+        ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
         time.sleep(DELAY_OF_CTC) # Delaying some time...
 
