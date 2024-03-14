@@ -44,7 +44,7 @@ def center_geo(window_width,window_height): # returns center values for any widg
 
     return "{}x{}+{}+{}".format(window_width, window_height, x_cordinate, y_cordinate)
 
-def connect_device(): # connects to the devices & checks if are working
+def show_checking_device_popup(): # connects to the devices & checks if are working
 
     loading_popup=Toplevel(root)
     loading_popup.config(bg="black")
@@ -53,7 +53,7 @@ def connect_device(): # connects to the devices & checks if are working
     loading_popup.overrideredirect(True)
     loading_popup.resizable(False,False)
 
-    Label(loading_popup,text="Checking Device...",fg="white",bg="black").place(relx=0.5,rely=0.5,anchor="center")
+    Label(loading_popup,text="Checking Devices...",fg="white",bg="black").place(relx=0.5,rely=0.5,anchor="center")
 
     loading_popup.grab_set()
     loading_popup.wait_visibility()
@@ -66,20 +66,30 @@ def set_settings(key,val): # changes them settings value then invokes function t
     settings[key]=val
     write_settings()
 
-def get_dir(out_dir_label): # sets the text on label after selecting output folder directory
+def ASK_FOR_OUTP_DIR_AND_SHOW_IT(out_dir_label): # sets the text on label after selecting output folder directory
     dirname = filedialog.askdirectory()
     if dirname:
         settings["output_dir"]=dirname
         write_settings()
         out_dir_label.config(text=dirname)
 ### popup window functions ###
-def cancel_pop(popup,callback=None): # destroys popup & invokes given callback function afterwards
+def CLOSE_POPUP(popup,callback=None): # destroys popup & invokes given callback function afterwards
     popup.destroy()
     root.update()
     if(callback!=None):
         callback()
-def show_settings_popup(): #shows settings popup
-    global ctc_address_entry,ctc_telnet_entry, impedance_only_var
+
+def UPDATE_MAX_RETRY(val):
+    global MAX_RETRY
+    MAX_RETRY = val
+
+def SET_DEFAULT_DIR(): # checks for valid output directory, else resets the output directory to same as GUI location
+    if(not exists(settings["output_dir"])):
+        settings["output_dir"]="./"
+        write_settings()
+
+def POPUP_SETTINGS_AND_UPDATE_THEM(): #shows settings popup
+    global ctc_address_entry,ctc_telnet_entry
 
     write_settings()
     settings_popup=Toplevel(root)
@@ -103,14 +113,12 @@ def show_settings_popup(): #shows settings popup
 
     Button(settings_popup,text="⟳").grid(row=0,column=1,padx=(120,0),pady=(10,5)) #command=lambda: get_gpib_devices(device_options)
 
-    # Checkbutton(settings_popup,text="Impedance Only",fg="white",bg=tab_bg,highlightthickness=0,variable=impedance_only_var,command=toggle_impedance_only, activebackground=tab_bg, activeforeground='white',selectcolor="black").grid(sticky="w",row=1,column=1,pady=(0,10))
-
     ctc_address_var = StringVar(value=settings["ctc_address"])
 
     Label(settings_popup,text="CTC Address:",fg="white",bg=tab_bg).grid(row=2,column=0,sticky="e",padx=(0,10),pady=10)
     ctc_address_entry=Entry(settings_popup,font=(10),width=15,textvariable=ctc_address_var)
     ctc_address_entry.grid(row=2,column=1,pady=0,sticky="w")
-    ctc_address_entry.bind("<KeyRelease>",lambda x: set_settings("ctc_address",ctc_address_var.get()))
+    ctc_address_entry.bind("<KeyRelease>",lambda x: set_settings("ctc_address",ctc_address_var.get())) #updates ctc_adress on any key release event
 
     ctc_telnet_var = StringVar(value=settings["ctc_telnet"])
 
@@ -129,32 +137,27 @@ def show_settings_popup(): #shows settings popup
     Label(settings_popup,text="Max_Retry:",fg="white",bg=tab_bg).grid(row=5,column=0,sticky="e",padx=(0,10),pady=10)
     max_retry_entry=Entry(settings_popup,font=(10),width=10)
     max_retry_entry.grid(row=5,column=1,pady=0,sticky="w")
-  
+    max_retry_entry.bind("<KeyRelease>",lambda x: UPDATE_MAX_RETRY(max_retry_entry))
 
     Label(settings_popup,text="Output Directory:",fg="white",bg=tab_bg).grid(row=6,column=0,sticky="e",padx=(0,10),pady=10)
     out_dir_label=Label(settings_popup,text=settings["output_dir"],anchor="w",width=25,fg="white",bg=tab_bg)
     out_dir_label.grid(row=6,column=1,sticky="w",padx=(0,10),pady=10)
-    Button(settings_popup,text="Select Folder",command=lambda: get_dir(out_dir_label)).grid(row=6,column=1,padx=(150,0),pady=10)
+    Button(settings_popup,text="Select Folder",command=lambda: ASK_FOR_OUTP_DIR_AND_SHOW_IT(out_dir_label)).grid(row=6,column=1,padx=(150,0),pady=10)
 
-    settings_popup.protocol("WM_DELETE_WINDOW") #lambda : cancel_pop(settings_popup,connect_device)
+    settings_popup.protocol("WM_DELETE_WINDOW") #lambda : CLOSE_POPUP(settings_popup,connect_device)
     settings_popup.grab_set()
     settings_popup.mainloop()
 
 def show_info_popup(re_query=False): # shows popup containing both device names
     try:
-        d_info="Nanovoltmeter Device: "+"BACKEND CODE TO CONNECT"+ "\nCurrent Source Device:" + "BACKEND CODE TO CONNECT"+ "\nCTC Device: "
-        try:
-            d_info+="BACKEND CODE TO CONNECT"
-        except:
-            d_info+="< Couldn't read, try again >"
-
+        d_info="Nanovoltmeter Device: "+ str(NANOVOLTMETER) + "\nCurrent Source Device:" + str(CURRENT_SOURCE) + "\nCTC Device: " + str(CTC)
         messagebox.showinfo("Device Info",d_info)
     except:
-        # connect_device()
+        CONNECT_INSTRUMENTS()
         if(not re_query):
             show_info_popup(True)
         else:
-            messagebox.showinfo("Alert", "Invalid Query! Check code")
+            messagebox.showinfo("Alert! ", "Not able to connect instruments... check code")
 ### graph functions ###
 NavigationToolbar2.toolitems = ( # to hide pan an zoom options (auto enabled by default)
 ('Home', 'Reset original view', 'home', 'home'),
@@ -312,32 +315,6 @@ class Grapher: # this class controls the graph & it's ploting
     def on_key_press(self,event): #propogates every click even to their respective button in matplotlib
         key_press_handler(event, self.canvas, self.toolbar)
 
-def set_plot_prop(event): # changes what property is currently being ploted when selected from the dropdown box
-    if(impedance_only_var.get()):
-        graph._set_plot("Freq",plot_property_var.get())
-        graph._plot()
-    else:
-        graph._set_plot("Temp",plot_property_var.get())
-        graph._plot(False)
-def configure_grid(event):
-    # current_source_tab.update_idletasks()
-    width = root.winfo_width()
-    height = root.winfo_height()
-    # Calculate the new padding values based on window size
-    padx = max(0, (width-200 ) // 2) 
-    pady = max(0, (height - 500)//4 ) 
-    # ctcpadx = max(0, (width-300 )//5 ) 
-    # ctcpady = max(0, (height-500)//5 ) 
-
-
-
-    title_lframe.grid_configure(padx=padx, pady=pady)
-    drive_lframe.grid_configure(padx=padx, pady=pady)
-    # io_frame.grid_configure(padx=padx, pady=pady)
-    # limits_frame.grid_configure(padx=padx, pady=ctcpady)
-    # temp_frame.grid_configure(padx=padx, pady=pady)
-    # pid_lframe.grid_configure(padx=padx, pady=pady)
-
 if __name__=="__main__":
     ### window setting ###
     root = Tk()
@@ -352,10 +329,8 @@ if __name__=="__main__":
     ## sidebar ##
     side_bar_frame=Frame(root,bg="#878787")
     side_bar_frame.grid(row=0,column=1,rowspan=2, sticky="nswe")
-    # side_bar_frame.grid_rowconfigure(0, weight=1)
-    # side_bar_frame.grid_rowconfigure(1, weight=1)
-    # side_bar_frame.grid_columnconfigure(0, weight=1)
-    settings_btn= Button(side_bar_frame,text="Settings",height= 2,command=show_settings_popup)
+
+    settings_btn= Button(side_bar_frame,text="Settings",height= 2,command=POPUP_SETTINGS_AND_UPDATE_THEM)
     settings_btn.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
     info_btn= Button(side_bar_frame,text="Info",height= 2,command=show_info_popup)
@@ -383,36 +358,18 @@ if __name__=="__main__":
     ControlPanel.add(graph_tab, text =' Graph\n Setup ')
     ControlPanel.grid(row=0,column=0,sticky="nswe")
 
-    ### graph options ###
-    graph_options=Frame(graph_tab)
-    graph_options.pack(fill="x",expand=True,pady=(10,0))
-    graph_options.grid_columnconfigure(0, weight=1)
-    graph_options.grid_columnconfigure(1, weight=1)
-    graph_options.grid_columnconfigure(2, weight=1)
-
-
     ## Graph ##  
     graph=Grapher(graph_tab)
     graph.frame.pack(side=TOP,fill="both",expand=True,pady=(10,0))
-    
-    ## CTC tab ##
-    # Configure grid weights for responsiveness
-    # ctc_tab.grid_columnconfigure(0, weight=1)
-    # ctc_tab.grid_rowconfigure(0, weight=1)
    
     # Input Selection
     io_frame = LabelFrame(ctc_tab, bg=tab_bg, borderwidth=0, highlightthickness=0)
     io_frame.grid(row=0, column=0, rowspan=3, pady=(20, 10), padx=120, sticky='nwes')
-    # io_frame.grid_columnconfigure(0, weight=1)  # Make the first column growable
-    # io_frame.grid_rowconfigure(0, weight=1)  # Make the first row growable
-    # io_frame.grid_rowconfigure(1, weight=1)  # Make the first row growable
-    # io_frame.grid_rowconfigure(2, weight=1)  # Make the first row growable
-    
     
     input_label = Label(io_frame, text='Input:', bg=tab_bg, fg='white')
     input_label.grid(row=0, column=0,sticky="ew",padx=(20,20),pady=20)
 
-    input_options = ['In 1', 'In 2', 'In 3']
+    input_options = ['In 1', 'In 2', 'In 3', 'In 4']
     input_var = StringVar()
     input_dropdown = ttk.Combobox(io_frame, textvariable=input_var, values=input_options, state='readonly')
     input_dropdown.grid(row=0,column=1,rowspan=3,sticky="ew",pady=(10,10))
@@ -422,7 +379,7 @@ if __name__=="__main__":
     output_label = Label(io_frame, text='Output:', bg=tab_bg, fg='white')
     output_label.grid(row=0, column=2,sticky="ew",padx=(20,20),pady=20)
 
-    output_options = ['Out 1', 'Out 2', 'Out 3']
+    output_options = ['Out 1', 'Out 2']
     output_var = StringVar()
     output_dropdown = ttk.Combobox(io_frame, textvariable=output_var, values=output_options, state='readonly')
     output_dropdown.grid(row=0, column=3,rowspan=3,sticky="ew",pady=(10,10))
@@ -433,15 +390,13 @@ if __name__=="__main__":
     
     limits_frame = LabelFrame(ctc_tab, text='Power Controls', fg='white', bg=tab_bg)
     limits_frame.grid(row=3, column=0, rowspan=2, pady=(20, 10), padx=120, sticky='nwes')
-    # limits_frame.grid_columnconfigure(0, weight=1)  # Make the first column growable
-    # limits_frame.grid_rowconfigure(3, weight=1)  # Make the first row growable
-    # limits_frame.grid_rowconfigure(4, weight=1)  # Make the first row growable
     
     # Low Limit
     low_limit_label = Label(limits_frame, text='Low Limit:', bg=tab_bg, fg='white')
     low_limit_label.grid(row=0, column=0, padx=(10, 10), pady=5, sticky='e')
     low_limit_entry = Entry(limits_frame, font=(10), width=15)
     low_limit_entry.grid(row=0, column=1, pady=10,ipady=3,sticky="w")
+
     # High Limit
     high_limit_label = Label(limits_frame, text='High Limit:', bg=tab_bg, fg='white')
     high_limit_label.grid(row=0, column=2, padx=(10, 10), pady=5, sticky='e')
@@ -463,8 +418,6 @@ if __name__=="__main__":
     # PID
     pid_lframe= LabelFrame(ctc_tab,text="PID",fg="white",bg=tab_bg)
     pid_lframe.grid(row=5, column=0, sticky="nesw",padx=120,pady=(20,10))
-    # pid_lframe.grid_columnconfigure(0, weight=1)  # Make the first column growable
-    # pid_lframe.grid_rowconfigure(5, weight=1)  # Make the first row growable
     
     #PID P
     Label(pid_lframe,text="P",fg="white",bg=tab_bg).grid(row=0,column=0,sticky="ew",padx=(20,20),pady=20)
@@ -481,15 +434,9 @@ if __name__=="__main__":
     ctc_D_entry=Entry(pid_lframe,font=(10),width=10)
     ctc_D_entry.grid(row=0,column=5,pady=0,ipady=3,sticky="ew")
     
-    #Temprature Controls
+    #Temperature Controls
     temp_frame = LabelFrame(ctc_tab, text='Temperature Controls', fg='white', bg=tab_bg)
     temp_frame.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes')
-    # temp_frame.grid_rowconfigure(6, weight=1)  # Make the first row growable
-    # temp_frame.grid_rowconfigure(7, weight=1)  # Make the first row growable
-    # temp_frame.grid_columnconfigure(0, weight=1)  # Make the first row growable
-    
-    
-    
 
     # Start Temp
     start_temp_label = Label(temp_frame, text='Start Temp:', bg=tab_bg, fg='white')
@@ -525,29 +472,21 @@ if __name__=="__main__":
     complete_cycle_var= IntVar()
     Checkbutton(ctc_tab,text="Complete Cycle",fg="white",bg=tab_bg,highlightthickness=0,variable=complete_cycle_var, activebackground=tab_bg, activeforeground='white',selectcolor="black").grid(row=8,column=0,pady=20,sticky="ew")
 
-    
-    
+
   
     ##CURRENT SOURCE TAB##
-    # current_source_tab.grid_columnconfigure(0, weight=2)
-    # current_source_tab.grid_rowconfigure(0, weight=1)
+
     # Title
     title_lframe = LabelFrame(current_source_tab, text="Title", fg="white", bg=tab_bg)
     title_lframe.grid(row=0, column=0,rowspan=1, sticky="nsew",padx=250,pady=(40,25))
-    # title_lframe.grid_rowconfigure(0, weight=1)  # Make the first row growable
-    # title_lframe.grid_columnconfigure(0, weight=1)  # Make the first row growable
+
     title_entry=Entry(title_lframe,font=(10),width=20)
     title_entry.pack(pady=(0,5),padx=10,ipady=5)
     
-
     # Drive
     drive_lframe = LabelFrame(current_source_tab, text="Current Controls", fg="white", bg=tab_bg)
     drive_lframe.grid(row=1, column=0, rowspan=3, sticky="nsew",padx=250,pady=25)
-    # drive_lframe.grid_rowconfigure(1, weight=1)  # Make the first row growable
-    # drive_lframe.grid_columnconfigure(0, weight=1)  # Make the first row growable
 
-
-    
     current_start_lframe=LabelFrame(drive_lframe,text="Current Start Value (A)",fg="white",bg=tab_bg)
     current_start_lframe.grid(row=0,column=0,padx=10,pady=(5,10),sticky="w")
 
@@ -569,7 +508,7 @@ if __name__=="__main__":
     interval_entry.grid(row=0,column=0,rowspan=3,pady=10,padx=10,ipady=5)
     
         ### other ###
-    # root.protocol("WM_DELETE_WINDOW", confirm)
+    root.protocol("WM_DELETE_WINDOW", confirm)
     root.wait_visibility()
     root.update()
     
@@ -578,12 +517,9 @@ if __name__=="__main__":
     root.geometry(center_geo(root_width,root_height))
     root.minsize(root_width,root_height)
 
-    # get_settings()
-
-    # impedance_only_var.set(settings["impedance_only"])
-    # toggle_impedance_only()
+    CONNECT_INSTRUMENTS()
 
     # connect_device()
-    # initial_setup()
+    SET_DEFAULT_DIR()
     # root.bind("<Configure>", configure_grid)
     root.mainloop()
