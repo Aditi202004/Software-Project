@@ -276,7 +276,9 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 
     SEND_COMMAND_TO_CTC("outputEnable off")
 
-def CHECK_AND_SET_ALL_VALUES(): # checks if all given user input values are accurate
+
+# Checks if all given user input values are accurate and sends required msgs to ctc to set some of the values
+def CHECK_AND_SET_ALL_VALUES(): 
 
     global TITLE, MAX_RETRY, INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, CSV_FILE
 
@@ -395,6 +397,8 @@ def CHECK_AND_SET_ALL_VALUES(): # checks if all given user input values are accu
 
     return 1
 
+
+# Main trigger function where all the functions are called
 def TRIGGER():
 
     global MAX_RETRY, INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, CSV_FILE
@@ -407,7 +411,9 @@ def TRIGGER():
     
     if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
 
-def START_TRIGGER(): # starts the trigger in a parallel thread
+
+# Function to start trigger in a parallel thread so that interaction with GUI is possible even after trigger event
+def START_TRIGGER():
     # if(check_non_sync_values()):
     #     return
 
@@ -426,19 +432,25 @@ def START_TRIGGER(): # starts the trigger in a parallel thread
     
     trigger_thread.start()
 
-def confirm(): #confirmation before quiting Gui
+
+# confirmation before quiting Gui
+def confirm(): 
    if messagebox.askokcancel("Quit", "Do you want to quit?"):
         # if(impedance_device_valid):
         #     export_config()
         root.destroy()
-        
-def write_settings(): #saves all changes made in the settings to the settings.json file
+
+
+# saves all changes made in the settings to the settings.json file
+def write_settings(): 
     global settings
 
     file_handler=open(settings_file, 'w',encoding='utf-8')
     file_handler.write(json.dumps(settings))
 
-def center_geo(window_width,window_height): # returns center values for any widget according to pc screen
+
+# returns center values for any widget according to pc screen
+def center_geo(window_width,window_height): 
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -448,8 +460,9 @@ def center_geo(window_width,window_height): # returns center values for any widg
 
     return "{}x{}+{}+{}".format(window_width, window_height, x_cordinate, y_cordinate)
 
-def show_checking_device_popup(): # connects to the devices & checks if are working
 
+# loads checking device popup
+def show_checking_device_popup(): 
     loading_popup=Toplevel(root)
     loading_popup.config(bg="black")
     # loading_popup.attributes('-topmost', True)
@@ -466,33 +479,47 @@ def show_checking_device_popup(): # connects to the devices & checks if are work
     # check_device(loading_popup)
     loading_popup.mainloop()
 
-def set_settings(key,val): # changes them settings value then invokes function to write those changes to the file
+
+# changes the settings value then invokes function to write those changes to the file
+def set_settings(key,val): 
     settings[key]=val
     write_settings()
 
-def ASK_FOR_OUTP_DIR_AND_SHOW_IT(out_dir_label): # sets the text on label after selecting output folder directory
+
+# shows popup for choosing output dir and sets the text on label
+def ASK_FOR_OUTP_DIR_AND_SHOW_IT(out_dir_label): 
     dirname = filedialog.askdirectory()
     if dirname:
         settings["output_dir"]=dirname
         write_settings()
         out_dir_label.config(text=dirname)
+
+
 ### popup window functions ###
-def CLOSE_POPUP(popup,callback=None): # destroys popup & invokes given callback function afterwards
+        
+# destroys popup & invokes given callback function afterwards
+def CLOSE_POPUP(popup,callback=None): 
     popup.destroy()
     root.update()
     if(callback!=None):
         callback()
 
+
+# function to update the val of global variable MAX_RETRY
 def UPDATE_MAX_RETRY(val):
     global MAX_RETRY
     MAX_RETRY = val
 
-def SET_DEFAULT_DIR(): # checks for valid output directory, else resets the output directory to same as GUI location
+
+# checks for valid output directory, else resets the output directory to same as GUI location
+def SET_DEFAULT_DIR(): 
     if(not exists(settings["output_dir"])):
         settings["output_dir"]="./"
         write_settings()
 
-def POPUP_SETTINGS_AND_UPDATE_THEM(): #shows settings popup
+
+# shows settings popup
+def POPUP_SETTINGS_AND_UPDATE_THEM(): 
     global ctc_address_entry,ctc_telnet_entry
 
     write_settings()
@@ -552,7 +579,9 @@ def POPUP_SETTINGS_AND_UPDATE_THEM(): #shows settings popup
     settings_popup.grab_set()
     settings_popup.mainloop()
 
-def show_info_popup(re_query=False): # shows popup containing both device names
+
+# shows popup containing all three device names
+def show_info_popup(re_query=False): 
     try:
         d_info="Nanovoltmeter Device: "+ str(NANOVOLTMETER) + "\nCurrent Source Device:" + str(CURRENT_SOURCE) + "\nCTC Device: " + str(CTC)
         messagebox.showinfo("Device Info",d_info)
