@@ -15,9 +15,9 @@ settings_file="setting_data.json"
 settings={"device_name":"GPIB0::6::INSTR",
 "output_dir":"./",
 "ctc_address":"192.168.0.2",
-"ctc_telnet":23,
-"impedance_only":0
-}
+"ctc_telnet":"23",
+"rs232":"COM 1"}
+
 
 # from telnetlib import Telnet
 tab_bg="#575757"
@@ -85,13 +85,13 @@ def show_settings_popup(): #shows settings popup
     settings_popup=Toplevel(root)
     settings_popup.config(bg=tab_bg)
     settings_popup.title("Settings")
-    settings_popup.geometry(center_geo(500, 200))
+    settings_popup.geometry(center_geo(500, 270))
     settings_popup.resizable(False,False)
 
     settings_popup.grid_columnconfigure(0,weight=1)
     settings_popup.grid_columnconfigure(1,weight=1)
 
-    Label(settings_popup,text="Impedance Analyzer:",fg="white",bg=tab_bg).grid(row=0,column=0,sticky="e",padx=(0,10),pady=10)
+    Label(settings_popup,text="Nanovoltmeter",fg="white",bg=tab_bg).grid(row=0,column=0,rowspan=2,sticky="e",padx=(0,10),pady=10)
     
     option_inside = StringVar(value=settings["device_name"])
 
@@ -101,7 +101,7 @@ def show_settings_popup(): #shows settings popup
 
     # get_gpib_devices(device_options)
 
-    Button(settings_popup,text="⟳").grid(row=0,column=1,padx=(110,0),pady=(10,5)) #command=lambda: get_gpib_devices(device_options)
+    Button(settings_popup,text="⟳").grid(row=0,column=1,padx=(120,0),pady=(10,5)) #command=lambda: get_gpib_devices(device_options)
 
     # Checkbutton(settings_popup,text="Impedance Only",fg="white",bg=tab_bg,highlightthickness=0,variable=impedance_only_var,command=toggle_impedance_only, activebackground=tab_bg, activeforeground='white',selectcolor="black").grid(sticky="w",row=1,column=1,pady=(0,10))
 
@@ -109,26 +109,52 @@ def show_settings_popup(): #shows settings popup
 
     Label(settings_popup,text="CTC Address:",fg="white",bg=tab_bg).grid(row=2,column=0,sticky="e",padx=(0,10),pady=10)
     ctc_address_entry=Entry(settings_popup,font=(10),width=15,textvariable=ctc_address_var)
-    ctc_address_entry.grid(row=2,column=1,pady=0,ipady=2,sticky="w")
+    ctc_address_entry.grid(row=2,column=1,pady=0,sticky="w")
     ctc_address_entry.bind("<KeyRelease>",lambda x: set_settings("ctc_address",ctc_address_var.get()))
 
     ctc_telnet_var = StringVar(value=settings["ctc_telnet"])
 
     Label(settings_popup,text="CTC Telnet:",fg="white",bg=tab_bg).grid(row=3,column=0,sticky="e",padx=(0,10),pady=10)
-    ctc_telnet_entry=Entry(settings_popup,font=(10),width=5,textvariable=ctc_telnet_var)
-    ctc_telnet_entry.grid(row=3,column=1,pady=0,ipady=2,sticky="w")
+    ctc_telnet_entry=Entry(settings_popup,font=(10),width=15,textvariable=ctc_telnet_var)
+    ctc_telnet_entry.grid(row=3,column=1,pady=0,sticky="w")
     ctc_telnet_entry.bind("<KeyRelease>",lambda x: set_settings("ctc_telnet",ctc_telnet_var.get()))
+    
+    rs232_var = StringVar(value=settings["rs232"])
 
-    # toggle_impedance_only()
+    Label(settings_popup,text="RS232:",fg="white",bg=tab_bg).grid(row=4,column=0,sticky="e",padx=(0,10),pady=10)
+    rs232_entry=Entry(settings_popup,font=(10),width=15,textvariable=rs232_var)
+    rs232_entry.grid(row=4,column=1,pady=0,sticky="w")
+    rs232_entry.bind("<KeyRelease>",lambda x: set_settings("rs232",rs232_var.get()))
 
-    Label(settings_popup,text="Output Directory:",fg="white",bg=tab_bg).grid(row=4,column=0,sticky="e",padx=(0,10),pady=10)
+    Label(settings_popup,text="Max_Retry:",fg="white",bg=tab_bg).grid(row=5,column=0,sticky="e",padx=(0,10),pady=10)
+    max_retry_entry=Entry(settings_popup,font=(10),width=10)
+    max_retry_entry.grid(row=5,column=1,pady=0,sticky="w")
+  
+
+    Label(settings_popup,text="Output Directory:",fg="white",bg=tab_bg).grid(row=6,column=0,sticky="e",padx=(0,10),pady=10)
     out_dir_label=Label(settings_popup,text=settings["output_dir"],anchor="w",width=25,fg="white",bg=tab_bg)
-    out_dir_label.grid(row=4,column=1,sticky="w",padx=(0,10),pady=10)
-    Button(settings_popup,text="Select Folder",command=lambda: get_dir(out_dir_label)).grid(row=4,column=1,padx=(150,0),pady=10)
+    out_dir_label.grid(row=6,column=1,sticky="w",padx=(0,10),pady=10)
+    Button(settings_popup,text="Select Folder",command=lambda: get_dir(out_dir_label)).grid(row=6,column=1,padx=(150,0),pady=10)
 
     settings_popup.protocol("WM_DELETE_WINDOW") #lambda : cancel_pop(settings_popup,connect_device)
     settings_popup.grab_set()
     settings_popup.mainloop()
+def show_info_popup(re_query=False): # shows popup containing both device names
+    try:
+        d_info="Nanovoltmeter Device: "+"BACKEND CODE TO CONNECT"+ "\nCurrent Source Device:" + "BACKEND CODE TO CONNECT"+ "\nCTC Device: "
+        
+        try:
+            d_info+="BACKEND CODE TO CONNECT"
+        except:
+            d_info+="< Couldn't read, try again >"
+
+        messagebox.showinfo("Device Info",d_info)
+    except:
+        # connect_device()
+        if(not re_query):
+            show_info_popup(True)
+        else:
+            messagebox.showinfo("Alert", "Invalid Query! Check code")
 ### graph functions ###
 NavigationToolbar2.toolitems = ( # to hide pan an zoom options (auto enabled by default)
 ('Home', 'Reset original view', 'home', 'home'),
@@ -332,7 +358,7 @@ if __name__=="__main__":
     settings_btn= Button(side_bar_frame,text="Settings",height= 2,command=show_settings_popup)
     settings_btn.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
-    info_btn= Button(side_bar_frame,text="Info",height= 2)
+    info_btn= Button(side_bar_frame,text="Info",height= 2,command=show_info_popup)
     info_btn.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
     sync_set_btn= Button(side_bar_frame,text="Sync Set",height= 2)
@@ -507,7 +533,7 @@ if __name__=="__main__":
     # current_source_tab.grid_rowconfigure(0, weight=1)
     # Title
     title_lframe = LabelFrame(current_source_tab, text="Title", fg="white", bg=tab_bg)
-    title_lframe.grid(row=0, column=0,rowspan=1, sticky="nsew",padx=400,pady=(500,100))
+    title_lframe.grid(row=0, column=0,rowspan=1, sticky="nsew",padx=250,pady=(40,25))
     # title_lframe.grid_rowconfigure(0, weight=1)  # Make the first row growable
     # title_lframe.grid_columnconfigure(0, weight=1)  # Make the first row growable
     title_entry=Entry(title_lframe,font=(10),width=20)
@@ -516,7 +542,7 @@ if __name__=="__main__":
 
     # Drive
     drive_lframe = LabelFrame(current_source_tab, text="Current Controls", fg="white", bg=tab_bg)
-    drive_lframe.grid(row=1, column=0, rowspan=3, sticky="nsew",padx=400,pady=(0,50))
+    drive_lframe.grid(row=1, column=0, rowspan=3, sticky="nsew",padx=250,pady=25)
     # drive_lframe.grid_rowconfigure(1, weight=1)  # Make the first row growable
     # drive_lframe.grid_columnconfigure(0, weight=1)  # Make the first row growable
 
@@ -559,5 +585,5 @@ if __name__=="__main__":
 
     # connect_device()
     # initial_setup()
-    root.bind("<Configure>", configure_grid)
+    # root.bind("<Configure>", configure_grid)
     root.mainloop()
