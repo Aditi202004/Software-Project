@@ -436,8 +436,7 @@ def START_TRIGGER():
 # confirmation before quiting Gui
 def confirm(): 
    if messagebox.askokcancel("Quit", "Do you want to quit?"):
-        # if(impedance_device_valid):
-        #     export_config()
+        # export_config()
         root.destroy()
 
 
@@ -542,7 +541,7 @@ def POPUP_SETTINGS_AND_UPDATE_THEM():
 
     # get_gpib_devices(device_options)
 
-    Button(settings_popup,text="⟳").grid(row=0,column=1,padx=(120,0),pady=(10,5)) #command=lambda: get_gpib_devices(device_options)
+    # Button(settings_popup,text="⟳").grid(row=0,column=1,padx=(120,0),pady=(10,5)) #command=lambda: get_gpib_devices(device_options)
 
     ctc_address_var = StringVar(value=settings["ctc_address"])
 
@@ -575,7 +574,7 @@ def POPUP_SETTINGS_AND_UPDATE_THEM():
     out_dir_label.grid(row=6,column=1,sticky="w",padx=(0,10),pady=10)
     Button(settings_popup,text="Select Folder",command=lambda: ASK_FOR_OUTP_DIR_AND_SHOW_IT(out_dir_label)).grid(row=6,column=1,padx=(150,0),pady=10)
 
-    settings_popup.protocol("WM_DELETE_WINDOW") #lambda : CLOSE_POPUP(settings_popup,connect_device)
+    settings_popup.protocol("WM_DELETE_WINDOW", lambda : CLOSE_POPUP(settings_popup))
     settings_popup.grab_set()
     settings_popup.mainloop()
 
@@ -594,14 +593,8 @@ def show_info_popup(re_query=False):
 
 
 ### graph functions ###
-NavigationToolbar2.toolitems = ( # to hide pan an zoom options (auto enabled by default)
-('Home', 'Reset original view', 'home', 'home'),
-('Back', 'Back to  previous view', 'back', 'back'),
-('Forward', 'Forward to next view', 'forward', 'forward'),
-(None, None, None, None),
-(None, None, None, None),
-('Subplots','Configure subplots','subplots','configure_subplots'), # (None, None, None, None),
-('Save', 'Save the figure', 'filesave', 'save_figure'))
+
+
 
 if __name__=="__main__":
     ### window setting ###
