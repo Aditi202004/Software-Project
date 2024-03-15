@@ -12,7 +12,7 @@ from datetime import datetime
 from os.path import exists
 from os import mkdir
 # Required imports for connecting the device
-# import pyvisa, serial, telnetlib
+import pyvisa, serial, telnetlib
 
 # Other Required imports
 import time, csv
@@ -37,26 +37,65 @@ global TITLE, MAX_RETRY, INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC,
 
 RESISTANCE_VALUES = [] # Array to store resistances at all temperatures...
 
+
+# -------------------------------------------------------- Instrument connections -----------------------------------------------------------------------
+
 # Function to connect the instruments with software
 def CONNECT_INSTRUMENTS(): 
     global NANOVOLTMETER, CURRENT_SOURCE, CTC
+    connected=0
+    i = 0
+    # connecting nanovoltmeter
+    while True:
+        try:
+            rm = pyvisa.ResourceManager()
+            NANOVOLTMETER = rm.open_resource('GPIB0::2::INSTR')
+            i = 0
+            connected+=1
+            break
+        except:
+            if i==MAX_RETRY:
+                messagebox.showinfo("Alert","NANOVOLTMETER not connected... check its connection!")
+                i = 0
+                break
+            i+=1
 
-    try:
-        # Connecting Nanovoltmeter with Pyvisa
-        rm = pyvisa.ResourceManager()
-        NANOVOLTMETER = rm.open_resource('GPIB0::2::INSTR')
+    # connecting current source
+    while True:
+        try:
+            CURRENT_SOURCE = serial.Serial('COM1', baudrate=9600,timeout=10)
+            i = 0
+            connected+=1
+            break
+        except:
+            if i==MAX_RETRY:
+                messagebox.showinfo("Alert","CURRENT SOURCE not connected... check its connection!")
+                i = 0
+                break
+            i+=1
 
-        # Connecting AC/DC Current Source with PySerial
-        CURRENT_SOURCE = serial.Serial('COM1', baudrate=9600,timeout=10)
-
-        # Connecting CTC with Telnet
-        CTC = telnetlib.Telnet("192.168.0.2",23,10)
+    # connecting CTC
+    while True:
+        try:
+            CTC = telnetlib.Telnet("192.168.0.2",23,10)
+            i = 0
+            connected+=1
+            break
+        except:
+            if i==MAX_RETRY:
+                messagebox.showinfo("Alert","CTC not connected... check its connection!")
+                i = 0
+                break
+            i+=1
+    
         return 1
     
-    except:
-        print("-1 returned")
-        return -1
 
+    if connected==3: return 1 # if all three devices are connected then return 1
+    else: return -1
+       
+
+# ----------------------------------------------------- Helper functions for the experiment --------------------------------------------------
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
 def SEND_COMMAND_TO_CTC(command): 
@@ -75,7 +114,6 @@ def SEND_COMMAND_TO_CTC(command):
             
     raise Exception("OOPS!!! Couldn't send command to CTC even after maximun number of tries")
     
-
 # Function to convert the command to correct format, which Current Source will understand and sends it to Current Source...
 def SEND_COMMAND_TO_CURRENT_SOURCE(command):
 
@@ -93,7 +131,6 @@ def SEND_COMMAND_TO_CURRENT_SOURCE(command):
             
     raise Exception("OOPS!!! Couldn't send command to Current Source even after maximum number of tries")
 
-
 # Function to get the voltage reading from the Nanovoltmeter...
 def GET_PRESENT_VOLTAGE_READING():
     global MAX_RETRY
@@ -110,7 +147,6 @@ def GET_PRESENT_VOLTAGE_READING():
             
     raise Exception("OOPS!!! Couldn't get voltage reading from Nanovoltmeter even after maximum number of tries")
 
-
 # Function to get the current temperature of sample from ctc...
 def GET_PRESENT_TEMPERATURE_OF_CTC():  
     retry_number = 0
@@ -125,7 +161,6 @@ def GET_PRESENT_TEMPERATURE_OF_CTC():
             time.sleep(0.5) # Adding a short delay before retrying
 
     raise Exception("Couldn't get temperature from ctc!") 
-
 
 # Function to Achieve and Stabilize required temperature...
 def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature): 
@@ -205,7 +240,6 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
         else:
             print("Temperature is not stabilized yet... Retrying...")
 
-
 # Function to get the current resistance of the sample at current temperature...
 def GET_PRESENT_RESISTANCE():
 
@@ -244,14 +278,12 @@ def GET_PRESENT_RESISTANCE():
     
     return sum(resistance_readings) / len(resistance_readings)
 
-
 # Function to write the temperature and resistance values into csv file
 def WRITE_DATA_TO_CSV(temperature, resistance):
 
     with open(CSV_FILE, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([temperature, resistance])
-
 
 # Function to get the resistances at all temperatures...
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
@@ -281,7 +313,6 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 
 
     SEND_COMMAND_TO_CTC("outputEnable off")
-
 
 # Checks if all given user input values are accurate and sends required msgs to ctc to set some of the values
 def CHECK_AND_SET_ALL_VALUES(): 
@@ -411,6 +442,9 @@ def CHECK_AND_SET_ALL_VALUES():
     return 1
 
 
+
+# ------------------------------------------------------------- trigger functions ---------------------------------------------------------
+
 # Main trigger function where all the functions are called
 def TRIGGER():
 
@@ -420,7 +454,6 @@ def TRIGGER():
     GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
     
     if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
-
 
 # Function to start trigger in a parallel thread so that interaction with GUI is possible even after trigger event
 def START_TRIGGER():
@@ -434,41 +467,12 @@ def START_TRIGGER():
         return
 
     print("all vals checked")
-    # ControlPanel.select(2)
+    ControlPanel.select(2)
 
     
     START_TRIGGER_THREAD()
 
-
-
-# confirmation before quiting Gui
-def confirm(): 
-   if messagebox.askokcancel("Quit", "Do you want to quit?"):
-        # export_config()
-        root.destroy()
-
-
-# saves all changes made in the settings to the settings.json file
-def write_settings(): 
-    global settings
-
-    file_handler=open(settings_file, 'w',encoding='utf-8')
-    file_handler.write(json.dumps(settings))
-
-
-# returns center values for any widget according to pc screen
-def center_geo(window_width,window_height): 
-
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-
-    x_cordinate = int((screen_width/2) - (window_width/2))
-    y_cordinate = int((screen_height/2) - (window_height/2))-25
-
-    return "{}x{}+{}+{}".format(window_width, window_height, x_cordinate, y_cordinate)
-
-
-# loads checking device popup
+# starts the triggering thread if all the instruments are connected
 def START_TRIGGER_THREAD():
     loading_popup=Toplevel(root) 
     loading_popup.config(bg="black")
@@ -490,25 +494,47 @@ def START_TRIGGER_THREAD():
 
         # trigger_btn.config(text="Abort",command=show_abort_trigger_popup,bg=selected_bg)
         trigger_thread=threading.Thread(target=TRIGGER)
-        
         trigger_thread.start()
         
-
     else:
         loading_popup.destroy()
         root.update()
-        messagebox.showinfo("Alert","Devices not connected, try again!")
+        messagebox.showinfo("Alert","Could not connect... CHECK ALL CONNECTIONS AND WIRES AND RETRY")
         
     # check_device(loading_popup)
     loading_popup.mainloop()
+  
+
+# -----------------------------------------------------------------
     
+# confirmation before quiting Gui
+def confirm(): 
+   if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        # export_config()
+        root.destroy()
 
+# saves all changes made in the settings to the settings.json file
+def write_settings(): 
+    global settings
 
+    file_handler=open(settings_file, 'w',encoding='utf-8')
+    file_handler.write(json.dumps(settings))
+
+# returns center values for any widget according to pc screen
+def center_geo(window_width,window_height): 
+
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    x_cordinate = int((screen_width/2) - (window_width/2))
+    y_cordinate = int((screen_height/2) - (window_height/2))-25
+
+    return "{}x{}+{}+{}".format(window_width, window_height, x_cordinate, y_cordinate)
+  
 # changes the settings value then invokes function to write those changes to the file
 def set_settings(key,val): 
     settings[key]=val
     write_settings()
-
 
 # shows popup for choosing output dir and sets the text on label
 def ASK_FOR_OUTP_DIR_AND_SHOW_IT(out_dir_label): 
@@ -655,7 +681,6 @@ if __name__=="__main__":
     ControlPanel = ttk.Notebook(root)
 
     ctc_tab = Frame(ControlPanel,bg=tab_bg) #CTC config tab
-    
     current_source_tab = Frame(ControlPanel,bg=tab_bg) #current source config tab
     graph_tab = Frame(ControlPanel) #graphing config tab
 
