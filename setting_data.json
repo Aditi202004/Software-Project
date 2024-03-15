@@ -1,1 +1,1 @@
-{"device_name": "GPIB0::6::INSTR", "output_dir": "./", "ctc_address": "192.168.0.2", "ctc_telnet": "23", "rs232": "COM 1"}
+{"device_name": "GPIB0::6::INSTR", "output_dir": "C:/Users/Aditi Wekhande/OneDrive/Desktop", "ctc_address": "192.168.0.2", "ctc_telnet": "23", "rs232": "COM 1"}

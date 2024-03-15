@@ -54,6 +54,7 @@ def CONNECT_INSTRUMENTS():
         return 1
     
     except:
+        print("-1 returned")
         return -1
 
 
@@ -415,9 +416,6 @@ def TRIGGER():
 
     global MAX_RETRY, INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, CSV_FILE
 
-    # Connecting CTC, Nanovoltmeter and AC/DC Current Source... The function is defined above...
-    CONNECT_INSTRUMENTS()
-
     # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
     GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
     
@@ -435,20 +433,11 @@ def START_TRIGGER():
     if(CHECK_AND_SET_ALL_VALUES() == -1): 
         return
 
-    ControlPanel.select(2)
+    print("all vals checked")
+    # ControlPanel.select(2)
 
-    show_checking_device_popup()
-    if CONNECT_INSTRUMENTS == 1:
-        global trigger_thread
-
-        # trigger_btn.config(text="Abort",command=show_abort_trigger_popup,bg=selected_bg)
-        trigger_thread=threading.Thread(target=TRIGGER)
-        
-        trigger_thread.start()
-        CLOSE_POPUP()
-
-    else:
-        messagebox.showinfo("Alert","Devices not connected, try again!")
+    
+    START_TRIGGER_THREAD()
 
 
 
@@ -480,8 +469,8 @@ def center_geo(window_width,window_height):
 
 
 # loads checking device popup
-def show_checking_device_popup(): 
-    loading_popup=Toplevel(root)
+def START_TRIGGER_THREAD():
+    loading_popup=Toplevel(root) 
     loading_popup.config(bg="black")
     # loading_popup.attributes('-topmost', True)
     loading_popup.geometry(center_geo(200, 60))
@@ -494,8 +483,25 @@ def show_checking_device_popup():
     loading_popup.wait_visibility()
     root.update()
 
+    if CONNECT_INSTRUMENTS() == 1:
+        loading_popup.destroy()
+        root.update() 
+        global trigger_thread
+
+        # trigger_btn.config(text="Abort",command=show_abort_trigger_popup,bg=selected_bg)
+        trigger_thread=threading.Thread(target=TRIGGER)
+        
+        trigger_thread.start()
+        
+
+    else:
+        loading_popup.destroy()
+        root.update()
+        messagebox.showinfo("Alert","Devices not connected, try again!")
+        
     # check_device(loading_popup)
     loading_popup.mainloop()
+    
 
 
 # changes the settings value then invokes function to write those changes to the file
