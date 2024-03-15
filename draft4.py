@@ -743,6 +743,13 @@ if __name__=="__main__":
     threshold_entry = Entry(temp_frame, font=(10), width=7)
     threshold_entry.grid(row=1, column=1, pady=10,ipady=3,sticky="ew")
     
+    #Tolerance
+    tolerance_label = Label(temp_frame, text='Threshold:', bg=tab_bg, fg='white')
+    tolerance_label.grid(row=1, column=2, padx=30, pady=5, sticky='ew')
+    tolerance_entry = Entry(temp_frame, font=(10), width=7)
+    tolerance_entry.grid(row=1, column=3, pady=10,ipady=3,sticky="ew")
+    
+    
     #Delay
     delay_label = Label(temp_frame, text='Avg Delay:', bg=tab_bg, fg='white')
     delay_label.grid(row=1, column=4, padx=30, pady=5, sticky='ew')
