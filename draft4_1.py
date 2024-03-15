@@ -12,11 +12,13 @@ import types
 
 
 # Required import for interface
+from tkinter import *
+from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
-
+import threading
 
 # Required imports for maintaining the data
-import csv
+import csv, json
 import numpy as np
 
 
@@ -24,10 +26,13 @@ import numpy as np
 import time
 
 
+# Required import for Directories of files
+from datetime import datetime
+from os.path import exists
+from os import mkdir
 
 
-# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232 cable for AC/DC current source. The code may change if you use different cables... :)
-
+# --- Experiment Variables --- #
 
 # Variables for Instruments...
 global NANOVOLTMETER, CURRENT_SOURCE, CTC
@@ -36,9 +41,147 @@ global NANOVOLTMETER, CURRENT_SOURCE, CTC
 # Variables for user input parameters...
 global MAX_RETRY, INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, CSV_FILE
 
-
 # Array to store resistances at all temperatures...
 RESISTANCE_VALUES = [] 
+
+
+# --- Graph Variables --- #
+
+# Variables for the plotting graph...
+global FRAME_FOR_GRAPH, LABEL_FOR_GRAPH, FIGURE_FOR_GRAPH, CANVAS_FOR_GRAPH, GRAPH, ANNOTATION, TOOLBAR_FOR_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
+
+
+# Array to store the lines...
+ARRAY_OF_PLOTTING_LINES = [] 
+
+
+#----------------------------------------- Graph Plotting Part ----------------------------------------------------#
+
+#%%
+
+# Function to updates the content in the annotation...
+def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
+    x, y = ARRAY_OF_PLOTTING_LINES.get_data()
+    annotations.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
+    annotations.set_text("Temperature : {}, Resistance: {}".format(x[ind["ind"][0]], y[ind["ind"][0]]))
+    annotations.get_bbox_patch().set_alpha(0.4)
+
+
+# Function used to display the annotation when hover...
+def DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES, annotations):
+    try:
+        vis = annotations.get_visible()
+        if event.inaxes:
+            cont, ind = ARRAY_OF_PLOTTING_LINES.contains(event)
+            if cont:
+                UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations)
+                annotations.set_visible(True)
+                event.canvas.draw_idle()
+            else:
+                if vis:
+                    annotations.set_visible(False)
+                    event.canvas.draw_idle()
+    except:
+        pass
+
+
+# Function used to zoom out and in graph using mouse...
+def ZOOM_INOUT_USING_MOUSE(event):
+    graph = event.inaxes
+    try:
+        graph._pan_start = types.SimpleNamespace(
+            lim=graph.viewLim.frozen(),
+            trans=graph.transData.frozen(),
+            trans_inverse=graph.transData.inverted().frozen(),
+            bbox=graph.bbox.frozen(),
+            x=event.x,
+            y=event.y)
+        if event.button == 'up':
+            graph.drag_pan(3, event.key, event.x + 10, event.y + 10)
+        else:
+            graph.drag_pan(3, event.key, event.x - 10, event.y - 10)
+        fig = graph.get_figure()
+        fig.canvas.draw_idle()
+    except:
+        pass
+
+  
+# Function which enables the functionality of all keys(Ctrl, Shift,etc..) ...
+def KEY_PRESS_HANDLER(event, canvas, toolbar):
+    key_press_handler(event, canvas, toolbar)
+
+
+# Function to add the new point to the graph...
+def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
+    global X_COORDINATE_OF_LAST_ADDED_POINT, Y_COORDINATE_OF_LAST_ADDED_POINT, ARRAY_OF_PLOTTING_LINES, CANVAS_FOR_GRAPH
+
+    PLOTTING_LINE = ARRAY_OF_PLOTTING_LINES[0]
+    PLOTTING_LINE.set_data(np.append(PLOTTING_LINE.get_xdata(), NEW_X_COORDINATE), np.append(PLOTTING_LINE.get_ydata(), NEW_Y_COORDINATE))
+    CANVAS_FOR_GRAPH.draw_idle()
+    if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
+    if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
+
+
+def SET_GRAPH_IN_TAB(GRAPH_TAB):
+
+    global FRAME_FOR_GRAPH, LABEL_FOR_GRAPH, FIGURE_FOR_GRAPH, CANVAS_FOR_GRAPH, GRAPH, ANNOTATION, TOOLBAR_FOR_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
+
+    FRAME_FOR_GRAPH = GRAPH_TAB 
+
+    LABEL_FOR_GRAPH = tk.Label(FRAME_FOR_GRAPH, text="Resistance Vs. Temperature") # Adding label/title for the graph
+
+    LABEL_FOR_GRAPH.config(font=('Times', 32)) # Changing the default font style and size to Times and 32
+
+    FIGURE_FOR_GRAPH = Figure() # Created a figure to add graph
+
+    CANVAS_FOR_GRAPH = FigureCanvasTkAgg(FIGURE_FOR_GRAPH, master = FRAME_FOR_GRAPH) # Created a canvas to plot graph
+
+    GRAPH = FIGURE_FOR_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
+
+    GRAPH.set_xlabel("TEMPERATURE") # Set X label
+    GRAPH.set_ylabel("RESISTANCE") # Set Y label
+    GRAPH.grid() # Added grids to graph
+    GRAPH.axhline(linewidth=2, color='black') # Added X axis
+    GRAPH.axvline(linewidth=2, color='black') # Added Y axis
+
+    ANNOTATION = GRAPH.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")) # Annotion means when we hover cursor to a point a small box will appear displaying the x and y co-ordinates
+
+    ANNOTATION.set_visible(False) # Making it invisible initially (We will make it visible when we hover the cursor in DISPLAY_ANNOTATION_WHEN_HOVER Function)
+
+    TOOLBAR_FOR_GRAPH = NavigationToolbar2Tk(CANVAS_FOR_GRAPH, FRAME_FOR_GRAPH) # Added toolbar for graph
+    TOOLBAR_FOR_GRAPH.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
+
+    Y_COORDINATE_OF_LAST_ADDED_POINT = None
+    X_COORDINATE_OF_LAST_ADDED_POINT = None
+
+    
+    PLOTTING_LINE, = GRAPH.plot([], [], color="orange", linestyle="-", marker="o", markerfacecolor="blue", markeredgewidth=1, markeredgecolor="black" ) # Plotted an empty graph...
+    ARRAY_OF_PLOTTING_LINES.append(PLOTTING_LINE) # Appending the line(plot) to ARRAY_OF_PLOTTING_LINES...
+
+    ADD_POINT_TO_GRAPH(1,1)
+    ADD_POINT_TO_GRAPH(2,2)
+    ADD_POINT_TO_GRAPH(3,-1)
+    ADD_POINT_TO_GRAPH(4,5)
+
+
+    # Making zooming, hovering by mouse
+    CANVAS_FOR_GRAPH.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_FOR_GRAPH, TOOLBAR_FOR_GRAPH))
+    CANVAS_FOR_GRAPH.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
+    CANVAS_FOR_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES
+    , ANNOTATION))
+
+
+    # Making Canvas, Label, Frame visible in the tab by packing
+    LABEL_FOR_GRAPH.pack()
+    CANVAS_FOR_GRAPH.get_tk_widget().pack(fill="both", expand=True)
+    FRAME_FOR_GRAPH.pack(fill="both", expand=True)
+
+#%%
+
+
+#------------------------------------------- Experiment Part ------------------------------------------------------#
+
+#%%
 
 
 # Function to connect the instruments with software
@@ -275,10 +418,14 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
         # Writing the present temperature and resistance into csv file...
         WRITE_DATA_TO_CSV(present_temperature, present_resistance)
 
+        # Plotting the point in the graph...
+        ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
+
         present_temperature += INCREASING_INTERVAL_OF_TEMPERATURE * direction
 
 
     SEND_COMMAND_TO_CTC("outputEnable off")
+
 
 # Fuction to start the experiment...
 def TRIGGER():
@@ -293,122 +440,11 @@ def TRIGGER():
     if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
 
 
+#%%
 
 
-
-# Function to updates the content in the annotation...
-def UPDATE_ANNOTATION(ind, PLOTTING_LINE, annotations):
-    x, y = PLOTTING_LINE.get_data()
-    annotations.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
-    annotations.set_text("Temperature : {}, Resistance: {}".format(x[ind["ind"][0]], y[ind["ind"][0]]))
-    annotations.get_bbox_patch().set_alpha(0.4)
-
-# Function used to display the annotation when hover...
-def DISPLAY_ANNOTATION_WHEN_HOVER(event, PLOTTING_LINE, annotations):
-    try:
-        vis = annotations.get_visible()
-        if event.inaxes:
-            cont, ind = PLOTTING_LINE.contains(event)
-            if cont:
-                UPDATE_ANNOTATION(ind, PLOTTING_LINE, annotations)
-                annotations.set_visible(True)
-                event.canvas.draw_idle()
-            else:
-                if vis:
-                    annotations.set_visible(False)
-                    event.canvas.draw_idle()
-    except:
-        pass
-
-# Function used to zoom out and in graph using mouse...
-def ZOOM_INOUT_USING_MOUSE(event):
-    graph = event.inaxes
-    try:
-        graph._pan_start = types.SimpleNamespace(
-            lim=graph.viewLim.frozen(),
-            trans=graph.transData.frozen(),
-            trans_inverse=graph.transData.inverted().frozen(),
-            bbox=graph.bbox.frozen(),
-            x=event.x,
-            y=event.y)
-        if event.button == 'up':
-            graph.drag_pan(3, event.key, event.x + 10, event.y + 10)
-        else:
-            graph.drag_pan(3, event.key, event.x - 10, event.y - 10)
-        fig = graph.get_figure()
-        fig.canvas.draw_idle()
-    except:
-        pass
-    
-# Function which enables the functionality of all keys(Ctrl, Shift,etc..) ...
-def KEY_PRESS_HANDLER(event, canvas, toolbar):
-    key_press_handler(event, canvas, toolbar)
-
-# Function to add the new point to the graph...
-def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
-    global X_COORDINATE_OF_LAST_ADDED_POINT, Y_COORDINATE_OF_LAST_ADDED_POINT, PLOTTING_LINE, CANVAS_FOR_GRAPH
-
-    line = PLOTTING_LINE[0]
-    line.set_data(np.append(line.get_xdata(), NEW_X_COORDINATE), np.append(line.get_ydata(), NEW_Y_COORDINATE))
-    CANVAS_FOR_GRAPH.draw_idle()
-    if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
-    if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
+#-------------------------------------------- Interface Part ----------------------------------------------------#
 
 
 
 
-
-
-
-GRAPH_TAB = tk.Tk() # Created a tab for Graph
-
-FRAME_FOR_GRAPH = tk.Frame(GRAPH_TAB) # Created a frame to add the graph plot
-
-LABEL_FOR_GRAPH = tk.Label(FRAME_FOR_GRAPH, text="Resistance Vs. Temperature") # Adding label/title for the graph
-
-LABEL_FOR_GRAPH.config(font=('Times', 32)) # Changing the default font style and size to Times and 32
-
-FIGURE_FOR_GRAPH = Figure() # Created a figure to add graph
-
-CANVAS_FOR_GRAPH = FigureCanvasTkAgg(FIGURE_FOR_GRAPH, master = FRAME_FOR_GRAPH) # Created a canvas to plot graph
-
-GRAPH = FIGURE_FOR_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
-
-GRAPH.set_xlabel("TEMPERATURE") # Set X label
-GRAPH.set_ylabel("RESISTANCE") # Set Y label
-GRAPH.grid() # Added grids to graph
-GRAPH.axhline(linewidth=2, color='black') # Added X axis
-GRAPH.axvline(linewidth=2, color='black') # Added Y axis
-
-ANNOTATION = GRAPH.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")) # Annotion means when we hover cursor to a point a small box will appear displaying the x and y co-ordinates
-
-ANNOTATION.set_visible(False) # Making it invisible initially (We will make it visible when we hover the cursor in DISPLAY_ANNOTATION_WHEN_HOVER Function)
-
-TOOLBAR_FOR_GRAPH = NavigationToolbar2Tk(CANVAS_FOR_GRAPH, FRAME_FOR_GRAPH) # Added toolbar for graph
-TOOLBAR_FOR_GRAPH.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
-
-Y_COORDINATE_OF_LAST_ADDED_POINT = None
-X_COORDINATE_OF_LAST_ADDED_POINT = None
-
-PLOTTING_LINE = [] # Array to store the lines...
-line, = GRAPH.plot([], [], color="orange", linestyle="-", marker="o", markerfacecolor="blue", markeredgewidth=1, markeredgecolor="black" ) # Plotted an empty graph...
-PLOTTING_LINE.append(line) # Appending the line(plot) to PLOTTING_LINE...
-
-ADD_POINT_TO_GRAPH(1,1)
-ADD_POINT_TO_GRAPH(2,2)
-ADD_POINT_TO_GRAPH(3,-1)
-ADD_POINT_TO_GRAPH(4,5)
-
-
-# Making zooming, hovering by mouse
-CANVAS_FOR_GRAPH.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_FOR_GRAPH, TOOLBAR_FOR_GRAPH))
-CANVAS_FOR_GRAPH.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
-CANVAS_FOR_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, PLOTTING_LINE, ANNOTATION))
-
-
-# Making Canvas, Label, Frame visible in the tab by packing
-LABEL_FOR_GRAPH.pack()
-CANVAS_FOR_GRAPH.get_tk_widget().pack(fill="both", expand=True)
-FRAME_FOR_GRAPH.pack(fill="both", expand=True)
-
-GRAPH_TAB.mainloop()
