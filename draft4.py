@@ -12,7 +12,7 @@ from datetime import datetime
 from os.path import exists
 from os import mkdir
 # Required imports for connecting the device
-import pyvisa, serial, telnetlib
+# import pyvisa, serial, telnetlib
 
 # Other Required imports
 import time, csv
@@ -41,15 +41,20 @@ RESISTANCE_VALUES = [] # Array to store resistances at all temperatures...
 def CONNECT_INSTRUMENTS(): 
     global NANOVOLTMETER, CURRENT_SOURCE, CTC
 
-    # Connecting Nanovoltmeter with Pyvisa
-    rm = pyvisa.ResourceManager()
-    NANOVOLTMETER = rm.open_resource('GPIB0::2::INSTR')
+    try:
+        # Connecting Nanovoltmeter with Pyvisa
+        rm = pyvisa.ResourceManager()
+        NANOVOLTMETER = rm.open_resource('GPIB0::2::INSTR')
 
-    # Connecting AC/DC Current Source with PySerial
-    CURRENT_SOURCE = serial.Serial('COM1', baudrate=9600,timeout=10)
+        # Connecting AC/DC Current Source with PySerial
+        CURRENT_SOURCE = serial.Serial('COM1', baudrate=9600,timeout=10)
 
-    # Connecting CTC with Telnet
-    CTC = telnetlib.Telnet("192.168.0.2",23,10)
+        # Connecting CTC with Telnet
+        CTC = telnetlib.Telnet("192.168.0.2",23,10)
+        return 1
+    
+    except:
+        return -1
 
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
@@ -288,14 +293,14 @@ def CHECK_AND_SET_ALL_VALUES():
     #getting ctc data
     try:
         HIGH_POWER_LIMIT_OF_CTC=float(high_limit_entry.get())
-        SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC))
+        # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC))
     except:
         messagebox.showinfo("Alert","Invalid Input for: High Limit !")
         return -1
 
     try:
         low_val=float(low_limit_entry.get())
-        SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.LowLmt" '+str(low_val))
+        # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.LowLmt" '+str(low_val))
     except:
         messagebox.showinfo("Alert","Invalid Input for: Low Limit !")
         return -1
@@ -314,21 +319,21 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         ctc_P_val=float(ctc_P_entry.get())
-        SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.P" '+str(ctc_P_val))
+        # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.P" '+str(ctc_P_val))
     except:
         messagebox.showinfo("Alert","Invalid Input for P !")
         return -1
     
     try:
         ctc_I_val=float(ctc_I_entry.get())
-        SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.I" '+str(ctc_I_val))
+        # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.I" '+str(ctc_I_val))
     except:
         messagebox.showinfo("Alert","Invalid Input for I !")
         return -1
     
     try:
         ctc_D_val=float(ctc_D_entry.get())
-        SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.D" '+str(ctc_D_val))
+        # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.D" '+str(ctc_D_val))
     except:
         messagebox.showinfo("Alert","Invalid Input for D !")
         return -1
@@ -357,6 +362,13 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showinfo("Alert","Invalid Input for Threshold!")
         return -1
     
+    try:
+        TOLERANCE = float(tolerance_entry.get())
+    except:
+        messagebox.showinfo("Alert","Invalid Input for Tolerance!")
+        return -1
+    
+
     try:
         DELAY_OF_CTC = float(delay_entry.get())
     except:
@@ -425,12 +437,19 @@ def START_TRIGGER():
 
     ControlPanel.select(2)
 
-    global trigger_thread
+    show_checking_device_popup()
+    if CONNECT_INSTRUMENTS == 1:
+        global trigger_thread
 
-    # trigger_btn.config(text="Abort",command=show_abort_trigger_popup,bg=selected_bg)
-    trigger_thread=threading.Thread(target=TRIGGER)
-    
-    trigger_thread.start()
+        # trigger_btn.config(text="Abort",command=show_abort_trigger_popup,bg=selected_bg)
+        trigger_thread=threading.Thread(target=TRIGGER)
+        
+        trigger_thread.start()
+        CLOSE_POPUP()
+
+    else:
+        messagebox.showinfo("Alert","Devices not connected, try again!")
+
 
 
 # confirmation before quiting Gui
@@ -623,7 +642,7 @@ if __name__=="__main__":
     sync_get_btn= Button(side_bar_frame,text="Sync Get",height= 2)
     sync_get_btn.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
-    trigger_btn= Button(side_bar_frame,text="Trigger",height=2, command=START_TRIGGER())
+    trigger_btn= Button(side_bar_frame,text="Trigger",height=2, command=START_TRIGGER)
     trigger_btn.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
     ## notebook tabs ##
@@ -640,8 +659,8 @@ if __name__=="__main__":
     ControlPanel.grid(row=0,column=0,sticky="nswe")
 
     ## Graph ##  
-    graph=Grapher(graph_tab)
-    graph.frame.pack(side=TOP,fill="both",expand=True,pady=(10,0))
+    # graph=Grapher(graph_tab)
+    # graph.frame.pack(side=TOP,fill="both",expand=True,pady=(10,0))
    
     # Input Selection
     io_frame = LabelFrame(ctc_tab, bg=tab_bg, borderwidth=0, highlightthickness=0)
@@ -744,7 +763,7 @@ if __name__=="__main__":
     threshold_entry.grid(row=1, column=1, pady=10,ipady=3,sticky="ew")
     
     #Tolerance
-    tolerance_label = Label(temp_frame, text='Threshold:', bg=tab_bg, fg='white')
+    tolerance_label = Label(temp_frame, text='Tolerance:', bg=tab_bg, fg='white')
     tolerance_label.grid(row=1, column=2, padx=30, pady=5, sticky='ew')
     tolerance_entry = Entry(temp_frame, font=(10), width=7)
     tolerance_entry.grid(row=1, column=3, pady=10,ipady=3,sticky="ew")
