@@ -878,56 +878,80 @@ if __name__=="__main__":
     output_dropdown = ttk.Combobox(io_frame, textvariable=output_var, values=output_options, state='readonly')
     output_dropdown.grid(row=0, column=3,rowspan=3,sticky="ew",pady=(10,10))
     
-    output_dropdown.current(0)
-
-    # Create the LabelFrame for limits and increments
+    output_dropdown.current(1)
     
+    #default values
+    default_low_limit = "0"
+    default_high_limit = "4"
+    default_increase_by = "1"
+    default_max_limit = "7"
+    default_pid_P = "30"
+    default_pid_I = "0.5"
+    default_pid_D = "120"
+    default_start_temp = "305"
+    default_stop_temp = "315"
+    default_interval_temp = "5"
+    default_threshold = "0.5"
+    default_tolerance="0.3"
+    default_delay = "30"
+    default_title = "Default Title"
+    default_current_start = "10e-5"
+    default_intervalno = "5"
+    default_interval = "10e-6"
+
     limits_frame = LabelFrame(ctc_tab, text='Power Controls', fg='white', bg=tab_bg)
     limits_frame.grid(row=3, column=0, rowspan=2, pady=(20, 10), padx=120, sticky='nwes')
-    
+
     # Low Limit
     low_limit_label = Label(limits_frame, text='Low Limit:', bg=tab_bg, fg='white')
     low_limit_label.grid(row=0, column=0, padx=(10, 10), pady=5, sticky='e')
     low_limit_entry = Entry(limits_frame, font=(10), width=15)
-    low_limit_entry.grid(row=0, column=1, pady=10,ipady=3,sticky="w")
+    low_limit_entry.grid(row=0, column=1, pady=10, ipady=3, sticky="w")
+    low_limit_entry.insert(0, default_low_limit)
 
     # High Limit
     high_limit_label = Label(limits_frame, text='High Limit:', bg=tab_bg, fg='white')
     high_limit_label.grid(row=0, column=2, padx=(10, 10), pady=5, sticky='e')
     high_limit_entry = Entry(limits_frame, font=(10), width=15)
-    high_limit_entry.grid(row=0, column=3, pady=10,ipady=3,sticky="w",padx=(0,20))
+    high_limit_entry.grid(row=0, column=3, pady=10, ipady=3, sticky="w", padx=(0, 20))
+    high_limit_entry.insert(0, default_high_limit)
 
     # Increase By
     increase_by_label = Label(limits_frame, text='Increase By:', bg=tab_bg, fg='white')
     increase_by_label.grid(row=1, column=0, padx=(10, 10), pady=5, sticky='e')
     increase_by_entry = Entry(limits_frame, font=(10), width=15)
-    increase_by_entry.grid(row=1, column=1, pady=10,ipady=3,sticky="w")
+    increase_by_entry.grid(row=1, column=1, pady=10, ipady=3, sticky="w")
+    increase_by_entry.insert(0, default_increase_by)
 
     # Max Limit
     max_limit_label = Label(limits_frame, text='Max Limit:', bg=tab_bg, fg='white')
     max_limit_label.grid(row=1, column=2, padx=(10, 10), pady=5, sticky='e')
     max_limit_entry = Entry(limits_frame, font=(10), width=15)
-    max_limit_entry.grid(row=1, column=3, pady=10,ipady=3,sticky="w",padx=(0,20))
-    
+    max_limit_entry.grid(row=1, column=3, pady=10, ipady=3, sticky="w", padx=(0, 20))
+    max_limit_entry.insert(0, default_max_limit)
+
     # PID
     pid_lframe= LabelFrame(ctc_tab,text="PID",fg="white",bg=tab_bg)
     pid_lframe.grid(row=5, column=0, sticky="nesw",padx=120,pady=(20,10))
-    
+
     #PID P
     Label(pid_lframe,text="P",fg="white",bg=tab_bg).grid(row=0,column=0,sticky="ew",padx=(20,20),pady=20)
     ctc_P_entry=Entry(pid_lframe,font=(10),width=10)
     ctc_P_entry.grid(row=0,column=1,pady=0,ipady=3,sticky="ew")
-  
+    ctc_P_entry.insert(0, default_pid_P)
+
     #PID I
     Label(pid_lframe,text="I",fg="white",bg=tab_bg).grid(row=0,column=2,sticky="we",padx=(20,20))
     ctc_I_entry=Entry(pid_lframe,font=(10),width=10)
     ctc_I_entry.grid(row=0,column=3,pady=0,ipady=3,sticky="ew")
+    ctc_I_entry.insert(0, default_pid_I)
 
     #PID D
     Label(pid_lframe,text="D",fg="white",bg=tab_bg).grid(row=0,column=4,sticky="we",padx=(20,20))
     ctc_D_entry=Entry(pid_lframe,font=(10),width=10)
     ctc_D_entry.grid(row=0,column=5,pady=0,ipady=3,sticky="ew")
-    
+    ctc_D_entry.insert(0, default_pid_D)
+
     #Temperature Controls
     temp_frame = LabelFrame(ctc_tab, text='Temperature Controls', fg='white', bg=tab_bg)
     temp_frame.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes')
@@ -936,78 +960,80 @@ if __name__=="__main__":
     start_temp_label = Label(temp_frame, text='Start Temp:', bg=tab_bg, fg='white')
     start_temp_label.grid(row=0, column=0, padx=30, pady=5, sticky='ew')
     start_temp_entry = Entry(temp_frame, font=(10), width=7)
-    start_temp_entry.grid(row=0, column=1, pady=10,ipady=3,sticky="ew")
-    
+    start_temp_entry.grid(row=0, column=1, pady=10, ipady=3, sticky="ew")
+    start_temp_entry.insert(0, default_start_temp)
+
     # Stop Temp
     stop_temp_label = Label(temp_frame, text='Stop Temp:', bg=tab_bg, fg='white')
     stop_temp_label.grid(row=0, column=2, padx=30, pady=5, sticky='ew')
     stop_temp_entry = Entry(temp_frame, font=(10), width=7)
-    stop_temp_entry.grid(row=0, column=3, pady=10,ipady=3,sticky="ew")
+    stop_temp_entry.grid(row=0, column=3, pady=10, ipady=3, sticky="ew")
+    stop_temp_entry.insert(0, default_stop_temp)
 
     # Interval Temp
     interval_label = Label(temp_frame, text='Interval Temp:', bg=tab_bg, fg='white')
     interval_label.grid(row=0, column=4, padx=30, pady=5, sticky='ew')
     interval_entry = Entry(temp_frame, font=(10), width=7)
-    interval_entry.grid(row=0, column=5, pady=10,ipady=3,sticky="ew")
+    interval_entry.grid(row=0, column=5, pady=10, ipady=3, sticky="ew")
+    interval_entry.insert(0, default_interval_temp)
 
     # Threshold
     threshold_label = Label(temp_frame, text='Threshold:', bg=tab_bg, fg='white')
     threshold_label.grid(row=1, column=0, padx=30, pady=5, sticky='ew')
     threshold_entry = Entry(temp_frame, font=(10), width=7)
-    threshold_entry.grid(row=1, column=1, pady=10,ipady=3,sticky="ew")
-    
-    #Tolerance
+    threshold_entry.grid(row=1, column=1, pady=10, ipady=3, sticky="ew")
+    threshold_entry.insert(0, default_threshold)
+
+    # Tolerance
     tolerance_label = Label(temp_frame, text='Tolerance:', bg=tab_bg, fg='white')
     tolerance_label.grid(row=1, column=2, padx=30, pady=5, sticky='ew')
     tolerance_entry = Entry(temp_frame, font=(10), width=7)
-    tolerance_entry.grid(row=1, column=3, pady=10,ipady=3,sticky="ew")
-    
-    
-    #Delay
+    tolerance_entry.grid(row=1, column=3, pady=10, ipady=3, sticky="ew")
+    tolerance_entry.insert(0, default_tolerance)
+
+    # Delay
     delay_label = Label(temp_frame, text='Avg Delay:', bg=tab_bg, fg='white')
     delay_label.grid(row=1, column=4, padx=30, pady=5, sticky='ew')
     delay_entry = Entry(temp_frame, font=(10), width=7)
-    delay_entry.grid(row=1, column=5, pady=10,ipady=3,sticky="ew")
-    
-    #Complete Cycle
-    complete_cycle_var= IntVar()
-    Checkbutton(ctc_tab,text="Complete Cycle",fg="white",bg=tab_bg,highlightthickness=0,variable=complete_cycle_var, activebackground=tab_bg, activeforeground='white',selectcolor="black").grid(row=8,column=0,pady=20,sticky="ew")
+    delay_entry.grid(row=1, column=5, pady=10, ipady=3, sticky="ew")
+    delay_entry.insert(0, default_delay)
 
-
-  
-    ##CURRENT SOURCE TAB##
+    # Complete Cycle
+    complete_cycle_var = IntVar()
+    Checkbutton(ctc_tab, text="Complete Cycle", fg="white", bg=tab_bg, highlightthickness=0, variable=complete_cycle_var, activebackground=tab_bg, activeforeground='white', selectcolor="black").grid(row=8, column=0, pady=20, sticky="ew")
 
     # Title
     title_lframe = LabelFrame(current_source_tab, text="Title", fg="white", bg=tab_bg)
-    title_lframe.grid(row=0, column=0,rowspan=1, sticky="nsew",padx=250,pady=(40,25))
+    title_lframe.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=250, pady=(40, 25))
 
-    title_entry=Entry(title_lframe,font=(10),width=20)
-    title_entry.pack(pady=(0,5),padx=10,ipady=5)
-    
+    title_entry = Entry(title_lframe, font=(10), width=20)
+    title_entry.pack(pady=(0, 5), padx=10, ipady=5)
+    title_entry.insert(0, default_title)
+
     # Drive
     drive_lframe = LabelFrame(current_source_tab, text="Current Controls", fg="white", bg=tab_bg)
-    drive_lframe.grid(row=1, column=0, rowspan=3, sticky="nsew",padx=250,pady=25)
+    drive_lframe.grid(row=1, column=0, rowspan=3, sticky="nsew", padx=250, pady=25)
 
-    current_start_lframe=LabelFrame(drive_lframe,text="Current Start Value (A)",fg="white",bg=tab_bg)
-    current_start_lframe.grid(row=0,column=0,padx=10,pady=(5,10),sticky="w")
+    current_start_lframe = LabelFrame(drive_lframe, text="Current Start Value (A)", fg="white", bg=tab_bg)
+    current_start_lframe.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    current_start_entry=Entry(current_start_lframe,font=(10),width=20)
-    current_start_entry.grid(row=0,column=0,rowspan=2,pady=10,padx=10,ipady=5)
+    current_start_entry = Entry(current_start_lframe, font=(10), width=20)
+    current_start_entry.grid(row=0, column=0, rowspan=2, pady=10, padx=10, ipady=5)
+    current_start_entry.insert(0, default_current_start)
 
+    intervalno_lframe = LabelFrame(drive_lframe, text="Number of Current Intervals at a Temperature", fg="white", bg=tab_bg)
+    intervalno_lframe.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    intervalno_lframe=LabelFrame(drive_lframe,text="Number of Current Intervals at a Temperature",fg="white",bg=tab_bg)
-    intervalno_lframe.grid(row=1,column=0,padx=10,pady=(5,10),sticky="w")
+    intervalno_entry = Entry(intervalno_lframe, font=(10), width=20)
+    intervalno_entry.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    intervalno_entry.insert(0, default_intervalno)
 
-    intervalno_entry=Entry(intervalno_lframe,font=(10),width=20)
-    intervalno_entry.grid(row=0,column=0,rowspan=3,pady=10,padx=10,ipady=5)
+    interval_lframe = LabelFrame(drive_lframe, text="Increase Current Interval at a Temperature", fg="white", bg=tab_bg)
+    interval_lframe.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
-
-    interval_lframe=LabelFrame(drive_lframe,text="Increase Current Interval at a Temperature",fg="white",bg=tab_bg)
-    interval_lframe.grid(row=2,column=0,padx=10,pady=(5,10),sticky="w")
-
-    interval_entry=Entry(interval_lframe,font=(10),width=20)
-    interval_entry.grid(row=0,column=0,rowspan=3,pady=10,padx=10,ipady=5)
-    
+    interval_entry = Entry(interval_lframe, font=(10), width=20)
+    interval_entry.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    interval_entry.insert(0, default_interval)
     # Setup the graph_tab...
     SET_GRAPH_IN_TAB(graph_tab)
 
