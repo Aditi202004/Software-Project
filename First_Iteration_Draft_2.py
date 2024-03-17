@@ -294,7 +294,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     print("*************************************************************************")
     print("===> Achieving", required_temperature, "K...")
 
-    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.Hi lmt" '+str(HIGH_POWER_LIMIT_OF_CTC)) # Setting High Limit of CTC to HIGH_POWER_LIMIT_OF_CTC...
+    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC)) # Setting High Limit of CTC to HIGH_POWER_LIMIT_OF_CTC...
 
     SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
 
@@ -325,7 +325,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                 if present_temperature <= temperature_before_stabilizing :
 
                     HIGH_POWER_LIMIT_OF_CTC += INCREASE_POWER_LIMIT_OF_CTC
-                    SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.Hi lmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
+                    SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
 
                     print(required_temperature," K is not achieving by current high power limit of CTC...")
                     print("So, Increased high power limit of CTC by "+str(INCREASE_POWER_LIMIT_OF_CTC)," W...")
@@ -391,9 +391,9 @@ def GET_PRESENT_RESISTANCE():
         # Get the voltage reading...
         positive_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
 
-        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",positive_cycle_voltage / present_current, "...")
+        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",abs(positive_cycle_voltage) / present_current, "...")
 
-        resistance_readings.append(positive_cycle_voltage / present_current)
+        resistance_readings.append(abs(positive_cycle_voltage) / present_current)
 
         # Sending command to set the output current to -present_current...
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR -" + str(present_current))
@@ -402,9 +402,9 @@ def GET_PRESENT_RESISTANCE():
 
         # Get the voltage reading...
         negative_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
-        resistance_readings.append(-1 * negative_cycle_voltage / present_current)
+        resistance_readings.append(abs(negative_cycle_voltage) / present_current)
 
-        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",(-1*positive_cycle_voltage / present_current), "...")
+        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",(abs(positive_cycle_voltage) / present_current), "...")
 
         present_current += INCREASING_INTERVAL_OF_CURRENT
         reading_number += 1
@@ -561,8 +561,8 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
-        if START_CURRENT >= 10e-1:
-            messagebox.showinfo("Alert! Enter the Current value less than 0.1 Ampere !")
+        if not START_CURRENT < 1:
+            messagebox.showinfo("Alert! Enter the Current value less than 1 Ampere !")
             return -1
     except:
         messagebox.showinfo("Alert","Invalid Input for Start Current Value!")
@@ -585,11 +585,11 @@ def CHECK_AND_SET_ALL_VALUES():
     invalid_characters=['\\','/',':','*','?','"','<','>','|']
     CSV_FILE_NAME = ENTRY_OF_CSV_FILE_NAME.get()
 
-    if CSV_FILE_NAME == "" : messagebox.showinfo("Alert",'No input is given for: TITLE !!')
+    if CSV_FILE_NAME == "" : messagebox.showinfo("Alert",'No input is given for Title!')
     for Character in invalid_characters:
         if Character in CSV_FILE_NAME:
             CSV_FILE_NAME = None
-            messagebox.showinfo("Alert",'Invalid Input for: TITLE !\nCannot contain \\ / : * ? " < > |')
+            messagebox.showinfo("Alert",'Invalid Input for Title !\nCannot contain \\ / : * ? " < > |')
             return -1
 
     return 1 
@@ -835,7 +835,7 @@ if __name__=="__main__":
     DROPDOWN_OF_OUTPUT_CHANNEL.current(1)
     
 
-    ## Creating entry fileds for Power controls of CTC...
+    ## Creating entry fields for Power controls of CTC...
     FRAME_OF_POWER_CONTROLS = LabelFrame(CTC_TAB, text = 'Power Controls', fg = 'white', bg = "#575757")
     FRAME_OF_POWER_CONTROLS.grid(row = 3, column = 0, rowspan = 2, pady = (20, 10), padx = 120, sticky = 'nwes')
 
