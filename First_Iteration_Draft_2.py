@@ -981,5 +981,4 @@ if __name__=="__main__":
     INTERFACE.geometry(CENTER_THE_WIDGET(INTERFACE.winfo_width(), INTERFACE.winfo_height()))
     INTERFACE.minsize(INTERFACE.winfo_width(), INTERFACE.winfo_height())
 
-    CONNECT_INSTRUMENTS()
     INTERFACE.mainloop()
