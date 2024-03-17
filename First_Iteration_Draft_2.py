@@ -32,6 +32,7 @@ import time
 
 # Required import for Directories of files
 from datetime import datetime
+import os
 from os.path import exists
 from os import mkdir
 
@@ -105,6 +106,12 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
     CANVAS_OF_GRAPH.draw_idle()
     if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
     if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
+
+
+def SAVE_THE_GRAPH_INTO(directory):
+    IMAGE_FILE_NAME = "Plot of "+ TITLE + ".png"
+    GRAPH_IMAGE_PATH = os.path.join(directory, IMAGE_FILE_NAME)
+    CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
 
 
 # Function to setup the Graph in Graph tab...
@@ -416,8 +423,9 @@ def GET_PRESENT_RESISTANCE():
 
 # Function to write the temperature and resistance values into csv file
 def WRITE_DATA_TO_CSV(temperature, resistance):
-
-    with open(CSV_FILE_NAME, 'a', newline='') as csvfile:
+    CSV_FILE_NAME = TITLE + ".csv"
+    CSV_FILE_PATH = os.path.join(DIRECTORY, CSV_FILE_NAME)
+    with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([temperature, resistance])
 
@@ -461,7 +469,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
 def CHECK_AND_SET_ALL_VALUES(): 
 
-    global INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, CSV_FILE_NAME, P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
+    global INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, TITLE, P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
 
 
     # Assigning the parameters of CTC given by user to the variables and Setting those to CTC if they are in correct format...
@@ -583,12 +591,12 @@ def CHECK_AND_SET_ALL_VALUES():
 
     # The title should not consists the following invalid characters...
     invalid_characters=['\\','/',':','*','?','"','<','>','|']
-    CSV_FILE_NAME = ENTRY_OF_CSV_FILE_NAME.get()
+    TITLE = ENTRY_OF_TITLE.get()
 
-    if CSV_FILE_NAME == "" : messagebox.showinfo("Alert",'No input is given for Title!')
+    if TITLE == "" : messagebox.showinfo("Alert",'No input is given for Title!')
     for Character in invalid_characters:
-        if Character in CSV_FILE_NAME:
-            CSV_FILE_NAME = None
+        if Character in TITLE:
+            TITLE = None
             messagebox.showinfo("Alert",'Invalid Input for Title !\nCannot contain \\ / : * ? " < > |')
             return -1
 
@@ -603,18 +611,19 @@ def START_EXPERIMENT():
     
     if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
 
+    SAVE_THE_GRAPH_INTO(DIRECTORY) # Saving the Image of plot into required directory...
+
 
 # Function to trigger the Experiment... 
 def TRIGGER():
 
-    if(CHECK_AND_SET_ALL_VALUES() == -1): # Checking and Setting all values...
-        return
-
-    CONTROL_PANEL.select(2) # Displaying Graph tab when experiment is started...
-
-    print("Checking Devices....")
-
     if CONNECT_INSTRUMENTS() == 1:
+        if(CHECK_AND_SET_ALL_VALUES() == -1): # Checking and Setting all values...
+            return
+
+        CONTROL_PANEL.select(2) # Displaying Graph tab when experiment is started...
+
+        print("Checking Devices....")
         Thread(target = START_EXPERIMENT).start() # Starting the experiment and threading to make GUI accessable even after the experiment is start... 
         
     else:
@@ -658,11 +667,12 @@ def CLOSE_WIDGET(widget, callback=None):
 
 # Function to open filedialog to select the directory...
 def OPEN_FILEDIALOG(out_dir_label): 
-    directory = filedialog.askdirectory()
-    if directory:
-        SETTINGS["output_dir"] = directory
+    global DIRECTORY
+    DIRECTORY = filedialog.askdirectory()
+    if DIRECTORY:
+        SETTINGS["output_dir"] = DIRECTORY
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
-        out_dir_label.config(text = directory)
+        out_dir_label.config(text = DIRECTORY)
 
 
 # Function to Create and Open Settings Widget and saving the changes if any are done in this widget...
@@ -932,10 +942,10 @@ if __name__=="__main__":
     Checkbutton(CTC_TAB, text = "Complete Cycle", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_COMPLETE_CYCLE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black").grid(row = 8, column = 0, pady = 20, sticky = "ew")
 
     # CSV File Name entry
-    FRAME_OF_CSV_FILE_NAME = LabelFrame(CURRENT_SOURCE_TAB, text = "Title", fg = "white", bg = "#575757")
-    FRAME_OF_CSV_FILE_NAME.grid(row = 0, column = 0, rowspan = 1, sticky = "nsew", padx = 250, pady = (40, 25))
-    ENTRY_OF_CSV_FILE_NAME = Entry(FRAME_OF_CSV_FILE_NAME, font = (10), width = 20)
-    ENTRY_OF_CSV_FILE_NAME.pack(pady = (0,5), padx = 10, ipady = 5)
+    FRAME_OF_TITLE = LabelFrame(CURRENT_SOURCE_TAB, text = "Title", fg = "white", bg = "#575757")
+    FRAME_OF_TITLE.grid(row = 0, column = 0, rowspan = 1, sticky = "nsew", padx = 250, pady = (40, 25))
+    ENTRY_OF_TITLE = Entry(FRAME_OF_TITLE, font = (10), width = 20)
+    ENTRY_OF_TITLE.pack(pady = (0,5), padx = 10, ipady = 5)
 
     ## Creating entry fileds for Current controls...
     FRAME_OF_CURRENT_CONTROLS = LabelFrame(CURRENT_SOURCE_TAB, text = "Current Controls", fg = "white", bg= "#575757")
@@ -961,6 +971,7 @@ if __name__=="__main__":
 
     # Setup the graph_tab...
     SET_GRAPH_IN_TAB(GRAPH_TAB)
+
 
     INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     INTERFACE.wait_visibility()
