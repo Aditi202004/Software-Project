@@ -197,7 +197,6 @@ def CONNECT_INSTRUMENTS():
                 break
             retry_number += 1
 
-    print("it came here")
     # connecting CTC
     while True:
         try:
@@ -210,7 +209,6 @@ def CONNECT_INSTRUMENTS():
                 messagebox.showinfo("Alert","CTC is not connected... Check its connections!")
                 retry_number = 0
                 break
-            print("here when", retry_number)
             retry_number += 1
     
 
