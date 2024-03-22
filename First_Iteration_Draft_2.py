@@ -226,6 +226,27 @@ def CONNECT_INSTRUMENTS():
         return -1
 
 
+# Function to take data from CTC, save it in config_data.json and display it on the GUI...
+def SYNC_GET():
+    global MAX_RETRY
+    MAX_RETRY = 10 # added it here because we are calling this function before doing anything else...so MAX_RETRY is not getting initialized anywhere
+
+    ALL_CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
+    DROPDOWN_OF_INPUT_CHANNEL["values"] = [ALL_CHANNELS_LIST[0],ALL_CHANNELS_LIST[1],ALL_CHANNELS_LIST[2],ALL_CHANNELS_LIST[3]]
+    DROPDOWN_OF_OUTPUT_CHANNEL["values"] = [ALL_CHANNELS_LIST[4],ALL_CHANNELS_LIST[5]]
+
+    if(ENTRY_OF_INPUT_CHANNEL.get() == ""):
+        ENTRY_OF_INPUT_CHANNEL.set(ALL_CHANNELS_LIST[0])
+    if(ENTRY_OF_OUTPUT_CHANNEL.get() == ""):
+        ENTRY_OF_OUTPUT_CHANNEL.set(ALL_CHANNELS_LIST[4])
+
+    DISPLAY_VALUES_IN_WIDGETS(ENTRY_OF_LOW_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.LowLmt?"'))
+    DISPLAY_VALUES_IN_WIDGETS(ENTRY_OF_HIGH_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.HiLmt?"'))
+
+    DISPLAY_VALUES_IN_WIDGETS(P_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.P?"'))
+    DISPLAY_VALUES_IN_WIDGETS(I_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.I?"'))
+    DISPLAY_VALUES_IN_WIDGETS(D_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.D?"'))
+
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
 def SEND_COMMAND_TO_CTC(command): 
     retry_number = 0 
@@ -242,7 +263,6 @@ def SEND_COMMAND_TO_CTC(command):
             time.sleep(0.5) # Adding a short delay before retrying
             
     raise Exception("OOPS!!! Couldn't send command to CTC even after maximun number of tries")
-
 
 # Function to convert the command to correct format, which Current Source will understand and sends it to Current Source...
 def SEND_COMMAND_TO_CURRENT_SOURCE(command):
@@ -440,6 +460,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     direction = 1 if start_temperature <= end_temperature else -1
 
     present_temperature = start_temperature
+
 
     while(present_temperature * direction < end_temperature * direction):
 
@@ -760,6 +781,12 @@ def SHOW_INFO_OF_DEVICES():
         messagebox.showinfo("Device Info", info_of_devices)
         
 
+# Function to display entry in a widget
+def DISPLAY_VALUES_IN_WIDGETS(widget, value):
+    widget.delete(0,'end')
+    widget.insert(0,str(value).strip())
+
+
 # Default Settings...
 SETTINGS = {"device_name":"GPIB0::6::INSTR",
             "output_dir":"./",
@@ -774,7 +801,6 @@ SETTINGS = {"device_name":"GPIB0::6::INSTR",
 def SET_SETTINGS(key,val): 
     SETTINGS[key] = val
     WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
-
 
 if __name__=="__main__":
 
@@ -799,7 +825,7 @@ if __name__=="__main__":
     SYNC_SET_BUTTON = Button(SIDE_BAR, text = "Sync Set", height= 2)
     SYNC_SET_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
-    SYNC_GET_BUTTON= Button(SIDE_BAR, text = "Sync Get", height = 2)
+    SYNC_GET_BUTTON= Button(SIDE_BAR, text = "Sync Get", height = 2, command = SYNC_GET)
     SYNC_GET_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
     TRIGGER_BUTTON = Button(SIDE_BAR, text = "Trigger", height = 2, command = TRIGGER)
@@ -943,12 +969,12 @@ if __name__=="__main__":
     Checkbutton(CTC_TAB, text = "Complete Cycle", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_COMPLETE_CYCLE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black").grid(row = 8, column = 0, pady = 20, sticky = "ew")
     tab_bg="#575757"
 
- # Title
+    # Title
     title_lframe = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white", bg=tab_bg)
     title_lframe.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=250, pady=(40, 25))
 
-    title_entry = Entry(title_lframe, font=(10), width=20)
-    title_entry.pack(pady=(0, 5), padx=10, ipady=5)
+    ENTRY_OF_TITLE = Entry(title_lframe, font=(10), width=20)
+    ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
  
 
     # Drive
@@ -958,22 +984,22 @@ if __name__=="__main__":
     current_start_lframe = LabelFrame(drive_lframe, text="Current Start Value (A)", fg="white", bg=tab_bg)
     current_start_lframe.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    current_start_entry = Entry(current_start_lframe, font=(10), width=20)
-    current_start_entry.grid(row=0, column=0, rowspan=2, pady=10, padx=10, ipady=5)
+    ENTRY_OF_START_CURRENT = Entry(current_start_lframe, font=(10), width=20)
+    ENTRY_OF_START_CURRENT.grid(row=0, column=0, rowspan=2, pady=10, padx=10, ipady=5)
    
 
     intervalno_lframe = LabelFrame(drive_lframe, text="Number of Current Intervals at a Temperature", fg="white", bg=tab_bg)
     intervalno_lframe.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    intervalno_entry = Entry(intervalno_lframe, font=(10), width=20)
-    intervalno_entry.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(intervalno_lframe, font=(10), width=20)
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
 
     interval_lframe = LabelFrame(drive_lframe, text="Increase Current Interval at a Temperature", fg="white", bg=tab_bg)
     interval_lframe.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    interval_entry = Entry(interval_lframe, font=(10), width=20)
-    interval_entry.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(interval_lframe, font=(10), width=20)
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
 
     # Setup the graph_tab...
