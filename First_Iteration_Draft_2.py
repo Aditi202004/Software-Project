@@ -325,7 +325,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
     SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
 
-
+    curr_increase_num = 0
     retry_number = 0
     temperature_before_stabilizing = GET_PRESENT_TEMPERATURE_OF_CTC()
 
@@ -345,7 +345,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             print("Current Temperature is", present_temperature, "... Waiting to achieve required temperature ", required_temperature, "K...")
             retry_number += 1
 
-        if retry_number == MAX_RETRY : # Increasing the high limit of power if possible...
+        if retry_number == 20 : # Increasing the high limit of power if possible...
 
             if HIGH_POWER_LIMIT_OF_CTC + INCREASE_POWER_LIMIT_OF_CTC <= MAXIMUM_POWER_LIMIT_OF_CTC :
 
@@ -361,11 +361,17 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                     # We are starting again by increasing high power limit of ctc... So...
                     retry_number = 0 
                     temperature_before_stabilizing = present_temperature
+                    curr_increase_num+=1
 
             else:
                 messagebox.showinfo("Alert","Cannot Achieve all the temperatures by given Maximum limit of Power!!")
                 raise Exception("Cannot Achieve all the temperatures by given Maximum limit of Power")
-            
+
+    # if current temperature is reached in less power then we decrease the high power limit
+    if(curr_increase_num < PREV_INCREASE_NUMBER):
+        HIGH_POWER_LIMIT_OF_CTC = HIGH_POWER_LIMIT_OF_CTC - (PREV_INCREASE_NUMBER - curr_increase_num)
+        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
+
     print("______________________________________________________________________")
     print("===> Stabilizing at", required_temperature, "K...")
 
@@ -452,6 +458,7 @@ def WRITE_DATA_TO_CSV(temperature, resistance):
 
 # Function to get the resistances at all temperatures...
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
+    global PREV_INCREASE_NUMBER
 
     # Switching CTC output ON
     SEND_COMMAND_TO_CTC("outputEnable on")
@@ -461,7 +468,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 
     present_temperature = start_temperature
 
-
+    PREV_INCREASE_NUMBER = 0
     while(present_temperature * direction < end_temperature * direction):
 
         # Achieving the current temperature... This function is defined above...
