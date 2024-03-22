@@ -4,7 +4,7 @@
 
 
 # Required imports for connecting the device
-# import pyvisa, serial, telnetlib
+import pyvisa, serial, telnetlib
 
 
 # Required imports for plotting the graph
@@ -612,6 +612,7 @@ def START_EXPERIMENT():
     if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
 
     SAVE_THE_GRAPH_INTO(DIRECTORY) # Saving the Image of plot into required directory...
+    print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
 
 
 # Function to trigger the Experiment... 
@@ -986,5 +987,9 @@ if __name__=="__main__":
 
     INTERFACE.geometry(CENTER_THE_WIDGET(INTERFACE.winfo_width(), INTERFACE.winfo_height()))
     INTERFACE.minsize(INTERFACE.winfo_width(), INTERFACE.winfo_height())
+
+    global DIRECTORY
+    DIRECTORY = os.getcwd()
+    print(DIRECTORY)
 
     INTERFACE.mainloop()
