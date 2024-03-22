@@ -4,7 +4,7 @@
 
 
 # Required imports for connecting the device
-import pyvisa, serial, telnetlib
+# import pyvisa, serial, telnetlib
 
 
 # Required imports for plotting the graph
@@ -940,34 +940,40 @@ if __name__=="__main__":
     # Complete Cycle entry
     ENTRY_OF_COMPLETE_CYCLE = IntVar()
     Checkbutton(CTC_TAB, text = "Complete Cycle", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_COMPLETE_CYCLE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black").grid(row = 8, column = 0, pady = 20, sticky = "ew")
+    tab_bg="#575757"
 
-    # CSV File Name entry
-    FRAME_OF_TITLE = LabelFrame(CURRENT_SOURCE_TAB, text = "Title", fg = "white", bg = "#575757")
-    FRAME_OF_TITLE.grid(row = 0, column = 0, rowspan = 1, sticky = "nsew", padx = 250, pady = (40, 25))
-    ENTRY_OF_TITLE = Entry(FRAME_OF_TITLE, font = (10), width = 20)
-    ENTRY_OF_TITLE.pack(pady = (0,5), padx = 10, ipady = 5)
+ # Title
+    title_lframe = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white", bg=tab_bg)
+    title_lframe.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=250, pady=(40, 25))
 
-    ## Creating entry fileds for Current controls...
-    FRAME_OF_CURRENT_CONTROLS = LabelFrame(CURRENT_SOURCE_TAB, text = "Current Controls", fg = "white", bg= "#575757")
-    FRAME_OF_CURRENT_CONTROLS.grid(row=1, column=0, sticky="nsew", padx=250, pady=25)
+    title_entry = Entry(title_lframe, font=(10), width=20)
+    title_entry.pack(pady=(0, 5), padx=10, ipady=5)
+ 
 
-    # Start Current entry
-    LABEL_OF_START_CURRENT = Label(FRAME_OF_CURRENT_CONTROLS, text = "Start Current:", fg = "white", bg= "#575757")
-    LABEL_OF_START_CURRENT.grid(row=0, column=0, padx=(10, 5), pady=(15, 10), sticky="w")  
-    ENTRY_OF_START_CURRENT = Entry(FRAME_OF_CURRENT_CONTROLS, font=(None, 10), width=20)
-    ENTRY_OF_START_CURRENT.grid(row=0, column=1, padx=(0, 10), pady=(10, 10), ipady=5, sticky="w")  
+    # Drive
+    drive_lframe = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white", bg=tab_bg)
+    drive_lframe.grid(row=1, column=0, rowspan=3, sticky="nsew", padx=250, pady=25)
 
-    # Number of current intervals entry
-    LABEL_OF_NUMBER_OF_CURRENT_INTERVALS = Label(FRAME_OF_CURRENT_CONTROLS, text = "No. of Current Intervals:", fg = "white", bg= "#575757")
-    LABEL_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=1, column=0, padx=(10, 5), pady=(10, 10), sticky="w")  
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(FRAME_OF_CURRENT_CONTROLS, font=(None, 10), width=20)
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=1, column=1, padx=(0, 10), pady=(10, 10), ipady=5, sticky="w")  
+    current_start_lframe = LabelFrame(drive_lframe, text="Current Start Value (A)", fg="white", bg=tab_bg)
+    current_start_lframe.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    # Increasing interval of current entry
-    LABEL_OF_INCREASING_INTERVAL_OF_CURRENT = Label(FRAME_OF_CURRENT_CONTROLS, text = "Increase by:", fg = "white", bg= "#575757")
-    LABEL_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=2, column=0, padx=(10, 5), pady=(10, 10), sticky="w")  
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(FRAME_OF_CURRENT_CONTROLS, font=(None, 10), width=20)
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=2, column=1, padx=(0, 10), pady=(10, 10), ipady=5, sticky="w")  
+    current_start_entry = Entry(current_start_lframe, font=(10), width=20)
+    current_start_entry.grid(row=0, column=0, rowspan=2, pady=10, padx=10, ipady=5)
+   
+
+    intervalno_lframe = LabelFrame(drive_lframe, text="Number of Current Intervals at a Temperature", fg="white", bg=tab_bg)
+    intervalno_lframe.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    intervalno_entry = Entry(intervalno_lframe, font=(10), width=20)
+    intervalno_entry.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    
+
+    interval_lframe = LabelFrame(drive_lframe, text="Increase Current Interval at a Temperature", fg="white", bg=tab_bg)
+    interval_lframe.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    interval_entry = Entry(interval_lframe, font=(10), width=20)
+    interval_entry.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    
 
     # Setup the graph_tab...
     SET_GRAPH_IN_TAB(GRAPH_TAB)
