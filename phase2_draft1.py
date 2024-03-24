@@ -232,9 +232,7 @@ OUTPUT_CHANNELS_LIST_OF_CTC = ['Out 1', 'Out 2']
 
 # Function to take data from CTC, save it in config_data.json and display it on the GUI...
 def SYNC_GET():
-    global MAX_RETRY
-    MAX_RETRY = SETTINGS["max_retry"]
-
+    
     if CONNECT_INSTRUMENTS():
         CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
 
@@ -807,7 +805,7 @@ def SHOW_INFO_OF_DEVICES():
 
 # Function to sync the settings from settings.json file to entry boxes(GUI)...
 def SYNC_SETTINGS():
-    global SETTINGS
+    global SETTINGS, MAX_RETRY
     if exists("SETTINGS.json"):
         with open("SETTINGS.json", "r") as file:
             SETTINGS = json.load(file)
@@ -821,6 +819,8 @@ def SYNC_SETTINGS():
             "max_retry":"10"
             }  # If the file doesn't exist, initialize SETTINGS some default values
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
+
+    MAX_RETRY = SETTINGS["max_retry"]
 
 
 # Function to change the settings...
