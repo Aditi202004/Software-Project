@@ -613,7 +613,7 @@ def CHECK_AND_SET_ALL_VALUES():
     try:
         START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
         if not START_CURRENT < 1:
-            messagebox.showwarning("Alert! Enter the Current value less than 1 Ampere !")
+            messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
             return False
     except:
         messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
@@ -828,7 +828,7 @@ def SYNC_SETTINGS():
             }  # If the file doesn't exist, initialize SETTINGS some default values
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
 
-    MAX_RETRY = SETTINGS["max_retry"]
+    MAX_RETRY = int(SETTINGS["max_retry"])
 
 
 # Function to change the settings...
@@ -1052,8 +1052,5 @@ if __name__=="__main__":
     INTERFACE.geometry(CENTER_THE_WIDGET(INTERFACE.winfo_width(), INTERFACE.winfo_height()))
     INTERFACE.minsize(INTERFACE.winfo_width(), INTERFACE.winfo_height())
 
-    # global DIRECTORY
-    # DIRECTORY = os.getcwd()
-    # print(DIRECTORY)
 
     INTERFACE.mainloop()
