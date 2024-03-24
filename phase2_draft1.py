@@ -36,6 +36,8 @@ import os
 from os.path import exists
 from os import mkdir
 
+global TO_ABORT
+
 ####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
 # Array to store the lines...
@@ -168,7 +170,7 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
 
 ####---------------------------------------- Experiment Part --------------------------------------------------####
 
-# Function to check whether all the instruments are connected or not...
+# Function to to connect all the instruments and check if they are connected...
 def CONNECT_INSTRUMENTS(): 
     global NANOVOLTMETER, CURRENT_SOURCE, CTC
 
@@ -659,6 +661,9 @@ def START_EXPERIMENT():
 # Function to trigger the Experiment... 
 def TRIGGER():
 
+    TRIGGER_BUTTON.config(text= "Abort", command=ABORT_TRIGGER)
+    INTERFACE.update()
+
     if CONNECT_INSTRUMENTS():
         if CHECK_AND_SET_ALL_VALUES(): # Checking and Setting all values...
 
@@ -667,7 +672,10 @@ def TRIGGER():
             print("Checking Devices....")
             Thread(target = START_EXPERIMENT).start() # Starting the experiment and threading to make GUI accessable even after the experiment is start... 
         
-    
+
+
+def ABORT_TRIGGER():
+    pass
 
 ####---------------------------------------- Interface Part -------------------------------------------------####
 

@@ -634,6 +634,8 @@ def CHECK_AND_SET_ALL_VALUES():
 # Function to start the Experiment...
 def START_EXPERIMENT():
 
+    TRIGGER_BUTTON['text']="Abort"
+
     # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
     GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
     
