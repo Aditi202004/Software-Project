@@ -49,6 +49,9 @@ def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
     annotations.get_bbox_patch().set_alpha(0.4)
 
 
+# Added a comment because we can remove it.......
+
+
 # Function used to display the annotation when hover...
 def DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES, annotations):
     try:
@@ -467,6 +470,9 @@ def WRITE_DATA_TO_CSV(temperature, resistance):
     with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([temperature, resistance])
+
+
+# Added a comment because we can remove it.......
 
 
 # Function to get the resistances at all temperatures...
@@ -1046,3 +1052,10 @@ if __name__=="__main__":
 
 
     INTERFACE.mainloop()
+
+# Added a comment because we can remove it.......
+
+
+
+
+# Added a comment because we can remove it.......
