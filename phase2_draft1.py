@@ -37,6 +37,7 @@ from os.path import exists
 from os import mkdir
 
 global TO_ABORT
+TO_ABORT = False
 
 ####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
@@ -300,7 +301,7 @@ def SEND_COMMAND_TO_CURRENT_SOURCE(command):
 # Function to get the voltage reading from the Nanovoltmeter...
 def GET_PRESENT_VOLTAGE_READING():
     retry_number = 0 
-    while(retry_number < MAX_RETRY):
+    while(not TO_ABORT and retry_number < MAX_RETRY):
 
         try:
             return float(NANOVOLTMETER.query("FETCh?"))
@@ -347,7 +348,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     lower_bound = required_temperature - THRESHOLD
     upper_bound = required_temperature + THRESHOLD
 
-    while(True):
+    while(True and not TO_ABORT):
 
         time.sleep(3)
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
@@ -429,7 +430,7 @@ def GET_PRESENT_RESISTANCE():
 
     resistance_readings = [] # Array to store resistance values at five different DC Currents...
 
-    while(reading_number < NUMBER_OF_CURRENT_INTERVALS):
+    while(not TO_ABORT and reading_number < NUMBER_OF_CURRENT_INTERVALS):
 
         # Sending command to set the output current to present_current...
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR " + str(present_current))
@@ -484,7 +485,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     present_temperature = start_temperature
 
     PREV_INCREASE_NUMBER = 0
-    while(present_temperature * direction < end_temperature * direction):
+    while(not TO_ABORT and present_temperature * direction < end_temperature * direction):
 
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
@@ -649,13 +650,16 @@ def CHECK_AND_SET_ALL_VALUES():
 # Function to start the Experiment...
 def START_EXPERIMENT():
 
-    # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
-    GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
+    if not TO_ABORT:
+        # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
+        GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
     
-    if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
-
-    SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
-    print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
+    if not TO_ABORT and COMPLETE_CYCLE:
+        GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
+    
+    if not TO_ABORT:
+        SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
+        print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
 
 
 # Function to trigger the Experiment... 
@@ -673,9 +677,11 @@ def TRIGGER():
             Thread(target = START_EXPERIMENT).start() # Starting the experiment and threading to make GUI accessable even after the experiment is start... 
         
 
-
+# Function to abort the experiment
 def ABORT_TRIGGER():
-    pass
+    global TO_ABORT
+    TO_ABORT = True
+    print("Aborted!")
 
 ####---------------------------------------- Interface Part -------------------------------------------------####
 
