@@ -751,11 +751,6 @@ def GET_RESISTANCE_WITH_PULSE(time):
 
 
 
-if __name__ == "__main__":
-    main()
-
-
-
 
 # Function to trigger the Experiment... 
 def TRIGGER():
