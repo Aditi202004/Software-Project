@@ -207,7 +207,7 @@ def CONNECT_INSTRUMENTS():
     # connecting CTC
     while True:
         try:
-            CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = SETTINGS["Telnet_Port"], timeout = 10)
+            CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = int(SETTINGS["Telnet_Port"]), timeout = 10)
             retry_number = 0
             number_of_connected_devices += 1
             break
@@ -716,9 +716,9 @@ def CONFIRM_TO_QUIT():
 
 
 # Function to display entry in a widget
-def DISPLAY_VALUE_IN_ENTRY_BOX(widget, value):
-    widget.delete(0,'end')
-    widget.insert(0,str(value).strip())
+def DISPLAY_VALUE_IN_ENTRY_BOX(entry_box, value):
+    entry_box.delete(0,'end')
+    entry_box.insert(0,str(value).strip())
 
 
 # Function to write the settings of the devices into json file...
