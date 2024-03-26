@@ -349,7 +349,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     lower_bound = required_temperature - THRESHOLD
     upper_bound = required_temperature + THRESHOLD
 
-    while(True and not TO_ABORT):
+    while(not TO_ABORT):
 
         time.sleep(3)
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
@@ -384,6 +384,8 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                 messagebox.showwarning("Alert","Cannot Achieve all the temperatures by given Maximum limit of Power!!")
                 raise Exception("Cannot Achieve all the temperatures by given Maximum limit of Power")
 
+    if TO_ABORT: return
+
     # if current temperature is reached in less power then we decrease the high power limit
     if(curr_increase_num < PREV_INCREASE_NUMBER):
         HIGH_POWER_LIMIT_OF_CTC = HIGH_POWER_LIMIT_OF_CTC - (PREV_INCREASE_NUMBER - curr_increase_num)
@@ -392,13 +394,13 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     print("______________________________________________________________________")
     print("===> Stabilizing at", required_temperature, "K...")
 
-    while(True):
+    while(not TO_ABORT):
 
         minimum_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
         maximum_temperature = minimum_temperature
         retry_number = 0
 
-        while(retry_number < MAX_RETRY):
+        while(not TO_ABORT and retry_number < MAX_RETRY):
 
             present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
@@ -410,6 +412,8 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             time.sleep(10) # Waiting for 10 seconds...
 
             retry_number += 1
+
+        if TO_ABORT: return
 
         if maximum_temperature - minimum_temperature < TOLERANCE:
             print(required_temperature, " K is achieved and stabilized...")
@@ -460,7 +464,9 @@ def GET_PRESENT_RESISTANCE():
         reading_number += 1
     
     SEND_COMMAND_TO_CURRENT_SOURCE("OUTP OFF") # Switching Current_Source output OFF
-    
+
+    if TO_ABORT: return float('-inf')
+
     return sum(resistance_readings) / len(resistance_readings)
 
 
@@ -493,11 +499,17 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
-        time.sleep(DELAY_OF_CTC) # Delaying some time...
+        for i in range(DELAY_OF_CTC): # Delaying some time...
+            if TO_ABORT: break  
+            time.sleep(i) 
+
+        if TO_ABORT: break
 
         # Getting current resistance of the sample at current temmperature...
         present_resistance = GET_PRESENT_RESISTANCE() 
         
+        if TO_ABORT: break
+
         print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
         # Writing the present temperature and resistance into csv file...
@@ -527,7 +539,7 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         HIGH_POWER_LIMIT_OF_CTC = float(ENTRY_OF_HIGH_POWER_LIMIT.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
+        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC)) 
     except:
         messagebox.showwarning("Alert","Invalid Input for: High Limit !")
         return False
@@ -657,8 +669,22 @@ def START_EXPERIMENT():
         # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
         GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
     
+    # If experiment is aborted then the function will break
+    if TO_ABORT: 
+        print("ABORTED !")
+        TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        INTERFACE.update()
+        return
+
     if not TO_ABORT and COMPLETE_CYCLE:
         GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
+
+    # If experiment is aborted then the function will break
+    if TO_ABORT: 
+        print("ABORTED !")
+        TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        INTERFACE.update()
+        return
     
     if not TO_ABORT:
         SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
@@ -685,6 +711,9 @@ def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
     print("Aborted!")
+
+    TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+    INTERFACE.update()
 
 ####---------------------------------------- Interface Part -------------------------------------------------####
 
