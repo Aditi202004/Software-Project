@@ -168,7 +168,7 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
 
 ####---------------------------------------- Experiment Part --------------------------------------------------####
 
-# Function to check whether all the instruments are connected or not. If not, will try to connect...
+# Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
     global NANOVOLTMETER, CURRENT_SOURCE, CTC
 
@@ -176,7 +176,7 @@ def CONNECT_INSTRUMENTS():
     retry_number = 0
 
     # Connecting Nanovoltmeter
-    while True:
+    while not TO_ABORT:
         try:
             rm = pyvisa.ResourceManager()
             NANOVOLTMETER = rm.open_resource(SETTINGS["device_name"])
@@ -191,7 +191,7 @@ def CONNECT_INSTRUMENTS():
             retry_number += 1
 
     # Connecting Current source
-    while True:
+    while not TO_ABORT:
         try:
             CURRENT_SOURCE = serial.Serial(SETTINGS["RS232_Port"], baudrate = 9600, timeout = 10)
             retry_number = 0
@@ -205,7 +205,7 @@ def CONNECT_INSTRUMENTS():
             retry_number += 1
 
     # connecting CTC
-    while True:
+    while not TO_ABORT:
         try:
             CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = SETTINGS["Telnet_Port"], timeout = 10)
             retry_number = 0
@@ -218,8 +218,10 @@ def CONNECT_INSTRUMENTS():
                 break
             retry_number += 1
     
+    if TO_ABORT:
+        TO_ABORT = False
 
-    # Returning True if all three devices are connected, otherwise False
+    # Returning 1 if all three devices are connected, otherwise -1
     if number_of_connected_devices == 3: 
         return True 
     else: 
@@ -233,7 +235,7 @@ OUTPUT_CHANNELS_LIST_OF_CTC = ['Out 1', 'Out 2']
 # Function to take data from CTC, save it in config_data.json and display it on the GUI...
 def SYNC_GET():
     
-    if CONNECT_INSTRUMENTS():
+    # if CONNECT_INSTRUMENTS():
         CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
 
         # Clearing the default channels before appending actual channels...
@@ -261,70 +263,22 @@ def SYNC_GET():
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
 def SEND_COMMAND_TO_CTC(command): 
-    retry_number = 0 
-
-    while(retry_number < MAX_RETRY):
-
-        try:
-            CTC.write((command+'\n').encode())
-            return CTC.read_until(b"\n",1).decode('ascii')
-
-        except Exception as e:
-            print(f"Error occurred while sending command to CTC: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5) # Adding a short delay before retrying
-            
-    raise Exception("OOPS!!! Couldn't send command to CTC even after maximun number of tries")
-
+    return float(input(command))
 
 # Function to convert the command to correct format, which Current Source will understand and sends it to Current Source...
 def SEND_COMMAND_TO_CURRENT_SOURCE(command):
+    return float(input(command))
 
-    retry_number = 0 
-    while(retry_number < MAX_RETRY):
-
-        try:
-            CURRENT_SOURCE.write((command+'\n').encode())
-            return CURRENT_SOURCE.readline().decode().strip()
-
-        except Exception as e:
-            print(f"Error occurred while sending command to Current Source: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5) # Adding a short delay before retrying
-            
-    raise Exception("OOPS!!! Couldn't send command to Current Source even after maximum number of tries")
 
 
 # Function to get the voltage reading from the Nanovoltmeter...
 def GET_PRESENT_VOLTAGE_READING():
-    retry_number = 0 
-    while(retry_number < MAX_RETRY):
-
-        try:
-            return float(NANOVOLTMETER.query("FETCh?"))
-
-        except Exception as e:
-            print(f"Error occurred while sending command to Current Source: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5) # Adding a short delay before retrying
-            
-    raise Exception("OOPS!!! Couldn't get voltage reading from Nanovoltmeter even after maximum number of tries")
+    return float(input("Get Voltage : "))
 
 
 # Function to get the current temperature of sample from ctc...
 def GET_PRESENT_TEMPERATURE_OF_CTC():  
-    retry_number = 0
-    while(retry_number < MAX_RETRY):
-
-        try:
-            return float(SEND_COMMAND_TO_CTC('"channel.'+INPUT_CHANNEL_OF_CTC+'?"'))
-        
-        except Exception as e:
-            print(f"Error occurred while getting temperature of CTC: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5) # Adding a short delay before retrying
-
-    raise Exception("Couldn't get temperature from ctc!") 
+    return float(input("Get Temperature : "))
 
 
 # Function to Achieve and Stabilize required temperature...
@@ -332,11 +286,11 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     global HIGH_POWER_LIMIT_OF_CTC 
 
     print("*************************************************************************")
-    print("===> Achieving", required_temperature, "K...")
+    h.config(text = "===> Achieving" + str(required_temperature) + "K...")
 
-    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC)) # Setting High Limit of CTC to HIGH_POWER_LIMIT_OF_CTC...
+    # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC)) # Setting High Limit of CTC to HIGH_POWER_LIMIT_OF_CTC...
 
-    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
+    # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
 
     curr_increase_num = 0
     retry_number = 0
@@ -347,15 +301,15 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
     while(not TO_ABORT):
 
-        time.sleep(3)
+        # time.sleep(3)
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
         if lower_bound <= present_temperature <= upper_bound :
-            print(required_temperature, "K is achieved but not stabilized...")
+            h.config(text = str(required_temperature) + "K is achieved but not stabilized...")
             break
 
         else:
-            print("Current Temperature is", present_temperature, "... Waiting to achieve required temperature ", required_temperature, "K...")
+            p.config(text = "Current Temperature is" + str(present_temperature) + "... Waiting to achieve required temperature " + str(required_temperature) + "K...")
             retry_number += 1
 
         if retry_number == 20 : # Increasing the high limit of power if possible...
@@ -380,7 +334,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                 messagebox.showwarning("Alert","Cannot Achieve all the temperatures by given Maximum limit of Power!!")
                 raise Exception("Cannot Achieve all the temperatures by given Maximum limit of Power")
 
-    if TO_ABORT: return
+    
 
     # if current temperature is reached in less power then we decrease the high power limit
     if(curr_increase_num < PREV_INCREASE_NUMBER):
@@ -388,7 +342,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
         SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
 
     print("______________________________________________________________________")
-    print("===> Stabilizing at", required_temperature, "K...")
+    h.config(text = "===> Stabilizing at" + str(required_temperature) + "K...")
 
     while(not TO_ABORT):
 
@@ -400,43 +354,41 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
             present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
-            print("Current temperature =", present_temperature, " K")
+            p.config(text = "Current temperature =" + str(present_temperature) + " K")
 
             if present_temperature > maximum_temperature: maximum_temperature = present_temperature
             if present_temperature < minimum_temperature: minimum_temperature = present_temperature
             
-            time.sleep(10) # Waiting for 10 seconds...
+            # time.sleep(10) # Waiting for 10 seconds...
 
             retry_number += 1
 
-        if TO_ABORT: return
-
         if maximum_temperature - minimum_temperature < TOLERANCE:
-            print(required_temperature, " K is achieved and stabilized...")
+            h.config(text = str(required_temperature) + " K is achieved and stabilized...")
             break
 
         else:
-            print("Temperature is not stabilized yet... Retrying...")
+            h.config(text = "Temperature is not stabilized yet... Retrying...")
 
 
 # Function to get the current resistance of the sample at current temperature...
 def GET_PRESENT_RESISTANCE():
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("OUTP ON") # Switching Current_Source output ON...
+    # SEND_COMMAND_TO_CURRENT_SOURCE("OUTP ON") # Switching Current_Source output ON...
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
 
     reading_number = 0
     present_current = START_CURRENT
 
     resistance_readings = [] # Array to store resistance values at five different DC Currents...
 
-    while(reading_number < NUMBER_OF_CURRENT_INTERVALS):
+    while(not TO_ABORT and reading_number < NUMBER_OF_CURRENT_INTERVALS):
 
         # Sending command to set the output current to present_current...
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR " + str(present_current))
 
-        time.sleep(3) # Waiting some time...
+        # time.sleep(3) # Waiting some time...
 
         # Get the voltage reading...
         positive_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
@@ -448,7 +400,7 @@ def GET_PRESENT_RESISTANCE():
         # Sending command to set the output current to -present_current...
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR -" + str(present_current))
 
-        time.sleep(3) # Waiting some time...
+        # time.sleep(3) # Waiting some time...
 
         # Get the voltage reading...
         negative_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
@@ -459,10 +411,8 @@ def GET_PRESENT_RESISTANCE():
         present_current += INCREASING_INTERVAL_OF_CURRENT
         reading_number += 1
     
-    SEND_COMMAND_TO_CURRENT_SOURCE("OUTP OFF") # Switching Current_Source output OFF
-
-    if TO_ABORT: return float('-inf')
-
+    # SEND_COMMAND_TO_CURRENT_SOURCE("OUTP OFF") # Switching Current_Source output OFF
+    
     return sum(resistance_readings) / len(resistance_readings)
 
 
@@ -480,7 +430,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     global PREV_INCREASE_NUMBER
 
     # Switching CTC output ON
-    SEND_COMMAND_TO_CTC("outputEnable on")
+    # SEND_COMMAND_TO_CTC("outputEnable on")
 
     # Making direction 1 in forward cycle and -1 in backward cycle...
     direction = 1 if start_temperature <= end_temperature else -1
@@ -488,22 +438,16 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     present_temperature = start_temperature
 
     PREV_INCREASE_NUMBER = 0
-    while(present_temperature * direction < end_temperature * direction):
+    while(not TO_ABORT and present_temperature * direction < end_temperature * direction):
 
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
-        for i in range(DELAY_OF_CTC): # Delaying some time...
-            if TO_ABORT: break  
-            time.sleep(i) 
-
-        if TO_ABORT: break
+        # time.sleep(DELAY_OF_CTC) # Delaying some time...
 
         # Getting current resistance of the sample at current temmperature...
         present_resistance = GET_PRESENT_RESISTANCE() 
         
-        if TO_ABORT: break
-
         print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
         # Writing the present temperature and resistance into csv file...
@@ -516,7 +460,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
         present_temperature += INCREASING_INTERVAL_OF_TEMPERATURE * direction 
 
     # Switching CTC output OFF
-    SEND_COMMAND_TO_CTC("outputEnable off")
+    # SEND_COMMAND_TO_CTC("outputEnable off")
 
 
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
@@ -533,7 +477,7 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         HIGH_POWER_LIMIT_OF_CTC = float(ENTRY_OF_HIGH_POWER_LIMIT.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC)) 
+        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
     except:
         messagebox.showwarning("Alert","Invalid Input for: High Limit !")
         return False
@@ -659,37 +603,25 @@ def CHECK_AND_SET_ALL_VALUES():
 # Function to start the Experiment...
 def START_EXPERIMENT():
 
-    if not TO_ABORT:
-        # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
-        GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
+    # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
+    GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
     
-    # If experiment is aborted then the function will break
-    if TO_ABORT: 
-        print("ABORTED !")
-        TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
-        INTERFACE.update()
-        return
+    if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
 
-    if not TO_ABORT and COMPLETE_CYCLE:
-        GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
-
-    # If experiment is aborted then the function will break
-    if TO_ABORT: 
-        print("ABORTED !")
-        TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
-        INTERFACE.update()
-        return
-    
-    if not TO_ABORT:
-        SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
-        print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
+    SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
+    print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
 
 
 # Function to trigger the Experiment... 
 def TRIGGER():
 
-    if CONNECT_INSTRUMENTS():
+    # if CONNECT_INSTRUMENTS():
         if CHECK_AND_SET_ALL_VALUES(): # Checking and Setting all values...
+
+            # Making the trigger button to Abort button...
+            TRIGGER_BUTTON.config(text= "Abort", command=ABORT_TRIGGER)
+            INTERFACE.update()
+
 
             CONTROL_PANEL.select(2) # Displaying Graph tab when experiment is started...
 
@@ -697,14 +629,17 @@ def TRIGGER():
             Thread(target = START_EXPERIMENT).start() # Starting the experiment and threading to make GUI accessable even after the experiment is start... 
         
 
+global TO_ABORT
+TO_ABORT = False
 # Function to abort the experiment
 def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
     print("Aborted!")
-
+    # Making the trigger button to Abort button...
     TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
     INTERFACE.update()
+
 
 ####---------------------------------------- Interface Part -------------------------------------------------####
 
@@ -884,7 +819,7 @@ if __name__=="__main__":
     SETTINGS_BUTTON = Button(SIDE_BAR, text = "Settings", height = 2, command = OPEN_SETTINGS_WIDGET)
     SETTINGS_BUTTON.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
-    INFO_BUTTON = Button(SIDE_BAR, text = "Info", height = 2, command = SHOW_INFO_OF_DEVICES)
+    INFO_BUTTON = Button(SIDE_BAR, text = "Info", height = 2)
     INFO_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
     SYNC_SET_BUTTON = Button(SIDE_BAR, text = "Sync Set", height= 2, command = CHECK_AND_SET_ALL_VALUES)
@@ -896,8 +831,6 @@ if __name__=="__main__":
     TRIGGER_BUTTON = Button(SIDE_BAR, text = "Trigger", height = 2, command = TRIGGER)
     TRIGGER_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
-    global TO_ABORT
-    TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
     CONTROL_PANEL = ttk.Notebook(INTERFACE)
@@ -905,12 +838,30 @@ if __name__=="__main__":
     CTC_TAB = Frame(CONTROL_PANEL,bg="#575757") 
     CURRENT_SOURCE_TAB = Frame(CONTROL_PANEL,bg="#575757") 
     GRAPH_TAB = Frame(CONTROL_PANEL) 
+    PROGRESS = Frame(CONTROL_PANEL, bg = "#A19F5A")
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
     CONTROL_PANEL.add(GRAPH_TAB, text = ' Graph\n Setup ')
+    CONTROL_PANEL.add(PROGRESS, text = ' Progress\n ')
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
    
+    global HEADING, PARAGRAPH
+
+    h = Label(PROGRESS, text = "HEADING", bg="#40413A", font=("Times", 64 * -1))
+    p = Label(PROGRESS, text = "PARAGRAPH", bg = "#40413A", font = ("Times", 64 * -1))
+
+    h.pack()
+    p.pack()
+
+
+
+
+
+
+
+
+
 
     ## Creating Dropdowns for selecting input and output channels of CTC...
     FRAME_OF_CHANNELS_SELECTION = LabelFrame(CTC_TAB, text = "Input/Output Channel", bg = "#575757", fg = "white")
