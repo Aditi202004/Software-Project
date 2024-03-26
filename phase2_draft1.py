@@ -36,9 +36,6 @@ import os
 from os.path import exists
 from os import mkdir
 
-global TO_ABORT
-TO_ABORT = False
-
 ####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
 # Array to store the lines...
@@ -50,7 +47,6 @@ def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
     annotations.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
     annotations.set_text("Temperature : {}, Resistance: {}".format(x[ind["ind"][0]], y[ind["ind"][0]]))
     annotations.get_bbox_patch().set_alpha(0.4)
-
 
 
 # Function used to display the annotation when hover...
@@ -172,7 +168,7 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
 
 ####---------------------------------------- Experiment Part --------------------------------------------------####
 
-# Function to to connect all the instruments and check if they are connected...
+# Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
     global NANOVOLTMETER, CURRENT_SOURCE, CTC
 
@@ -302,7 +298,7 @@ def SEND_COMMAND_TO_CURRENT_SOURCE(command):
 # Function to get the voltage reading from the Nanovoltmeter...
 def GET_PRESENT_VOLTAGE_READING():
     retry_number = 0 
-    while(not TO_ABORT and retry_number < MAX_RETRY):
+    while(retry_number < MAX_RETRY):
 
         try:
             return float(NANOVOLTMETER.query("FETCh?"))
@@ -435,7 +431,7 @@ def GET_PRESENT_RESISTANCE():
 
     resistance_readings = [] # Array to store resistance values at five different DC Currents...
 
-    while(not TO_ABORT and reading_number < NUMBER_OF_CURRENT_INTERVALS):
+    while(reading_number < NUMBER_OF_CURRENT_INTERVALS):
 
         # Sending command to set the output current to present_current...
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR " + str(present_current))
@@ -479,8 +475,6 @@ def WRITE_DATA_TO_CSV(temperature, resistance):
         writer.writerow([temperature, resistance])
 
 
-
-
 # Function to get the resistances at all temperatures...
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     global PREV_INCREASE_NUMBER
@@ -494,7 +488,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
     present_temperature = start_temperature
 
     PREV_INCREASE_NUMBER = 0
-    while(not TO_ABORT and present_temperature * direction < end_temperature * direction):
+    while(present_temperature * direction < end_temperature * direction):
 
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
@@ -693,9 +687,6 @@ def START_EXPERIMENT():
 
 # Function to trigger the Experiment... 
 def TRIGGER():
-
-    TRIGGER_BUTTON.config(text= "Abort", command=ABORT_TRIGGER)
-    INTERFACE.update()
 
     if CONNECT_INSTRUMENTS():
         if CHECK_AND_SET_ALL_VALUES(): # Checking and Setting all values...
@@ -905,6 +896,8 @@ if __name__=="__main__":
     TRIGGER_BUTTON = Button(SIDE_BAR, text = "Trigger", height = 2, command = TRIGGER)
     TRIGGER_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
+    global TO_ABORT
+    TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
     CONTROL_PANEL = ttk.Notebook(INTERFACE)
@@ -1092,4 +1085,3 @@ if __name__=="__main__":
 
 
     INTERFACE.mainloop()
-
