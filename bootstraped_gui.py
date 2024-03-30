@@ -527,13 +527,29 @@ def GET_PRESENT_RESISTANCE():
 
 
 # Function to write the temperature and resistance values into csv file
+# def WRITE_DATA_TO_CSV(temperature, resistance):
+#     CSV_FILE_NAME = TITLE + ".csv"
+#     CSV_FILE_PATH = os.path.join(DIRECTORY, CSV_FILE_NAME)
+#     with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
+#         writer = csv.writer(csvfile)
+#         writer.writerow([temperature, resistance])
+
 def WRITE_DATA_TO_CSV(temperature, resistance):
     CSV_FILE_NAME = TITLE + ".csv"
     CSV_FILE_PATH = os.path.join(DIRECTORY, CSV_FILE_NAME)
-    with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([temperature, resistance])
-
+    
+    data = [temperature, resistance]
+    
+    while True:
+        try:
+            with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(data)
+                csvfile.flush()  # Flush the buffer to ensure immediate write
+            break
+        except (PermissionError, OSError) as e:
+            print(f"Error writing to file: {e}. Retrying in 1 second...")
+            time.sleep(1)
 
 # Function to get the resistances at all temperatures...
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
