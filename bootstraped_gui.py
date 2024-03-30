@@ -121,23 +121,23 @@ def SAVE_THE_GRAPH_INTO(directory):
 # temperature_combobox = ttk.Combobox(temperature_lframe, font=("Arial", 10), state = 'readonly')
 # temperature_combobox.grid(row=3, column=0, pady=10, padx=10, ipady=5)
 # Function to setup the Graph in Graph tab...
-def SET_GRAPH_IN_TAB(GRAPH_TAB):
+def SET_R_vs_Temp_Graph(GRAPH_TAB):
 
     global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
     global temperature_combobox
 
-    # FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
+    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
 
-    # # LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text = "Resistance Vs. Temperature") # Adding label/title for the graph
+    LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text = "Resistance Vs. Temperature") # Adding label/title for the graph
 
-    # # LABEL_OF_GRAPH.config(font=('Times', 32)) # Changing the default font style and size to Times and 32
-    # # temperature_combobox = ttk.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
-    # # temperature_combobox.current(0)
+    LABEL_OF_GRAPH.config(font=('Times', 25)) # Changing the default font style and size to Times and 32
+    # temperature_combobox = ttk.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+    # temperature_combobox.current(0)
 
     # FIGURE_OF_GRAPH = Figure(figsize=(5, 4)) # Created a figure to add graph
 
     # CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master = FRAME_OF_GRAPH) # Created a canvas to plot graph
-    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
+    # FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
 
     FIGURE_OF_GRAPH = Figure(figsize=(6, 5))  # Adjust the figsize parameter to set a smaller figure size (e.g., 4x3 inches)
 
@@ -176,8 +176,96 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
 
 
     # Making Canvas, Label, Frame visible in the tab by packing
-    # LABEL_OF_GRAPH.pack()
+    LABEL_OF_GRAPH.pack()
     # temperature_combobox.pack(padx=10, pady=10)
+    CANVAS_OF_GRAPH.get_tk_widget().pack()
+    FRAME_OF_GRAPH.pack()
+
+# def update_label_text():
+#     global text_var,INTERFACE
+    
+#     # Update the text in the label
+#     text_var.set("New Text")
+#     # Schedule the update_label_text function to be called again after 1000 milliseconds (1 second)
+#     INTERFACE.after(30000, update_label_text)
+
+
+
+def SET_R_vs_Time_Graph(GRAPH_TAB):
+
+    global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT,text_var
+    global temperature_combobox
+    
+    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
+    text_var = tk.StringVar()
+    text_var.set("Initial Text")  # Set initial text
+
+
+
+
+
+    
+    LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text="Current Temperature :") 
+    # LABEL_OF_TERMINAL = tk.Label(FRAME_OF_GRAPH,textvariable=text_var)
+    # update_label_text()
+    LABEL_OF_GRAPH.config(font=('Times', 20)) # Adding label/title for the graph
+
+    temperature_combobox = tb.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+
+    # Function to update label with combobox value
+    def update_label(*args):
+        selected_temperature = temperature_combobox.get()
+        LABEL_OF_GRAPH.config(text="Temperature is " + selected_temperature+ " K")
+
+    # Associate the update_label function with the combobox
+    temperature_combobox.bind("<<ComboboxSelected>>", update_label)
+
+
+    FIGURE_OF_GRAPH = Figure(figsize=(6, 4.5))  # Adjust the figsize parameter to set a smaller figure size (e.g., 4x3 inches)
+
+    CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master=FRAME_OF_GRAPH)
+   
+
+
+    GRAPH = FIGURE_OF_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
+
+    GRAPH.set_xlabel("TIME") # Set X label
+    GRAPH.set_ylabel("RESISTANCE") # Set Y label
+    GRAPH.grid() # Added grids to graph
+    GRAPH.axhline(linewidth=2, color='black') # Added X axis
+    GRAPH.axvline(linewidth=2, color='black') # Added Y axis
+
+    ANNOTATION = GRAPH.annotate("", xy=(0,0), xytext=(-150,25),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")) # Annotion means when we hover cursor to a point a small box will appear displaying the x and y co-ordinates
+
+    ANNOTATION.set_visible(False) # Making it invisible initially (We will make it visible when we hover the cursor in DISPLAY_ANNOTATION_WHEN_HOVER Function)
+
+    TOOLBAR_OF_GRAPH = NavigationToolbar2Tk(CANVAS_OF_GRAPH, FRAME_OF_GRAPH) # Added toolbar for graph
+    TOOLBAR_OF_GRAPH.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
+
+    Y_COORDINATE_OF_LAST_ADDED_POINT = None
+    X_COORDINATE_OF_LAST_ADDED_POINT = None
+
+    
+    PLOTTING_LINE, = GRAPH.plot([], [], color="orange", linestyle="-", marker="o", markerfacecolor="blue", markeredgewidth=1, markeredgecolor="black" ) # Plotted an empty graph...
+    ARRAY_OF_PLOTTING_LINES.append(PLOTTING_LINE) # Appending the line(plot) to ARRAY_OF_PLOTTING_LINES...
+    #  Adjusting the limits of x and y axes to display in the first quadrant only
+    GRAPH.set_xlim(0, None)  # X-axis starts from 0 and extends towards positive infinity
+    GRAPH.set_ylim(0, None)  # Y-axis starts from 0 and extends towards positive infinity
+
+
+
+    # Making zooming, hovering by mouse
+    CANVAS_OF_GRAPH.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_OF_GRAPH, TOOLBAR_OF_GRAPH))
+    CANVAS_OF_GRAPH.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
+    CANVAS_OF_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES
+    , ANNOTATION))
+
+
+    # Making Canvas, Label, Frame visible in the tab by packing
+    
+    temperature_combobox.pack(padx=10, pady=(30,20))
+    LABEL_OF_GRAPH.pack(pady=(0,0))
+    # LABEL_OF_TERMINAL.pack(pady=(0,0)) 
     CANVAS_OF_GRAPH.get_tk_widget().pack()
     FRAME_OF_GRAPH.pack()
 
@@ -695,8 +783,8 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
      
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
-    SETTINGS_WIDGET.config(bg = "#575757")
-    SETTINGS_WIDGET.title("Settings")
+  
+    SETTINGS_WIDGET.title("Experiment Settings")
     SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 270))
     SETTINGS_WIDGET.resizable(False,False)
     SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
@@ -712,10 +800,24 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
     ENTRY_OF_TEMPERATURE_RANGE = IntVar()
     Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_RANGE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
-    Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2).grid(row =3 , column = 0, padx = (90,0), pady = 20)
+    # Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2).grid(row =3 , column = 0, padx = (90,0), pady = 20)
+    def confirm_settings():
+        if ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 1 and ENTRY_OF_TEMPERATURE_RANGE.get() == 0:
+            CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
+            SETTINGS_WIDGET.destroy()
+        
+            
+        elif ENTRY_OF_TEMPERATURE_RANGE.get() == 1 and ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 0:
+            CONTROL_PANEL.hide(TEMPERATURE_TAB)
+            CONTROL_PANEL.hide(GRAPH_R_vs_Time)
+            SETTINGS_WIDGET.destroy()
+      
+        else:
+            SETTINGS_WIDGET.destroy()
+          
+    Button(SETTINGS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(90,0), pady=20)
     
-    
-
+     
     
     SETTINGS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SETTINGS_WIDGET))
     SETTINGS_WIDGET.grab_set()
@@ -733,14 +835,15 @@ def OPEN_SETTINGS_WIDGET():
     SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
     SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
 
-    # Creating Combobox for selecting GPIB Cabel connected to Nanovoltmeter...
-    Label(SETTINGS_WIDGET, text = "Nanovoltmeter", fg = "white", bg = "#575757").grid(row = 0,column = 0, rowspan = 2, sticky = "e", padx = (0,10), pady = 10)
     
-    cabels_available = StringVar(value = SETTINGS["device_name"]) # Assigning the variable with the cabel which is in settings (Simply setting default)
+    
+    Label(SETTINGS_WIDGET,text = "Nanovoltmeter:", fg = "white", bg = "#575757").grid(row = 1, column = 0, sticky = "e", padx = (0,10), pady = 10)
 
-    device_options = ttk.Combobox(SETTINGS_WIDGET, width = 27, textvariable = cabels_available, state = "readonly")
-    device_options.bind('<<ComboboxSelected>>', lambda x: SET_SETTINGS("device_name", device_options.get()))
-    device_options.grid(row = 0, column = 1, sticky = "w", pady = 10)
+    nanovoltmeter_address = StringVar(value = SETTINGS["device_name"]) # Assigning the variable with the address which is in settings (Simply setting default)
+
+    nanovoltmeter_address_entry = Entry(SETTINGS_WIDGET, font = (10), width = 15, textvariable = nanovoltmeter_address)
+    nanovoltmeter_address_entry.grid(row = 1, column = 1, pady = 0, sticky = "w")
+    nanovoltmeter_address_entry.bind("<KeyRelease>", lambda x: SET_SETTINGS("nanovoltmeter_address", nanovoltmeter_address.get())) #updates ctc_adress on any key release event
 
 
     # Creating an entry field to enter the address of the CTC device...
@@ -845,6 +948,7 @@ def update_combobox(event):
 
 
 if __name__=="__main__":
+    global INTERFACE 
 
     ## Creating a Tkinter Interface ##
     INTERFACE = tb.Window(themename="yeti") # Made a root Interface
@@ -853,6 +957,8 @@ if __name__=="__main__":
     INTERFACE.geometry("1000x700") # Set Geometry of the interface widget
     INTERFACE.grid_columnconfigure(0, weight=1) 
     INTERFACE.grid_rowconfigure(0, weight=1)
+    
+    
     # root = tb.Tk()
     
     
@@ -885,12 +991,14 @@ if __name__=="__main__":
     CTC_TAB = tb.Frame(CONTROL_PANEL) 
     CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
     TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
-    GRAPH_TAB = tb.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Temp = tb.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Time = tb.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
     CONTROL_PANEL.add(TEMPERATURE_TAB, text = ' Temperature\n Setup ')
-    CONTROL_PANEL.add(GRAPH_TAB, text = ' Graph\n Setup ')
+    CONTROL_PANEL.add(GRAPH_R_vs_Temp, text = ' Graph\n (R vs Temp) ')
+    CONTROL_PANEL.add(GRAPH_R_vs_Time, text = ' Graph\n (R vs Time) ')
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
    
    
@@ -1080,9 +1188,11 @@ if __name__=="__main__":
 
 
     # Setup the graph_tab...
-    SET_GRAPH_IN_TAB(GRAPH_TAB)
+    SET_R_vs_Temp_Graph(GRAPH_R_vs_Temp)
+    SET_R_vs_Time_Graph(GRAPH_R_vs_Time)
+    
             ### other ###
-    INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
+    # INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     INTERFACE.wait_visibility()
     INTERFACE.update()
     
@@ -1090,7 +1200,11 @@ if __name__=="__main__":
     root_height=INTERFACE.winfo_height()
     INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
     INTERFACE.minsize(root_width,root_height)
+    
     # SETTINGS_WIDGET_TEMPERATURE_CONTROL()
+    SETTINGS_WIDGET_TEMPERATURE_CONTROL()
+    
+    
     
     
 
