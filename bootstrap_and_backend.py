@@ -1077,11 +1077,11 @@ def UPDATE_COMBOBOX(event):
     # Split the input_text into individual values based on comma
     values = input_text.split(",")
     
-    # Strip leading and trailing whitespaces from each value
-    values= [value.strip() for value in values if value.strip()]  # Include placeholder text
+    # Filter out non-numeric values
+    numeric_values = [value for value in values if value.replace('.', '', 1).isdigit()]
     
-    # Populate the Combobox with the extracted values
-    temperature_combobox['values'] = values
+    # Populate the Combobox with the extracted numeric values
+    temperature_combobox['values'] = numeric_values
     
     
     
