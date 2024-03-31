@@ -863,13 +863,14 @@ def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY):
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
         LABEL_OF_OUTPUT_DIRECTORY.config(text = directory)
 
+from tkinter import Toplevel, Label, Text, Button
 
-def DISPLAY_SETTINGS():
+def DISPLAY_REQUIREMENTS():
     REQUIREMENTS_WIDGET = Toplevel(INTERFACE)
 
     REQUIREMENTS_WIDGET.title("Make Sure")
     REQUIREMENTS_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
-    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
+    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 1.75)
     REQUIREMENTS_WIDGET.geometry(CENTER_THE_WIDGET(REQUIREMENTS_WIDGET_Temp_width, REQUIREMENTS_WIDGET_Temp_height))
     REQUIREMENTS_WIDGET.resizable(False, False)
     REQUIREMENTS_WIDGET.grid_columnconfigure(0, weight=1)
@@ -882,15 +883,16 @@ def DISPLAY_SETTINGS():
     • GPIB: current source to CPU
     • RS-232: male-to-male between current source and 
       voltmeter 
-    • Trigger Llink Cable: between current source and voltmeter
+    • Trigger Link Cable: between current source and voltmeter
     • Telnet: CTC to CPU
     • set GPIB interface for current source
     • set RS-232 interface for nanovoltmeter
     • baudrate of nanovoltmeter and current source should be 
       19.2K and flow control on nanovoltmeter: NONE
     """
-    label = Label(REQUIREMENTS_WIDGET, text=label_text, fg="white", justify='left', wraplength=500)
-
+    label = Text(REQUIREMENTS_WIDGET, wrap='word', height=10, width=50)
+    label.insert('1.0', label_text)
+    label.config(state='disabled')
     label.grid(row=1, column=0, sticky="wens", pady=(0, 10))
     label.config(font=("Times New Roman", 12))
 
@@ -903,6 +905,9 @@ def DISPLAY_SETTINGS():
     REQUIREMENTS_WIDGET.transient(INTERFACE)
     REQUIREMENTS_WIDGET.grab_set()
     INTERFACE.wait_window(REQUIREMENTS_WIDGET)
+
+# You might need to implement the CENTER_THE_WIDGET and CLOSE_WIDGET functions as you haven't provided them in your snippet.
+
 
 def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
     
@@ -1404,7 +1409,7 @@ if __name__=="__main__":
 
     # messagebox.showinfo("Make_Sure", info_text, icon='info')
 
-    CONNECTION_SETTINGS()
+    DISPLAY_REQUIREMENTS()
 
     # After the first popup is closed, call the second popup function
     SETTINGS_WIDGET_TEMPERATURE_CONTROL()
