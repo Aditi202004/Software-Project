@@ -792,12 +792,38 @@ def CHECK_AND_SET_ALL_VALUES():
     return True
 
 
+# Helper function to insert into sorted array using insertion sort
+def insert_into_sorted_array(arr, elem):
+    # If the array is empty or the element is greater than the last element, append it.
+    if len(arr) == 0 or elem >= arr[-1]:
+        arr.append(elem)
+        return arr
+
+    # Find the position where the element should be inserted.
+    for i in range(len(arr)):
+        if arr[i] >= elem:
+            # Once the position is found, insert the element at that position
+            arr.insert(i, elem)
+            return arr
+
+
 # Function to start the Experiment...
+ARRAY_OF_ALL_TEMPERATURES = []
 def START_EXPERIMENT():
+    if TEMPERATURE_EXPERIMENT == 1:
+        curr_temp = START_TEMPERATURE
+        while curr_temp <= END_TEMPERATURE:
+            ARRAY_OF_ALL_TEMPERATURES.append(curr_temp)
+            curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
+            
+    if TIME_EXPERIMENT == 1:
+        entered_temperatures = temperature_combobox["values"]
+        for temperature in entered_temperatures:
+            ARRAY_OF_ALL_TEMPERATURES = insert_into_sorted_array(FINAL_TEMPERATURES, temperature)
 
     if not TO_ABORT:
         # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
-        GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
+        GET_RESISTANCE_AT_ALL_TEMPERATURES(1)
     
     # If experiment is aborted then the function will break
     if TO_ABORT: 
@@ -805,10 +831,10 @@ def START_EXPERIMENT():
         TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
         INTERFACE.update()
         return
-
-    if not TO_ABORT and COMPLETE_CYCLE:
-        GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
-
+    
+    if not TO_ABORT and TEMPERATURE_EXPERIMENT == 1 and COMPLETE_CYCLE:
+        GET_RESISTANCE_AT_ALL_TEMPERATURES(-1)
+        
     # If experiment is aborted then the function will break
     if TO_ABORT: 
         print("ABORTED !")
@@ -819,6 +845,7 @@ def START_EXPERIMENT():
     if not TO_ABORT:
         SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
         print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
+
 
 
 
@@ -939,15 +966,15 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
     label.grid(row = 0,column = 0,  sticky = "we",  pady = 25)
     label.config(font=("Arial", 12, "bold"))
     
-    ENTRY_OF_SPECIFIC_TEMPERATURES = IntVar()
-    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_SPECIFIC_TEMPERATURES, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    ENTRY_OF_TIME_EXPERIMENT = IntVar()
+    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
    
-    ENTRY_OF_TEMPERATURE_RANGE = IntVar()
-    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_RANGE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    ENTRY_OF_TEMPERATURE_EXPERIMENT = IntVar()
+    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
     # Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2).grid(row =3 , column = 0, padx = (90,0), pady = 20)
     def confirm_settings():
-        if ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 1 and ENTRY_OF_TEMPERATURE_RANGE.get() == 0:
+        if ENTRY_OF_TIME_EXPERIMENT.get() == 1 and ENTRY_OF_TEMPERATURE_EXPERIMENT.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
             CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
@@ -956,7 +983,7 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
             SETTINGS_WIDGET.destroy()
 
 
-        elif ENTRY_OF_TEMPERATURE_RANGE.get() == 1 and ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 0:
+        elif ENTRY_OF_TEMPERATURE_EXPERIMENT.get() == 1 and ENTRY_OF_TIME_EXPERIMENT.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Time_final)
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
             CONTROL_PANEL.hide(GRAPH_R_vs_Time)
@@ -1118,14 +1145,14 @@ if __name__=="__main__":
     INTERFACE.grid_rowconfigure(0, weight=1)
     INTERFACE.grid_columnconfigure(1, weight=0) 
     
-    # root = tb.Tk()
+    # root = tk.Tk()
     
     
  
   
 
     # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
-    SIDE_BAR = tb.Frame(INTERFACE,bootstyle="info")
+    SIDE_BAR = tk.Frame(INTERFACE,bootstyle="info")
     SIDE_BAR.grid(row=0, column=1, rowspan=2, sticky="nswe")
 
     SETTINGS_BUTTON = Button(SIDE_BAR, text = "Settings", height = 2, command = OPEN_SETTINGS_WIDGET)
@@ -1147,13 +1174,13 @@ if __name__=="__main__":
     TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
-    CONTROL_PANEL = tb.Notebook(INTERFACE,bootstyle="primary")
+    CONTROL_PANEL = tk.Notebook(INTERFACE,bootstyle="primary")
 
-    CTC_TAB = tb.Frame(CONTROL_PANEL) 
-    CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
-    TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
-    GRAPH_R_vs_Temp = tb.Frame(CONTROL_PANEL) 
-    GRAPH_R_vs_Time_final  = tb.Frame(CONTROL_PANEL) 
+    CTC_TAB = tk.Frame(CONTROL_PANEL) 
+    CURRENT_SOURCE_TAB = tk.Frame(CONTROL_PANEL) 
+    TEMPERATURE_TAB = tk.Frame(CONTROL_PANEL)
+    GRAPH_R_vs_Temp = tk.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Time_final  = tk.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
@@ -1285,7 +1312,7 @@ if __name__=="__main__":
 
     # Complete Cycle entry
     ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE_CHECKBUTTON=tk.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
     COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
  # Title
@@ -1327,8 +1354,8 @@ if __name__=="__main__":
     DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay (Pulse Width)", fg="white")
     DELAY_LFRAME.grid(row=4, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_DELAY = Entry(DELAY_LFRAME, font=(10), width=20)
-    ENTRY_OF_DELAY.grid(row=0, column=0,  pady=10, padx=10,ipady=5,ipadx=20,sticky="w")
+    ENTRY_OF_DELAY_OF_CURRENT_SOURCE = Entry(DELAY_LFRAME, font=(10), width=20)
+    ENTRY_OF_DELAY_OF_CURRENT_SOURCE.grid(row=0, column=0,  pady=10, padx=10,ipady=5,ipadx=20,sticky="w")
 
     # Temperature Tab
     TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white")
@@ -1363,20 +1390,20 @@ if __name__=="__main__":
     HIGH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="High current of pulse(A)", fg="white")
     HIGH_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_HIGH = Entry(HIGH_LFRAME, font=(10), width=20)
-    ENTRY_OF_HIGH.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
+    ENTRY_OF_HIGH_PULSE = Entry(HIGH_LFRAME, font=(10), width=20)
+    ENTRY_OF_HIGH_PULSE.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
     
     LOW_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Low current of pulse(A)", fg="white")
     LOW_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_LOW = Entry(LOW_LFRAME, font=(10), width=20)
-    ENTRY_OF_LOW.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    ENTRY_OF_LOW_PULSE = Entry(LOW_LFRAME, font=(10), width=20)
+    ENTRY_OF_LOW_PULSE.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
    
     WIDTH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Width of the pulse(s)", fg="white")
     WIDTH_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
-    ENTRY_OF_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    ENTRY_OF_PULSE_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
+    ENTRY_OF_PULSE_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
     NUMBER_OF_PULSES_PER_SECOND_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white")
     NUMBER_OF_PULSES_PER_SECOND_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
