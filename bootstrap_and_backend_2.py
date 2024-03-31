@@ -818,13 +818,13 @@ def MERGE_BOTH_TEMPERATURES(arr1, arr2):
 # Function to start the Experiment...
 def START_EXPERIMENT():
     global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES
-    if int(TEMPERATURE_EXPERIMENT.get()):
+    if TEMPERATURE_EXPERIMENT.get():
         curr_temp = START_TEMPERATURE
         while curr_temp <= END_TEMPERATURE:
             ARRAY_OF_ALL_TEMPERATURES.append(curr_temp)
             curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
             
-    if int(TIME_EXPERIMENT.get()):
+    if TIME_EXPERIMENT.get():
         ARRAY_OF_SELECTED_TEMPERATURES = temperature_combobox["values"]
         ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting the array
         ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURES(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
@@ -841,7 +841,7 @@ def START_EXPERIMENT():
         INTERFACE.update()
         return
     
-    if not TO_ABORT and int(TEMPERATURE_EXPERIMENT.get()) and int(COMPLETE_CYCLE.get()):
+    if not TO_ABORT and TEMPERATURE_EXPERIMENT.get() and COMPLETE_CYCLE.get():
         GET_RESISTANCE_AT_ALL_TEMPERATURES(-1)
         
     # If experiment is aborted then the function will break
@@ -973,6 +973,7 @@ def DISPLAY_REQUIREMENTS():
     REQUIREMENTS_WIDGET.grab_set()
     INTERFACE.wait_window(REQUIREMENTS_WIDGET)
 
+
 # Function for getting what experiments user wants to do from user...
 def DISPLAY_SELECTING_EXPERIMENTS_WIDGET(): 
     global TIME_EXPERIMENT, TEMPERATURE_EXPERIMENT
@@ -998,7 +999,7 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
     Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
     def confirm_settings():
-        if TIME_EXPERIMENT.get() == 1 and TEMPERATURE_EXPERIMENT.get() == 0:
+        if TIME_EXPERIMENT.get() and not TEMPERATURE_EXPERIMENT.get():
             CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
             CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
@@ -1007,15 +1008,18 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
             SELECTING_EXP_WIDGET.destroy()
 
 
-        elif TEMPERATURE_EXPERIMENT.get() == 1 and TIME_EXPERIMENT.get() == 0:
+        elif TEMPERATURE_EXPERIMENT.get() and not TIME_EXPERIMENT.get():
             CONTROL_PANEL.hide(GRAPH_R_vs_Time_final)
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
-            CONTROL_PANEL.hide(GRAPH_R_vs_Time)
-
+            # CONTROL_PANEL.hide(GRAPH_R_vs_Time)
+            FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
 
+        elif TEMPERATURE_EXPERIMENT.get() and TIME_EXPERIMENT.get():
+            FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
+            SELECTING_EXP_WIDGET.destroy()
         else:
-            SELECTING_EXP_WIDGET.destroy()
+            messagebox.showwarning("Alert", "Select options!")
           
     Button(SELECTING_EXP_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(70,0), pady=20)
     
@@ -1097,7 +1101,6 @@ def OPEN_SETTINGS_WIDGET():
     SETTINGS_WIDGET.mainloop()
 
 
-
 # Function to display the info of devices...
 def SHOW_INFO_OF_DEVICES(): 
 
@@ -1152,8 +1155,6 @@ def UPDATE_COMBOBOX(event):
     # Filter out non-numeric values
     numeric_values = [value for value in values if value.replace('.', '', 1).isdigit()]
 
-    # # Populate the Combobox with the extracted values
-    # temperature_combobox['values'] = values
     # Populate the Combobox with the extracted numeric values
     temperature_combobox['values'] = numeric_values
 
@@ -1210,6 +1211,11 @@ if __name__=="__main__":
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
    
    
+    # Title   change the location :)
+    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white")
+    TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=300, pady=(60, 35))
+    ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
+    ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
 
     ## Creating Dropdowns for selecting input and output channels of CTC...
     FRAME_OF_CHANNELS_SELECTION = LabelFrame(CTC_TAB, text = "Input/Output Channel", bg = "#575757", fg = "white")
@@ -1293,6 +1299,20 @@ if __name__=="__main__":
     ## Creating entry fileds for Temperature controls of CTC...
     FRAME_OF_TEMPERATURE_CONTROLS = LabelFrame(CTC_TAB, text = 'Temperature Controls', fg = 'white', bg="#575757")
     FRAME_OF_TEMPERATURE_CONTROLS.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+    FRAME_OF_TEMPERATURE_CONTROLS_2 = LabelFrame(CTC_TAB, text = 'Temperature Controls', fg = 'white', bg="#575757")
+    FRAME_OF_TEMPERATURE_CONTROLS_2.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+
+    # Threshold entry
+    LABEL_OF_THRESHOLD_2 = Label(FRAME_OF_TEMPERATURE_CONTROLS_2, text = 'Threshold :', bg = "#575757", fg = 'white')
+    LABEL_OF_THRESHOLD_2.grid(row = 1, column = 0, padx = 30, pady = 5, sticky = 'ew')
+    ENTRY_OF_THRESHOLD_2 = Entry(FRAME_OF_TEMPERATURE_CONTROLS_2, font = (10), width = 7)
+    ENTRY_OF_THRESHOLD_2.grid(row = 1, column = 1, pady = 10, ipady = 3, sticky = "ew")
+
+    # Tolerance entry
+    LABEL_OF_TOLERANCE_2 = Label(FRAME_OF_TEMPERATURE_CONTROLS_2, text = 'Tolerance :', bg = "#575757", fg = 'white')
+    LABEL_OF_TOLERANCE_2.grid(row = 1, column = 2, padx = 30, pady = 5, sticky = 'ew')
+    ENTRY_OF_TOLERANCE_2 = Entry(FRAME_OF_TEMPERATURE_CONTROLS_2, font = (10), width = 7)
+    ENTRY_OF_TOLERANCE_2.grid(row = 1, column = 3, pady = 10, ipady = 3, sticky = "ew")
 
     # Start Temperature entry
     LABEL_OF_START_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Start Temperature(K) :', bg = "#575757", fg = 'white')
@@ -1335,45 +1355,34 @@ if __name__=="__main__":
     COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = COMPLETE_CYCLE, bootstyle="primary-round-toggle")
     COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
- # Title
-    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white")
-    TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=300, pady=(60, 35))
-
-    ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
-    ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
  
- # Drive
+    # Drive
     DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white")
     DRIVE_LFRAME.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=300, pady=30)
 
     CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white")
     CURRENT_START_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_START_CURRENT = Entry(CURRENT_START_LFRAME, font=(10), width=20)
     ENTRY_OF_START_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
     
     CURRENT_STOP_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Stop Value (A)", fg="white")
     CURRENT_STOP_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_STOP_CURRENT = Entry(CURRENT_STOP_LFRAME, font=(10), width=20)
     ENTRY_OF_STOP_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
    
     INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Count(Number of Current Intervals at a Temperature)", fg="white")
     INTERVALNO_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(INTERVALNO_LFRAME, font=(10), width=20)
     ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
 
     INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Step (Increase Current Interval at a Temperature)(A)", fg="white")
     INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(INTERVAL_LFRAME, font=(10), width=20)
     ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
-    DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay (Pulse Width)", fg="white")
+    DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay of Current Source", fg="white")
     DELAY_LFRAME.grid(row=4, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_DELAY_OF_CURRENT_SOURCE = Entry(DELAY_LFRAME, font=(10), width=20)
     ENTRY_OF_DELAY_OF_CURRENT_SOURCE.grid(row=0, column=0,  pady=10, padx=10,ipady=5,ipadx=20,sticky="w")
 
@@ -1383,51 +1392,39 @@ if __name__=="__main__":
 
     SELECT_TEMP_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Temperature(s)(in K)", fg="white")
     SELECT_TEMP_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
-
     TEMPERATURES_ENTRY = Text(SELECT_TEMP_LFRAME, font=(10), width=20, height=1)
     TEMPERATURES_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
-    
     TEMPERATURES_ENTRY.bind("<KeyRelease>", UPDATE_COMBOBOX) 
    
 
     MEASURING_TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white")
     MEASURING_TIME_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
-
     MEASURING_TIME_ENTRY = Entry(MEASURING_TIME_LFRAME, font=(10), width=20)
     MEASURING_TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
     
 
-    NUMBER_OF_PULSES_PER_SECOND_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white")
-    NUMBER_OF_PULSES_PER_SECOND_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
-
-    NUMBER_OF_PULSES_PER_SECOND_ENTRY = Entry(NUMBER_OF_PULSES_PER_SECOND_LFRAME, font=(10), width=20)
-    NUMBER_OF_PULSES_PER_SECOND_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
-     #CURRENT_CONTROLS
+    #CURRENT_CONTROLS
     CURRENT_CONTROLS_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Current Controls", fg="white")
     CURRENT_CONTROLS_LFRAME.grid(row=0, column=1, rowspan=4, sticky="nsew", padx=(60,180), pady=100)
 
     HIGH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="High current of pulse(A)", fg="white")
     HIGH_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_HIGH_PULSE = Entry(HIGH_LFRAME, font=(10), width=20)
     ENTRY_OF_HIGH_PULSE.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
     
     LOW_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Low current of pulse(A)", fg="white")
     LOW_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_LOW_PULSE = Entry(LOW_LFRAME, font=(10), width=20)
     ENTRY_OF_LOW_PULSE.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
    
     WIDTH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Width of the pulse(s)", fg="white")
     WIDTH_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_PULSE_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
     ENTRY_OF_PULSE_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
     NUMBER_OF_PULSES_PER_SECOND_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white")
     NUMBER_OF_PULSES_PER_SECOND_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
-
     ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND = Entry(NUMBER_OF_PULSES_PER_SECOND_LFRAME, font=(10), width=20)
     ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
@@ -1437,8 +1434,7 @@ if __name__=="__main__":
     SET_R_vs_Temp_Graph(GRAPH_R_vs_Temp)
     SET_R_vs_Time_Graph(GRAPH_R_vs_Time_final)
     
-            ### other ###
-    # INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
+    ### other ###
     INTERFACE.wait_visibility()
     INTERFACE.update()
     
@@ -1447,7 +1443,6 @@ if __name__=="__main__":
     INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
     INTERFACE.minsize(root_width,root_height)
     
-    # SETTINGS_WIDGET_TEMPERATURE_CONTROL()
     DISPLAY_REQUIREMENTS()
     DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
 
