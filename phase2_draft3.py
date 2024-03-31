@@ -478,18 +478,14 @@ def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances):
 
 
 # Function to get the resistances at all temperatures...
-def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
+def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 
     SEND_COMMAND_TO_CTC("outputEnable on") # Switching CTC output ON
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
 
-    # Making direction 1 in forward cycle and -1 in backward cycle...
-    direction = 1 if start_temperature <= end_temperature else -1
+    filename = TITLE + "_Resistance_vs_Temperature.csv" 
 
-    present_temperature = start_temperature
-
-    while(present_temperature * direction < end_temperature * direction):
-
+    for present_temperature in ARRAY_OF_ALL_TEMPERATURES[::direction]:
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
@@ -497,26 +493,20 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
             if TO_ABORT: break  
             time.sleep(1) 
 
-        if TO_ABORT: break
-
-        # Getting current resistance of the sample at current temmperature...
-        present_resistance = GET_PRESENT_RESISTANCE() 
-        
-        if TO_ABORT: break
-
+        present_resistance = GET_PRESENT_RESISTANCE()
         print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
-        # Writing the present temperature and resistance into csv file...
-        WRITE_DATA_TO_CSV(present_temperature, present_resistance)
-
-        # Plotting the present point in the graph...
+        WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
         ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
 
-        # Increase or decrease the temperature according to the direction...
-        present_temperature += INCREASING_INTERVAL_OF_TEMPERATURE * direction 
 
-    # Switching CTC output OFF
-    SEND_COMMAND_TO_CTC("outputEnable off")
+        if direction and (present_temperature in ARRAY_OF_SELECTED_TEMPERATURES):
+            GET_RESISTANCES_WITH_TIME_AT(present_temperature)
+    
+
+    SEND_COMMAND_TO_CTC("outputEnable off") # Switching CTC output OFF
+
+
 
 
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
@@ -683,72 +673,6 @@ def START_EXPERIMENT():
     if not TO_ABORT:
         SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
         print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
-
-
-
-
-def GET_RESISTANCE_WITH_PULSE(time):
-    voltage_and_time = []
-    Time = 0
-    current = 10e-3
-    # Start a pulses with each 1ms long and 1ms gap...
-    # Get voltage values 
-    voltage_reading = GET_PRESENT_VOLTAGE_READING() # Have to do this every ms...
-    voltage_and_time.append((Time, voltage_reading))
-    # store time in ms and voltage values...
-
-    # Get resistance 
-    for i in range(len(voltage_and_time)):
-        ADD_POINT_TO_GRAPH(voltage_and_time[i][1] / current, voltage_and_time[i][0], ind = -1)
-
-
-
-######### Use this if required...
-        
-# import visa
-# import time
-
-# def configure_current_source(visa_address):
-#     rm = visa.ResourceManager()
-#     current_source = rm.open_resource(visa_address)
-    
-#     # Set source to current mode
-#     SEND_COMMAND_TO_CURRENT_SOURCE(":SOUR:FUNC CURR")
-    
-#     # Set current level to 1 mA
-#     SEND_COMMAND_TO_CURRENT_SOURCE(":SOUR:CURR:LEV 0.001")
-    
-#     # Set pulse width to 1 millisecond
-#     SEND_COMMAND_TO_CURRENT_SOURCE(":SOUR:PULS:WIDTH 0.001")
-    
-#     # Set pulse period to 2 milliseconds (1 ms pulse + 1 ms gap)
-#     SEND_COMMAND_TO_CURRENT_SOURCE(":SOUR:PULS:PER 0.002")
-    
-#     return current_source
-
-# def start_pulse_sequence(current_source):
-#     SEND_COMMAND_TO_CURRENT_SOURCE(":OUTP ON")  # Turn output on
-    
-# def stop_pulse_sequence(current_source):
-#     SEND_COMMAND_TO_CURRENT_SOURCE(":OUTP OFF")  # Turn output off
-    
-# def main():
-#     visa_address = "GPIB0::1::INSTR"  # Update with the correct VISA address
-    
-#     current_source = configure_current_source(visa_address)
-    
-#     try:
-#         start_pulse_sequence(current_source)
-#         print("Pulse sequence started.")
-#         time.sleep(10)  # Run the pulse sequence for 10 seconds (adjust as needed)
-#     except KeyboardInterrupt:
-#         print("Pulse sequence stopped by user.")
-#     finally:
-#         stop_pulse_sequence(current_source)
-#         current_source.close()
-
-
-
 
 
 
