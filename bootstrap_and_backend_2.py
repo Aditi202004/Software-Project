@@ -422,6 +422,7 @@ def GET_PRESENT_TEMPERATURE_OF_CTC():
 
 # Function to Achieve and Stabilize required temperature...
 def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature): 
+    global HIGH_POWER_LIMIT_OF_CTC
 
     print("*************************************************************************")
     print("===> Achieving", required_temperature, "K...")
@@ -431,13 +432,17 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
     retry_number = 0
     temperature_before_stabilizing = GET_PRESENT_TEMPERATURE_OF_CTC()
+    # initial_temperature_difference = required_temperature - temperature_before_stabilizing
 
     lower_bound = required_temperature - THRESHOLD
     upper_bound = required_temperature + THRESHOLD
 
+    time_elapsed = 0
+
     while not TO_ABORT:
 
         time.sleep(3)
+        time_elapsed+=3
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
         if lower_bound <= present_temperature <= upper_bound :
@@ -446,9 +451,11 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
         else:
             print("Current Temperature is", present_temperature, "... Waiting to achieve required temperature ", required_temperature, "K...")
-            retry_number += 1
+            if abs(present_temperature - temperature_before_stabilizing) < 0.03*time_elapsed: # 0.04 is the max ramp rate currently set in CTC 
+                retry_number += 1
+            else: retry_number = 0                
 
-        if retry_number == 50 : # Increasing the high limit of power if possible...
+        if retry_number == 10 : # Increasing the high limit of power if possible...
 
             if HIGH_POWER_LIMIT_OF_CTC + INCREASE_POWER_LIMIT_OF_CTC <= MAXIMUM_POWER_LIMIT_OF_CTC :
 
@@ -459,7 +466,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
                     print(required_temperature," K is not achieving by current high power limit of CTC...")
                     print("So, Increased high power limit of CTC by "+str(INCREASE_POWER_LIMIT_OF_CTC)," W...")
-                    print("New High power limit of CTC is ",HIGH_POWER_LIMIT_OF_CTC,"...")
+                    print("New High power limit of CTC is ", HIGH_POWER_LIMIT_OF_CTC,"...")
 
                     # We are starting again by increasing high power limit of ctc... So...
                     retry_number = 0 
