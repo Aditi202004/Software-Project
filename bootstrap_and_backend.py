@@ -4,7 +4,7 @@
 
 
 # Required imports for connecting the device
-# import pyvisa, serial, telnetlib
+# import pyvisa, serial, telnetlibw
 
 
 # Required imports for plotting the graph
@@ -38,6 +38,14 @@ from datetime import datetime
 import os
 from os.path import exists
 from os import mkdir
+
+SETTINGS={"device_name":"GPIB0::6::INSTR",
+"output_dir":"./",
+"ctc_address":"192.168.0.2",
+"ctc_telnet":"23",
+"rs232":"COM 1",
+"max_retry":5,}
+
 
 ####-------------------------------------- Graph Plotting Part -------------------------------------------------####
 
@@ -859,9 +867,10 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
      
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
-  
+    SETTINGS_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
+    SETTINGS_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2.7)
     SETTINGS_WIDGET.title("Experiment Settings")
-    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 270))
+    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(SETTINGS_WIDGET_Temp_width,SETTINGS_WIDGET_Temp_height))
     SETTINGS_WIDGET.resizable(False,False)
     SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
     SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
@@ -891,7 +900,7 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
         else:
             SETTINGS_WIDGET.destroy()
           
-    Button(SETTINGS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(90,0), pady=20)
+    Button(SETTINGS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(70,0), pady=20)
     
      
     
@@ -906,7 +915,10 @@ def OPEN_SETTINGS_WIDGET():
     SETTINGS_WIDGET = Toplevel(INTERFACE)
     # SETTINGS_WIDGET.config()
     SETTINGS_WIDGET.title("Settings")
-    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 350))
+    # SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 350))
+    SETTINGS_WIDGET_width=int(INTERFACE.winfo_width()/2)
+    SETTINGS_WIDGET_height=int(INTERFACE.winfo_height()/2.5)
+    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(SETTINGS_WIDGET_width,SETTINGS_WIDGET_height))
     SETTINGS_WIDGET.resizable(False,False)
     SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
     SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
@@ -968,6 +980,7 @@ def OPEN_SETTINGS_WIDGET():
     SETTINGS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SETTINGS_WIDGET))
     SETTINGS_WIDGET.grab_set()
     SETTINGS_WIDGET.mainloop()
+
 
 
 # Function to display the info of devices...
@@ -1256,7 +1269,7 @@ if __name__=="__main__":
 
     # Temperature Tab
     TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white", bg=tab_bg)
-    TERMPERATURE_LFRAME.grid(row=0, column=0, rowspan=3,sticky="nsew", padx=350, pady=150)
+    TERMPERATURE_LFRAME.grid(row=0, column=0, rowspan=3,sticky="nsew", padx=(180,60), pady=150)
 
     SELECT_TEMP_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Temperature(s)(in K)", fg="white", bg=tab_bg)
     SELECT_TEMP_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
@@ -1279,6 +1292,34 @@ if __name__=="__main__":
 
     PULSE_INTERVAL_ENTRY = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
     PULSE_INTERVAL_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    
+     #CURRENT_CONTROLS
+    CURRENT_CONTROLS_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Current Controls", fg="white", bg=tab_bg)
+    CURRENT_CONTROLS_LFRAME.grid(row=0, column=1, rowspan=4, sticky="nsew", padx=(60,180), pady=100)
+
+    HIGH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="High current of pulse(A)", fg="white", bg=tab_bg)
+    HIGH_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    ENTRY_OF_HIGH = Entry(HIGH_LFRAME, font=(10), width=20)
+    ENTRY_OF_HIGH.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
+    
+    LOW_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Low current of pulse(A)", fg="white", bg=tab_bg)
+    LOW_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    ENTRY_OF_LOW = Entry(LOW_LFRAME, font=(10), width=20)
+    ENTRY_OF_LOW.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+   
+    WIDTH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Width of the pulse(s)", fg="white", bg=tab_bg)
+    WIDTH_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    ENTRY_OF_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
+    ENTRY_OF_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    
+    PULSE_INTERVAL_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white", bg=tab_bg)
+    PULSE_INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    ENTRY_OF_PULSE_INTERVAL = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
+    ENTRY_OF_PULSE_INTERVAL.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
 
 
