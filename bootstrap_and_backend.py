@@ -4,7 +4,7 @@
 
 
 # Required imports for connecting the device
-import pyvisa, serial, telnetlib
+# import pyvisa, serial, telnetlib
 
 
 # Required imports for plotting the graph
@@ -43,7 +43,7 @@ from os import mkdir
 
 # Array to store the lines...
 ARRAY_OF_PLOTTING_LINES = [] 
-
+ARRAY_OF_PLOTTING_LINES_R_vs_Time=[]
 # Function to updates the content in the annotation...
 def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
     x, y = ARRAY_OF_PLOTTING_LINES.get_data()
@@ -109,7 +109,22 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
     CANVAS_OF_GRAPH.draw_idle()
     if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
     if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
+def ADD_POINT_TO_GRAPH_R_vs_Time(NEW_X_COORDINATE, NEW_Y_COORDINATE, selected_temperature):
+    global ARRAY_OF_PLOTTING_LINES, CANVAS_OF_GRAPH
+    # global selected_temperature
+    # Find the plotting line corresponding to the selected temperature
+    for line in ARRAY_OF_PLOTTING_LINES:
+        if line.get_label() == selected_temperature:
+            PLOTTING_LINE = line
+            break
 
+    # Append the new data points to the plotting line
+    PLOTTING_LINE.set_data(np.append(PLOTTING_LINE.get_xdata(), NEW_X_COORDINATE), np.append(PLOTTING_LINE.get_ydata(), NEW_Y_COORDINATE))
+    
+    # Update the view limits as per the newly added points
+    GRAPH.relim()
+    GRAPH.autoscale_view()
+    CANVAS_OF_GRAPH.draw_idle()
 # Function to save the graph plot image to selected directory...
 def SAVE_THE_GRAPH_INTO(directory):
     IMAGE_FILE_NAME = "Plot of "+ TITLE + ".png"
@@ -118,9 +133,7 @@ def SAVE_THE_GRAPH_INTO(directory):
 
 
 
-# temperature_combobox = ttk.Combobox(temperature_lframe, font=("Arial", 10), state = 'readonly')
-# temperature_combobox.grid(row=3, column=0, pady=10, padx=10, ipady=5)
-# Function to setup the Graph in Graph tab...
+
 def SET_R_vs_Temp_Graph(GRAPH_TAB):
 
     global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
@@ -182,79 +195,75 @@ def SET_R_vs_Temp_Graph(GRAPH_TAB):
     FRAME_OF_GRAPH.pack()
 
 def SET_R_vs_Time_Graph(GRAPH_TAB):
-
-    global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT,text_var
+    global FRAME_OF_GRAPH_R_vs_Time, LABEL_OF_GRAPH_R_vs_Time, FIGURE_OF_GRAPH_R_vs_Time, CANVAS_OF_GRAPH_R_vs_Time, GRAPH_R_vs_Time, TOOLBAR_OF_GRAPH_R_vs_Time, Y_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time, X_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time
     global temperature_combobox
+    global selected_temperature
     
-    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
-    text_var = tk.StringVar()
-    text_var.set("Initial Text")  # Set initial text
+    FRAME_OF_GRAPH_R_vs_Time = tb.Frame(GRAPH_TAB) 
 
+    LABEL_OF_GRAPH_R_vs_Time = tk.Label(FRAME_OF_GRAPH_R_vs_Time, text="Current Temperature :") 
+    LABEL_OF_GRAPH_R_vs_Time.config(font=('Times', 20)) # Adding label/title for the graph
 
-    
-    LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text="Current Temperature :") 
-    # LABEL_OF_TERMINAL = tk.Label(FRAME_OF_GRAPH,textvariable=text_var)
-    # update_label_text()
-    LABEL_OF_GRAPH.config(font=('Times', 20)) # Adding label/title for the graph
-
-    temperature_combobox = tb.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+    temperature_combobox = tb.Combobox(FRAME_OF_GRAPH_R_vs_Time, font=("Arial", 10), state='readonly')
 
     # Function to update label with combobox value
     def update_label(*args):
         selected_temperature = temperature_combobox.get()
-        LABEL_OF_GRAPH.config(text="Temperature is " + selected_temperature+ " K")
+        
+        LABEL_OF_GRAPH_R_vs_Time.config(text="Current Temperature : " + selected_temperature+ " K")
+        
+        # Check if plotting line already exists for the selected temperature
+        plotting_line_exists = False
+        for line in ARRAY_OF_PLOTTING_LINES_R_vs_Time:
+            if line.get_label() == selected_temperature:
+                plotting_line_exists = True
+                break
+        
+        # If plotting line doesn't exist, create a new one
+        if not plotting_line_exists:
+            new_plotting_line, = GRAPH_R_vs_Time.plot([], [], linestyle="-", marker="o")
+            new_plotting_line.set_label(selected_temperature)
+            ARRAY_OF_PLOTTING_LINES_R_vs_Time.append(new_plotting_line)
+
+        # Adjusting the limits of x and y axes to display in the first quadrant only
+        GRAPH_R_vs_Time.set_xlim(0, None)  # X-axis starts from 0 and extends towards positive infinity
+        GRAPH_R_vs_Time.set_ylim(0, None)  # Y-axis starts from 0 and extends towards positive infinity
+        
+        CANVAS_OF_GRAPH_R_vs_Time.draw_idle()
 
     # Associate the update_label function with the combobox
     temperature_combobox.bind("<<ComboboxSelected>>", update_label)
 
+    FIGURE_OF_GRAPH_R_vs_Time = Figure(figsize=(6, 4.5))  # Adjust the figsize parameter to set a smaller figure size (e.g., 4x3 inches)
 
-    FIGURE_OF_GRAPH = Figure(figsize=(6, 4.5))  # Adjust the figsize parameter to set a smaller figure size (e.g., 4x3 inches)
+    CANVAS_OF_GRAPH_R_vs_Time = FigureCanvasTkAgg(FIGURE_OF_GRAPH_R_vs_Time, master=FRAME_OF_GRAPH_R_vs_Time)
 
-    CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master=FRAME_OF_GRAPH)
-   
+    GRAPH_R_vs_Time = FIGURE_OF_GRAPH_R_vs_Time.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
 
+    GRAPH_R_vs_Time.set_xlabel("TIME") # Set X label
+    GRAPH_R_vs_Time.set_ylabel("RESISTANCE") # Set Y label
+    GRAPH_R_vs_Time.grid() # Added grids to graph
+    GRAPH_R_vs_Time.axhline(linewidth=2, color='black') # Added X axis
+    GRAPH_R_vs_Time.axvline(linewidth=2, color='black') # Added Y axis
 
-    GRAPH = FIGURE_OF_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
+    TOOLBAR_OF_GRAPH_R_vs_Time = NavigationToolbar2Tk(CANVAS_OF_GRAPH_R_vs_Time, FRAME_OF_GRAPH_R_vs_Time) # Added toolbar for graph
+    TOOLBAR_OF_GRAPH_R_vs_Time.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
 
-    GRAPH.set_xlabel("TIME") # Set X label
-    GRAPH.set_ylabel("RESISTANCE") # Set Y label
-    GRAPH.grid() # Added grids to graph
-    GRAPH.axhline(linewidth=2, color='black') # Added X axis
-    GRAPH.axvline(linewidth=2, color='black') # Added Y axis
+    Y_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time = None
+    X_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time = None
 
-    ANNOTATION = GRAPH.annotate("", xy=(0,0), xytext=(-150,25),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")) # Annotion means when we hover cursor to a point a small box will appear displaying the x and y co-ordinates
-
-    ANNOTATION.set_visible(False) # Making it invisible initially (We will make it visible when we hover the cursor in DISPLAY_ANNOTATION_WHEN_HOVER Function)
-
-    TOOLBAR_OF_GRAPH = NavigationToolbar2Tk(CANVAS_OF_GRAPH, FRAME_OF_GRAPH) # Added toolbar for graph
-    TOOLBAR_OF_GRAPH.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
-
-    Y_COORDINATE_OF_LAST_ADDED_POINT = None
-    X_COORDINATE_OF_LAST_ADDED_POINT = None
-
-    
-    PLOTTING_LINE, = GRAPH.plot([], [], color="orange", linestyle="-", marker="o", markerfacecolor="blue", markeredgewidth=1, markeredgecolor="black" ) # Plotted an empty graph...
-    ARRAY_OF_PLOTTING_LINES.append(PLOTTING_LINE) # Appending the line(plot) to ARRAY_OF_PLOTTING_LINES...
-    #  Adjusting the limits of x and y axes to display in the first quadrant only
-    GRAPH.set_xlim(0, None)  # X-axis starts from 0 and extends towards positive infinity
-    GRAPH.set_ylim(0, None)  # Y-axis starts from 0 and extends towards positive infinity
-
-
+    ARRAY_OF_PLOTTING_LINES_R_vs_Time = []  # Initialize array to hold plotting lines
 
     # Making zooming, hovering by mouse
-    CANVAS_OF_GRAPH.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_OF_GRAPH, TOOLBAR_OF_GRAPH))
-    CANVAS_OF_GRAPH.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
-    CANVAS_OF_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES
-    , ANNOTATION))
-
+    CANVAS_OF_GRAPH_R_vs_Time.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_OF_GRAPH_R_vs_Time, TOOLBAR_OF_GRAPH_R_vs_Time))
+    CANVAS_OF_GRAPH_R_vs_Time.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
 
     # Making Canvas, Label, Frame visible in the tab by packing
-    
     temperature_combobox.pack(padx=10, pady=(30,20))
-    LABEL_OF_GRAPH.pack(pady=(0,0))
-    # LABEL_OF_TERMINAL.pack(pady=(0,0)) 
-    CANVAS_OF_GRAPH.get_tk_widget().pack()
-    FRAME_OF_GRAPH.pack()
+    LABEL_OF_GRAPH_R_vs_Time.pack(pady=(0,0))
+    CANVAS_OF_GRAPH_R_vs_Time.get_tk_widget().pack()
+    FRAME_OF_GRAPH_R_vs_Time.pack()
+
 
 
 ####---------------------------------------- Experiment Part ---------------------------------------------------####
@@ -1028,10 +1037,10 @@ if __name__=="__main__":
     INTERFACE = tb.Window(themename="yeti") # Made a root Interface
     # style = tb.Style("yeti")
     INTERFACE.wm_title("TD-Controller") # Set title to the interface widget
-    INTERFACE.geometry("1000x700") # Set Geometry of the interface widget
+    # INTERFACE.geometry("1000x700") # Set Geometry of the interface widget
     INTERFACE.grid_columnconfigure(0, weight=1) 
     INTERFACE.grid_rowconfigure(0, weight=1)
-    
+    INTERFACE.grid_columnconfigure(1, weight=0) 
     
     # root = tb.Tk()
     
@@ -1210,31 +1219,41 @@ if __name__=="__main__":
     ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
     ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
  
-
-    # Drive
+ # Drive
     DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white", bg=tab_bg)
-    DRIVE_LFRAME.grid(row=1, column=0, rowspan=3, sticky="nsew", padx=300, pady=30)
+    DRIVE_LFRAME.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=300, pady=30)
 
     CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white", bg=tab_bg)
     CURRENT_START_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_START_CURRENT = Entry(CURRENT_START_LFRAME, font=(10), width=20)
-    ENTRY_OF_START_CURRENT.grid(row=0, column=0, rowspan=2, pady=10, padx=10, ipady=5)
-   
+    ENTRY_OF_START_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
+    
+    CURRENT_STOP_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Stop Value (A)", fg="white", bg=tab_bg)
+    CURRENT_STOP_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Number of Current Intervals at a Temperature", fg="white", bg=tab_bg)
-    INTERVALNO_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_STOP_CURRENT = Entry(CURRENT_STOP_LFRAME, font=(10), width=20)
+    ENTRY_OF_STOP_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+   
+    INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Count(Number of Current Intervals at a Temperature)", fg="white", bg=tab_bg)
+    INTERVALNO_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(INTERVALNO_LFRAME, font=(10), width=20)
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
 
-    INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Increase Current Interval at a Temperature(A)", fg="white", bg=tab_bg)
-    INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+    INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Step (Increase Current Interval at a Temperature)(A)", fg="white", bg=tab_bg)
+    INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(INTERVAL_LFRAME, font=(10), width=20)
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
+    DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay (Pulse Width)", fg="white", bg=tab_bg)
+    DELAY_LFRAME.grid(row=4, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    ENTRY_OF_DELAY = Entry(DELAY_LFRAME, font=(10), width=20)
+    ENTRY_OF_DELAY.grid(row=0, column=0,  pady=10, padx=10,ipady=5,ipadx=20,sticky="w")
+
     # Temperature Tab
     TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white", bg=tab_bg)
     TERMPERATURE_LFRAME.grid(row=0, column=0, rowspan=3,sticky="nsew", padx=350, pady=150)
