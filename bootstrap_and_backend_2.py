@@ -798,7 +798,7 @@ def CHECK_AND_SET_ALL_VALUES():
 
 
 
-def merge_sorted_arrays(arr1, arr2):
+def MERGE_BOTH_TEMPERATURES(arr1, arr2):
     final_arr = []
     n = len(arr1)
     m = len(arr2)
@@ -827,8 +827,8 @@ def START_EXPERIMENT():
             curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
             
     if int(TIME_EXPERIMENT.get()):
-        ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting 
-        ARRAY_OF_ALL_TEMPERATURES = merge_sorted_arrays(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
+        ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting the array
+        ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURES(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
 
 
     if not TO_ABORT:
@@ -982,10 +982,10 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
     label.grid(row = 0,column = 0,  sticky = "we",  pady = 25)
     label.config(font = ("Arial", 12, "bold"))
     
-    ENTRY_OF_TIME_EXPERIMENT = IntVar()
+    TIME_EXPERIMENT = IntVar()
     Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
    
-    ENTRY_OF_TEMPERATURE_EXPERIMENT = IntVar()
+    TEMPERATURE_EXPERIMENT = IntVar()
     Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
     def confirm_settings():
