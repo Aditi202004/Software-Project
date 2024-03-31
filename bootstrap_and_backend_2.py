@@ -1094,14 +1094,14 @@ if __name__=="__main__":
     INTERFACE.grid_rowconfigure(0, weight=1)
     INTERFACE.grid_columnconfigure(1, weight=0) 
     
-    # root = tb.Tk()
+    # root = tk.Tk()
     
     
  
   
 
     # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
-    SIDE_BAR = tb.Frame(INTERFACE,bootstyle="info")
+    SIDE_BAR = tk.Frame(INTERFACE,bootstyle="info")
     SIDE_BAR.grid(row=0, column=1, rowspan=2, sticky="nswe")
 
     SETTINGS_BUTTON = Button(SIDE_BAR, text = "Settings", height = 2, command = OPEN_SETTINGS_WIDGET)
@@ -1123,13 +1123,13 @@ if __name__=="__main__":
     TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
-    CONTROL_PANEL = tb.Notebook(INTERFACE,bootstyle="primary")
+    CONTROL_PANEL = tk.Notebook(INTERFACE,bootstyle="primary")
 
-    CTC_TAB = tb.Frame(CONTROL_PANEL) 
-    CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
-    TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
-    GRAPH_R_vs_Temp = tb.Frame(CONTROL_PANEL) 
-    GRAPH_R_vs_Time_final  = tb.Frame(CONTROL_PANEL) 
+    CTC_TAB = tk.Frame(CONTROL_PANEL) 
+    CURRENT_SOURCE_TAB = tk.Frame(CONTROL_PANEL) 
+    TEMPERATURE_TAB = tk.Frame(CONTROL_PANEL)
+    GRAPH_R_vs_Temp = tk.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Time_final  = tk.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
@@ -1261,7 +1261,7 @@ if __name__=="__main__":
 
     # Complete Cycle entry
     ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE_CHECKBUTTON=tk.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
     COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
  # Title
