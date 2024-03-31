@@ -492,51 +492,61 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             print("Temperature is not stabilized yet... Retrying...")
 
 
-# Function to get the current resistance of the sample at current temperature...
-def GET_PRESENT_RESISTANCE():
+# Function for getting resistance at a particular instant
+def GET_RESISTANCES():
+    full_data = CURRENT_SOURCE.query("TRACe:DATA?") # collects all data(resistance and time) in string format
+    full_data = full_data[:-1].split(",") #splitting the string and storing in array in {resistance, time} repetition
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("OUTP ON") # Switching Current_Source output ON...
+    # seperating resistances and time stamps 
+    resistance_readings = []
+    time_stamps = []
+    for i,dat in enumerate(full_data):
+        if(i%2==0):
+            resistance_readings.append(float(dat))
+        else:
+            time_stamps.append(float(dat))
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
+    return resistance_readings, time_stamps
 
-    reading_number = 0
-    present_current = START_CURRENT
 
-    resistance_readings = [] # Array to store resistance values at five different DC Currents...
+# Function for getting resistance at a particular temperature for TEMP vs RESISTANCE graph
+def GET_PRESENT_RESISTANCE_SWEEP():
+    CURRENT_SOURCE.write("SOUR:PDEL:SWE ON") # sweeping ON
+    CURRENT_SOURCE.write(("SOURce:PDELta:ARM")) # arming
+    CURRENT_SOURCE.write(("INIT:IMM")) # triggering
 
-    while(reading_number < NUMBER_OF_CURRENT_INTERVALS):
+    to_sleep_time = (NUMBER_OF_CURRENT_INTERVALS - 1) + 1.5
+    time.sleep(to_sleep_time) # time + 1.50
 
-        # Sending command to set the output current to present_current...
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR " + str(present_current))
+    CURRENT_SOURCE.write(("SOUR:SWE:ABOR")) # stops the sweeping process
 
-        time.sleep(3) # Waiting some time...
+    full_data = CURRENT_SOURCE.query("TRACe:DATA?") # collects all data(resistance and time) in string format
+    full_data = full_data[:-1].split(",") #splitting the string and storing in array in {resistance, time} repetition
 
-        # Get the voltage reading...
-        positive_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
-
-        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",abs(positive_cycle_voltage) / present_current, "...")
-
-        resistance_readings.append(abs(positive_cycle_voltage) / present_current)
-
-        # Sending command to set the output current to -present_current...
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR -" + str(present_current))
-
-        time.sleep(3) # Waiting some time...
-
-        # Get the voltage reading...
-        negative_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
-        resistance_readings.append(abs(negative_cycle_voltage) / present_current)
-
-        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",(abs(positive_cycle_voltage) / present_current), "...")
-
-        present_current += INCREASING_INTERVAL_OF_CURRENT
-        reading_number += 1
-    
-    SEND_COMMAND_TO_CURRENT_SOURCE("OUTP OFF") # Switching Current_Source output OFF
-    
-    if TO_ABORT: return float('-inf')
+    # seperating resistances and time stamps 
+    resistance_readings, = GET_RESISTANCES()
 
     return sum(resistance_readings) / len(resistance_readings)
+
+
+# Function for getting resistance at a particular temperature for TIME vs RESISTANCE graph at that temp
+def GET_RESISTANCES_AT_ONE_TEMP():
+    CURRENT_SOURCE.write("SOUR:PDEL:SWE OFF") # sweeping OFF
+    CURRENT_SOURCE.write(("SOURce:PDELta:ARM")) # arming
+    CURRENT_SOURCE.write(("INIT:IMM")) # triggering
+
+    time.sleep(1.5) # time required to execute above three commands by the device
+    count = 0
+    end_count = MEASURING_TIME / 2 
+
+    while not (count == end_count) :
+        count+=1
+        time.sleep(2)
+        resistance_readings, time_stamps = GET_RESISTANCES()
+
+        # code to save to csv and plot the points in resistance_readings and time_stamps in that graph of that temperature
+
+    CURRENT_SOURCE.write(("SOUR:SWE:ABOR")) # stops the sweeping process
 
 
 # Function to write the temperature and resistance values into csv file
@@ -582,7 +592,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
         if TO_ABORT: break
 
         # Getting current resistance of the sample at current temmperature...
-        present_resistance = GET_PRESENT_RESISTANCE() 
+        present_resistance = GET_PRESENT_RESISTANCE_SWEEP() 
         
         if TO_ABORT: break
 
@@ -1238,18 +1248,18 @@ if __name__=="__main__":
     TEMPERATURES_ENTRY.bind("<KeyRelease>", UPDATE_COMBOBOX) 
    
 
-    TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white", bg=tab_bg)
-    TIME_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+    MEASURING_TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white", bg=tab_bg)
+    MEASURING_TIME_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    TIME_ENTRY = Entry(TIME_LFRAME, font=(10), width=20)
-    TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
+    MEASURING_TIME_ENTRY = Entry(MEASURING_TIME_LFRAME, font=(10), width=20)
+    MEASURING_TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
     
 
-    TIME_INTERVAL_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white", bg=tab_bg)
-    TIME_INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+    PULSE_INTERVAL_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white", bg=tab_bg)
+    PULSE_INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    TIME_INTERVAL_ENTRY = Entry(TIME_INTERVAL_LFRAME, font=(10), width=20)
-    TIME_INTERVAL_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    PULSE_INTERVAL_ENTRY = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
+    PULSE_INTERVAL_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
 
 

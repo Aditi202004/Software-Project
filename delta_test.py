@@ -15,8 +15,13 @@ CURRENT_SOURCE.write(("SOUR:CURR:STOP 14e-4"))
 CURRENT_SOURCE.write(("SOUR:CURR:STEP 1e-4"))
 CURRENT_SOURCE.write(("SOUR:DEL 1"))
 CURRENT_SOURCE.write("SOUR:SWE:COUN 1")
-
 CURRENT_SOURCE.write(("UNIT:VOLT:DC OHMS"))
+
+
+
+
+
+# -----------------------------------------------------
 CURRENT_SOURCE.write(("SOURce:PDELta:ARM"))
 CURRENT_SOURCE.write(("INIT:IMM"))
 time.sleep(7) # time + 1.50
