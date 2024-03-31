@@ -862,17 +862,19 @@ def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY):
         SETTINGS["Directory"] = directory
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
         LABEL_OF_OUTPUT_DIRECTORY.config(text = directory)
-def CONNECTION_SETTINGS():
-    CONNECTION_WIDGET = Toplevel(INTERFACE)
 
-    CONNECTION_WIDGET.title("Make Sure")
-    CONNECTION_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
-    CONNECTION_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
-    CONNECTION_WIDGET.geometry(CENTER_THE_WIDGET(CONNECTION_WIDGET_Temp_width, CONNECTION_WIDGET_Temp_height))
-    CONNECTION_WIDGET.resizable(False, False)
-    CONNECTION_WIDGET.grid_columnconfigure(0, weight=1)
-    CONNECTION_WIDGET.grid_columnconfigure(1, weight=1)
-    title = Label(CONNECTION_WIDGET, text="Make Sure the Following ")
+
+def DISPLAY_SETTINGS():
+    REQUIREMENTS_WIDGET = Toplevel(INTERFACE)
+
+    REQUIREMENTS_WIDGET.title("Make Sure")
+    REQUIREMENTS_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
+    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
+    REQUIREMENTS_WIDGET.geometry(CENTER_THE_WIDGET(REQUIREMENTS_WIDGET_Temp_width, REQUIREMENTS_WIDGET_Temp_height))
+    REQUIREMENTS_WIDGET.resizable(False, False)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(0, weight=1)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(1, weight=1)
+    title = Label(REQUIREMENTS_WIDGET, text="Make Sure the Following ")
     title.grid(row=0, column=0, sticky="wens", pady=(10, 10))
     title.config(font=("Times New Roman", 15, "bold"))
 
@@ -887,20 +889,20 @@ def CONNECTION_SETTINGS():
     • baudrate of nanovoltmeter and current source should be 
       19.2K and flow control on nanovoltmeter: NONE
     """
-    label = Label(CONNECTION_WIDGET, text=label_text, fg="white", justify='left', wraplength=500)
+    label = Label(REQUIREMENTS_WIDGET, text=label_text, fg="white", justify='left', wraplength=500)
 
     label.grid(row=1, column=0, sticky="wens", pady=(0, 10))
     label.config(font=("Times New Roman", 12))
 
     def confirm_connections():
-        CONNECTION_WIDGET.destroy()
+        REQUIREMENTS_WIDGET.destroy()
 
-    Button(CONNECTION_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(15, 0), pady=20)
+    Button(REQUIREMENTS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(15, 0), pady=20)
 
-    CONNECTION_WIDGET.protocol("WM_DELETE_WINDOW", lambda: CLOSE_WIDGET(CONNECTION_WIDGET))
-    CONNECTION_WIDGET.transient(INTERFACE)
-    CONNECTION_WIDGET.grab_set()
-    INTERFACE.wait_window(CONNECTION_WIDGET)
+    REQUIREMENTS_WIDGET.protocol("WM_DELETE_WINDOW", lambda: CLOSE_WIDGET(REQUIREMENTS_WIDGET))
+    REQUIREMENTS_WIDGET.transient(INTERFACE)
+    REQUIREMENTS_WIDGET.grab_set()
+    INTERFACE.wait_window(REQUIREMENTS_WIDGET)
 
 def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
     
@@ -1385,7 +1387,7 @@ if __name__=="__main__":
     
     # connection_window = CONNECTION_SETTINGS()
 
-    # # Wait for the CONNECTION_WIDGET to be destroyed
+    # # Wait for the REQUIREMENTS_WIDGET to be destroyed
     # INTERFACE.wait_window(connection_window)
     # print("Hello")
     

@@ -936,33 +936,42 @@ def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY):
 def DISPLAY_REQUIREMENTS():
     REQUIREMENTS_WIDGET = Toplevel(INTERFACE)
 
-    REQUIREMENTS_WIDGET.title("Make Sure the following...")
-    REQUIREMENTS_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
-    REQUIREMENTS_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2.7)
+    REQUIREMENTS_WIDGET.title("Make Sure")
+    REQUIREMENTS_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
+    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
     REQUIREMENTS_WIDGET.geometry(CENTER_THE_WIDGET(REQUIREMENTS_WIDGET_Temp_width, REQUIREMENTS_WIDGET_Temp_height))
-    REQUIREMENTS_WIDGET.resizable(False,False)
-    REQUIREMENTS_WIDGET.grid_columnconfigure(0,weight=1)
-    REQUIREMENTS_WIDGET.grid_columnconfigure(1,weight=1)
+    REQUIREMENTS_WIDGET.resizable(False, False)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(0, weight=1)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(1, weight=1)
+    title = Label(REQUIREMENTS_WIDGET, text="Make Sure the Following ")
+    title.grid(row=0, column=0, sticky="wens", pady=(10, 10))
+    title.config(font=("Times New Roman", 15, "bold"))
 
-    label=Label(REQUIREMENTS_WIDGET, text = """a) gpib : current source to cpu
-	b) rs232 : male-to-male between curr source and voltmeter 
-	c) trigger link cable : between curr source and voltmeter
-	d) telnet : ctc to cpu
-	e) set GPIB interface for current source
-	f) set RS232 interface for nanovoltmeter
-	g) baudrate of nanovoltmeter and current source should be 19.2K and flow control on nanovoltmeter: NONE""", fg = "white", bg = "#575757")
-    label.grid(row = 0,column = 0,  sticky = "we",  pady = 25)
-    label.config(font=("Arial", 12, "bold"))
+    label_text = """
+    • GPIB: current source to CPU
+    • RS-232: male-to-male between current source and 
+      voltmeter 
+    • Trigger Llink Cable: between current source and voltmeter
+    • Telnet: CTC to CPU
+    • set GPIB interface for current source
+    • set RS-232 interface for nanovoltmeter
+    • baudrate of nanovoltmeter and current source should be 
+      19.2K and flow control on nanovoltmeter: NONE
+    """
+    label = Label(REQUIREMENTS_WIDGET, text=label_text, fg="white", justify='left', wraplength=500)
+
+    label.grid(row=1, column=0, sticky="wens", pady=(0, 10))
+    label.config(font=("Times New Roman", 12))
 
     def confirm_connections():
         REQUIREMENTS_WIDGET.destroy()
 
-    Button(REQUIREMENTS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(70,0), pady=20)
-    
-    REQUIREMENTS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(REQUIREMENTS_WIDGET))
-    REQUIREMENTS_WIDGET.grab_set()
-    REQUIREMENTS_WIDGET.mainloop()
+    Button(REQUIREMENTS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(15, 0), pady=20)
 
+    REQUIREMENTS_WIDGET.protocol("WM_DELETE_WINDOW", lambda: CLOSE_WIDGET(REQUIREMENTS_WIDGET))
+    REQUIREMENTS_WIDGET.transient(INTERFACE)
+    REQUIREMENTS_WIDGET.grab_set()
+    INTERFACE.wait_window(REQUIREMENTS_WIDGET)
 
 # Function for getting what experiments user wants to do from user...
 def DISPLAY_SELECTING_EXPERIMENTS_WIDGET(): 
