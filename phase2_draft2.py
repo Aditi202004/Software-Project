@@ -762,7 +762,7 @@ def TRIGGER():
 
             print("Checking Devices....")
             Thread(target = START_EXPERIMENT).start() # Starting the experiment and threading to make GUI accessable even after the experiment is start... 
-        
+
 
 # Function to abort the experiment
 def ABORT_TRIGGER():
