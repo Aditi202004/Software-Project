@@ -798,7 +798,7 @@ def CHECK_AND_SET_ALL_VALUES():
 
 
 
-def merge_sorted_arrays(arr1, arr2):
+def MERGE_BOTH_TEMPERATURES(arr1, arr2):
     final_arr = []
     n = len(arr1)
     m = len(arr2)
@@ -827,8 +827,8 @@ def START_EXPERIMENT():
             
     if int(TIME_EXPERIMENT.get()):
         ARRAY_OF_SELECTED_TEMPERATURES = temperature_combobox["values"]
-        ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting 
-        ARRAY_OF_ALL_TEMPERATURES = merge_sorted_arrays(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
+        ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting the array
+        ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURES(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
 
 
     if not TO_ABORT:
