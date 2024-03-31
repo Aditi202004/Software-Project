@@ -4,7 +4,7 @@
 
 
 # Required imports for connecting the device
-# import pyvisa, serial, telnetlibw
+import pyvisa, telnetlib
 
 
 # Required imports for plotting the graph
@@ -38,13 +38,6 @@ from datetime import datetime
 import os
 from os.path import exists
 from os import mkdir
-
-SETTINGS={"device_name":"GPIB0::6::INSTR",
-"output_dir":"./",
-"ctc_address":"192.168.0.2",
-"ctc_telnet":"23",
-"rs232":"COM 1",
-"max_retry":5,}
 
 
 ####-------------------------------------- Graph Plotting Part -------------------------------------------------####
@@ -117,6 +110,9 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
     CANVAS_OF_GRAPH.draw_idle()
     if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
     if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
+
+
+# 
 def ADD_POINT_TO_GRAPH_R_vs_Time(NEW_X_COORDINATE, NEW_Y_COORDINATE, selected_temperature):
     global ARRAY_OF_PLOTTING_LINES, CANVAS_OF_GRAPH
     # global selected_temperature
@@ -133,6 +129,8 @@ def ADD_POINT_TO_GRAPH_R_vs_Time(NEW_X_COORDINATE, NEW_Y_COORDINATE, selected_te
     GRAPH.relim()
     GRAPH.autoscale_view()
     CANVAS_OF_GRAPH.draw_idle()
+
+
 # Function to save the graph plot image to selected directory...
 def SAVE_THE_GRAPH_INTO(directory):
     IMAGE_FILE_NAME = "Plot of "+ TITLE + ".png"
@@ -140,8 +138,7 @@ def SAVE_THE_GRAPH_INTO(directory):
     CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
 
 
-
-
+#
 def SET_R_vs_Temp_Graph(GRAPH_TAB):
 
     global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
@@ -202,6 +199,8 @@ def SET_R_vs_Temp_Graph(GRAPH_TAB):
     CANVAS_OF_GRAPH.get_tk_widget().pack()
     FRAME_OF_GRAPH.pack()
 
+
+#
 def SET_R_vs_Time_Graph(GRAPH_TAB):
     global FRAME_OF_GRAPH_R_vs_Time, LABEL_OF_GRAPH_R_vs_Time, FIGURE_OF_GRAPH_R_vs_Time, CANVAS_OF_GRAPH_R_vs_Time, GRAPH_R_vs_Time, TOOLBAR_OF_GRAPH_R_vs_Time, Y_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time, X_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time
     global temperature_combobox
@@ -278,24 +277,27 @@ def SET_R_vs_Time_Graph(GRAPH_TAB):
 
 # Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
-    global NANOVOLTMETER, CURRENT_SOURCE, CTC
+    global CURRENT_SOURCE, CTC
+
     number_of_connected_devices = 0
     retry_number = 0
-    # Connecting Current source
+
+    # Connecting Current source to PC...
     while True:
         try:
-            CURRENT_SOURCE = serial.Serial(SETTINGS["RS232_Port"], baudrate = 9600, timeout = 10)
+            rm = pyvisa.ResourceManager()
+            CURRENT_SOURCE = rm.open_resource(SETTINGS["device_name"])
             retry_number = 0
             number_of_connected_devices += 1
             break
         except:
             if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","CURRENT SOURCE is not connected... Check its connections!")
+                messagebox.showerror("Alert","CURRENT_SOURCE(6221) is not connected to PC... Check its connections!!")
                 retry_number = 0
                 break
             retry_number += 1
 
-    # connecting CTC
+    # Connecting CTC to PC...
     while True:
         try:
             CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = int(SETTINGS["Telnet_Port"]), timeout = 10)
@@ -304,49 +306,81 @@ def CONNECT_INSTRUMENTS():
             break
         except:
             if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","CTC is not connected... Check its connections!")
+                messagebox.showerror("Alert","CTC is not connected to PC... Check its connections!")
                 retry_number = 0
                 break
             retry_number += 1
     
+    # Checking whether Nanovoltmeter is connected to Current Source or not...
+    while True:
+        try:
+            # Checking by sending the commands to Nanovoltmeter via Current Source...
+            SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND “*IDN?”')
+            SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
+            retry_number = 0
+            number_of_connected_devices += 1
+            break
+        except:
+            if retry_number == MAX_RETRY:
+                messagebox.showerror("Alert","NANOVOLTMETER(2182A) is not connected to CURRENT SOURCE(6221)... Check its connections!")
+                retry_number = 0
+                break
+            retry_number += 1
 
+    
     # Returning True if all three devices are connected, otherwise False
     if number_of_connected_devices == 3: 
         return True 
     else: 
         return False
 
+
 # Arrays to store input channels and output channels and the stored below are just default, these will be changed in SYNC_GET function defined below...
 INPUT_CHANNELS_LIST_OF_CTC = ['In 1', 'In 2', 'In 3', 'In 4']
 OUTPUT_CHANNELS_LIST_OF_CTC = ['Out 1', 'Out 2']
+
 
 # Function to take data from CTC, save it in config_data.json and display it on the GUI...
 def SYNC_GET():
     
     if CONNECT_INSTRUMENTS():
+
+        ## Syncing CTC data ##
         CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
 
         # Clearing the default channels before appending actual channels...
         INPUT_CHANNELS_LIST_OF_CTC.clear() 
         OUTPUT_CHANNELS_LIST_OF_CTC.clear()
 
-        for channel in CHANNELS_LIST:
-            if channel[0] == 'I':
-                INPUT_CHANNELS_LIST_OF_CTC.append(channel)
-            else:
-                OUTPUT_CHANNELS_LIST_OF_CTC.append(channel)
+        INPUT_CHANNELS_LIST_OF_CTC = [channel for channel in CHANNELS_LIST if channel.startswith('I')]
+        OUTPUT_CHANNELS_LIST_OF_CTC = [channel for channel in CHANNELS_LIST if not channel.startswith('I')]
 
-        if(ENTRY_OF_INPUT_CHANNEL.get() == ""):
+        if ENTRY_OF_INPUT_CHANNEL.get() == "":
             ENTRY_OF_INPUT_CHANNEL.set(INPUT_CHANNELS_LIST_OF_CTC[0])
-        if(ENTRY_OF_OUTPUT_CHANNEL.get() == ""):
+        if ENTRY_OF_OUTPUT_CHANNEL.get() == "":
             ENTRY_OF_OUTPUT_CHANNEL.set(OUTPUT_CHANNELS_LIST_OF_CTC[0])
 
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.LowLmt?"'))
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.HiLmt?"'))
 
-        DISPLAY_VALUE_IN_ENTRY_BOX(P_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.P?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(I_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.I?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(D_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.D?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_P_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.P?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_I_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.I?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_D_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.D?"'))
+
+        ## Syncing CURRENT SOURCE data ##
+
+        # For Resistance vs Time 
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:HIGH?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:LOW?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_WIDTH, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:WIDT?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_INTERVAL, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:INT?"))
+
+        # For Resistance vs Temperature 
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_START_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STAR?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_STOP_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STOP?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STEP?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:COUN?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_DELAY_OF_CURRENT_SOURCE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:DEL?"))
 
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
@@ -374,8 +408,7 @@ def SEND_COMMAND_TO_CURRENT_SOURCE(command):
     while(retry_number < MAX_RETRY):
 
         try:
-            CURRENT_SOURCE.write((command+'\n').encode())
-            return CURRENT_SOURCE.readline().decode().strip()
+            return CURRENT_SOURCE.query(command)
 
         except Exception as e:
             print(f"Error occurred while sending command to Current Source: {e}... Retrying")
@@ -383,22 +416,6 @@ def SEND_COMMAND_TO_CURRENT_SOURCE(command):
             time.sleep(0.5) # Adding a short delay before retrying
             
     raise Exception("OOPS!!! Couldn't send command to Current Source even after maximum number of tries")
-
-
-# Function to get the voltage reading from the Nanovoltmeter...
-def GET_PRESENT_VOLTAGE_READING():
-    retry_number = 0 
-    while(retry_number < MAX_RETRY):
-
-        try:
-            return float(NANOVOLTMETER.query("FETCh?"))
-
-        except Exception as e:
-            print(f"Error occurred while sending command to Current Source: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5) # Adding a short delay before retrying
-            
-    raise Exception("OOPS!!! Couldn't get voltage reading from Nanovoltmeter even after maximum number of tries")
 
 
 # Function to get the current temperature of sample from ctc...
@@ -419,23 +436,20 @@ def GET_PRESENT_TEMPERATURE_OF_CTC():
 
 # Function to Achieve and Stabilize required temperature...
 def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature): 
-    global HIGH_POWER_LIMIT_OF_CTC 
 
     print("*************************************************************************")
     print("===> Achieving", required_temperature, "K...")
 
-    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC)) # Setting High Limit of CTC to HIGH_POWER_LIMIT_OF_CTC...
 
     SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
 
-    curr_increase_num = 0
     retry_number = 0
     temperature_before_stabilizing = GET_PRESENT_TEMPERATURE_OF_CTC()
 
     lower_bound = required_temperature - THRESHOLD
     upper_bound = required_temperature + THRESHOLD
 
-    while(not TO_ABORT):
+    while not TO_ABORT:
 
         time.sleep(3)
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
@@ -448,7 +462,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             print("Current Temperature is", present_temperature, "... Waiting to achieve required temperature ", required_temperature, "K...")
             retry_number += 1
 
-        if retry_number == 20 : # Increasing the high limit of power if possible...
+        if retry_number == 50 : # Increasing the high limit of power if possible...
 
             if HIGH_POWER_LIMIT_OF_CTC + INCREASE_POWER_LIMIT_OF_CTC <= MAXIMUM_POWER_LIMIT_OF_CTC :
 
@@ -464,7 +478,6 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                     # We are starting again by increasing high power limit of ctc... So...
                     retry_number = 0 
                     temperature_before_stabilizing = present_temperature
-                    curr_increase_num+=1
 
             else:
                 messagebox.showwarning("Alert","Cannot Achieve all the temperatures by given Maximum limit of Power!!")
@@ -472,21 +485,17 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
     if TO_ABORT: return
 
-    # if current temperature is reached in less power then we decrease the high power limit
-    if(curr_increase_num < PREV_INCREASE_NUMBER):
-        HIGH_POWER_LIMIT_OF_CTC = HIGH_POWER_LIMIT_OF_CTC - (PREV_INCREASE_NUMBER - curr_increase_num)
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
 
     print("______________________________________________________________________")
     print("===> Stabilizing at", required_temperature, "K...")
 
-    while(not TO_ABORT):
+    while not TO_ABORT:
 
         minimum_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
         maximum_temperature = minimum_temperature
         retry_number = 0
 
-        while(not TO_ABORT and retry_number < MAX_RETRY):
+        while not TO_ABORT and retry_number < MAX_RETRY:
 
             present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
@@ -509,94 +518,84 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             print("Temperature is not stabilized yet... Retrying...")
 
 
-# Function for getting resistance at a particular instant
+# Function to get resistance at a particular instant...
 def GET_RESISTANCES():
-    full_data = CURRENT_SOURCE.query("TRACe:DATA?") # collects all data(resistance and time) in string format
-    full_data = full_data[:-1].split(",") #splitting the string and storing in array in {resistance, time} repetition
+    # The data received from the current source is a string having resistances and time stamps... Eg:4.2Ω,0.00s,4.3Ω,0.01s,...\n
+    # Collect all data (resistance and time) in string format
+    data = SEND_COMMAND_TO_CURRENT_SOURCE("TRACE:DATA?")[:-1]  # Remove trailing newline(\n)
 
-    # seperating resistances and time stamps 
-    resistance_readings = []
-    time_stamps = []
-    for i,dat in enumerate(full_data):
-        if(i%2==0):
-            resistance_readings.append(float(dat))
-        else:
-            time_stamps.append(float(dat))
+    # Split the string and store in an array in {resistance, time} repetition
+    data = list(map(float, data.split(",")))
+
+    # Separate resistances and time stamps using list slicing
+    resistance_readings = data[::2]
+    time_stamps = data[1::2]
 
     return resistance_readings, time_stamps
 
 
-# Function for getting resistance at a particular temperature for TEMP vs RESISTANCE graph
-def GET_PRESENT_RESISTANCE_SWEEP():
-    CURRENT_SOURCE.write("SOUR:PDEL:SWE ON") # sweeping ON
-    CURRENT_SOURCE.write(("SOURce:PDELta:ARM")) # arming
-    CURRENT_SOURCE.write(("INIT:IMM")) # triggering
+# Function to get current average resistance(Using to get resistance at a temperature in Resistance vs Temperature)...
+def GET_PRESENT_RESISTANCE():
+    # We are doing this by using Pulse Sweep Step...
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE ON") # ON the sweeping mode
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM") # Arming the pulse mode
+    SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM") # Triggering the pulse mode
 
-    to_sleep_time = (NUMBER_OF_CURRENT_INTERVALS - 1) + 1.5
-    time.sleep(to_sleep_time) # time + 1.50
+    # Wait for some time until it calculates the resistances
+    time.sleep(NUMBER_OF_CURRENT_INTERVALS + 0.5) # This value is set by our observations after many iterations
 
-    CURRENT_SOURCE.write(("SOUR:SWE:ABOR")) # stops the sweeping process
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR") # Aborting the sweep process
 
-    full_data = CURRENT_SOURCE.query("TRACe:DATA?") # collects all data(resistance and time) in string format
-    full_data = full_data[:-1].split(",") #splitting the string and storing in array in {resistance, time} repetition
-
-    # seperating resistances and time stamps 
     resistance_readings, = GET_RESISTANCES()
 
     return sum(resistance_readings) / len(resistance_readings)
 
 
-# Function for getting resistance at a particular temperature for TIME vs RESISTANCE graph at that temp
-def GET_RESISTANCES_AT_ONE_TEMP():
-    CURRENT_SOURCE.write("SOUR:PDEL:SWE OFF") # sweeping OFF
-    CURRENT_SOURCE.write(("SOURce:PDELta:ARM")) # arming
-    CURRENT_SOURCE.write(("INIT:IMM")) # triggering
+# Function to get resistances with time at a temperature(Used in Resistance vs Time at a temperature)...
+def GET_RESISTANCES_WITH_TIME_AT(temperature):
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF") # OFF the sweeping mode
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM") # Arming the 
+    SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM")) # triggering
 
     time.sleep(1.5) # time required to execute above three commands by the device
-    count = 0
-    end_count = MEASURING_TIME / 2 
 
-    while not (count == end_count) :
-        count+=1
-        time.sleep(2)
+    present_time = 0
+    index_of_last_update = 0
+
+    present_csvfile = TITLE + "_Resistance_vs_Time_at_" + temperature + ".csv"
+    while present_time <= MEASURING_TIME:
+        present_time += 5
+        time.sleep(5)
         resistance_readings, time_stamps = GET_RESISTANCES()
 
+        WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
         # code to save to csv and plot the points in resistance_readings and time_stamps in that graph of that temperature
+        index_of_last_update = len(resistance_readings)
 
-    CURRENT_SOURCE.write(("SOUR:SWE:ABOR")) # stops the sweeping process
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR") # stops the sweeping process
 
 
 # Function to write the temperature and resistance values into csv file
-def WRITE_DATA_TO_CSV(temperature, resistance):
-    CSV_FILE_NAME = TITLE + ".csv"
-    CSV_FILE_PATH = os.path.join(SETTINGS["Directory"], CSV_FILE_NAME)
+def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances):
+    filepath = os.path.join(SETTINGS["Directory"], filename)
     
-    data = [temperature, resistance]
-    
-    while True:
-        try:
-            with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow(data)
-                csvfile.flush()  # Flush the buffer to ensure immediate write
-            break
-        except (PermissionError, OSError) as e:
-            print(f"Error writing to file: {e}. Retrying in 1 second...")
-            time.sleep(1)
+    with open(filepath, 'a', newline='') as csvfile:  # Open file in write mode
+        writer = csv.writer(csvfile)
+        for TemperatureOrTime, resistance in zip(TemperatureOrTimes, resistances):
+            writer.writerow([TemperatureOrTime, resistance])
+
 
 # Function to get the resistances at all temperatures...
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
-    global PREV_INCREASE_NUMBER
 
-    # Switching CTC output ON
-    SEND_COMMAND_TO_CTC("outputEnable on")
+    SEND_COMMAND_TO_CTC("outputEnable on") # Switching CTC output ON
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
 
     # Making direction 1 in forward cycle and -1 in backward cycle...
     direction = 1 if start_temperature <= end_temperature else -1
 
     present_temperature = start_temperature
 
-    PREV_INCREASE_NUMBER = 0
     while(present_temperature * direction < end_temperature * direction):
 
         # Achieving the current temperature... This function is defined above...
@@ -604,12 +603,12 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 
         for i in range(DELAY_OF_CTC): # Delaying some time...
             if TO_ABORT: break  
-            time.sleep(i) 
+            time.sleep(1) 
 
         if TO_ABORT: break
 
         # Getting current resistance of the sample at current temmperature...
-        present_resistance = GET_PRESENT_RESISTANCE_SWEEP() 
+        present_resistance = GET_PRESENT_RESISTANCE() 
         
         if TO_ABORT: break
 
@@ -626,6 +625,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 
     # Switching CTC output OFF
     SEND_COMMAND_TO_CTC("outputEnable off")
+
 
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
 def CHECK_AND_SET_ALL_VALUES(): 
