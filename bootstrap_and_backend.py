@@ -862,8 +862,49 @@ def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY):
         SETTINGS["Directory"] = directory
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
         LABEL_OF_OUTPUT_DIRECTORY.config(text = directory)
+def CONNECTION_SETTINGS():
+    CONNECTION_WIDGET = Toplevel(INTERFACE)
 
+    CONNECTION_WIDGET.title("Make Sure")
+    CONNECTION_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
+    CONNECTION_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2)
+    CONNECTION_WIDGET.geometry(CENTER_THE_WIDGET(CONNECTION_WIDGET_Temp_width, CONNECTION_WIDGET_Temp_height))
+    CONNECTION_WIDGET.resizable(False,False)
+    CONNECTION_WIDGET.grid_columnconfigure(0,weight=1)
+    CONNECTION_WIDGET.grid_columnconfigure(1,weight=1)
+    title=Label(CONNECTION_WIDGET, text = "Make Sure the Following ")
+    title.grid(row = 0,column = 0,  sticky = "wens",  pady = (10,10))
+    title.config(font=("Times New Roman", 15,"bold"))
+    
+    label=Label(CONNECTION_WIDGET, text = """
+    a) gpib : current source to cpu
+    b) rs232 : male-to-male between curr source and voltmeter 
+    c) trigger link cable : between curr source and voltmeter
+    d) telnet : ctc to cpu
+    e) set GPIB interface for current source
+    f) set RS232 interface for nanovoltmeter
+    g) baudrate of nanovoltmeter and current source should be 
+    19.2K and flow control on nanovoltmeter: NONE
+    """, fg = "white", justify='left', wraplength=500)
+
+    label.grid(row = 1,column = 0,  sticky = "wens",  pady = (0,10))
+    label.config(font=("Times New Roman", 12))
+
+    def confirm_connections():
+        CONNECTION_WIDGET.destroy()
+        # CONNECTION_WIDGET.grab_set()
+        # INTERFACE.wait_window(CONNECTION_WIDGET)
+
+    Button(CONNECTION_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(70,0), pady=20)
+    
+    CONNECTION_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(CONNECTION_WIDGET))
+    # CONNECTION_WIDGET.grab_set()
+    # CONNECTION_WIDGET.mainloop()
+    CONNECTION_WIDGET.transient(INTERFACE)
+    CONNECTION_WIDGET.grab_set()
+    INTERFACE.wait_window(CONNECTION_WIDGET)
 def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
+    
      
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
@@ -1343,8 +1384,32 @@ if __name__=="__main__":
     INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
     INTERFACE.minsize(root_width,root_height)
     
-  
+    # connection_window = CONNECTION_SETTINGS()
+
+    # # Wait for the CONNECTION_WIDGET to be destroyed
+    # INTERFACE.wait_window(connection_window)
+    # print("Hello")
+    
+    # info_text = """
+    # a) gpib : current source to cpu
+    # b) rs232 : male-to-male between curr source and voltmeter 
+    # c) trigger link cable : between curr source and voltmeter
+    # d) telnet : ctc to cpu
+    # e) set GPIB interface for current source
+    # f) set RS232 interface for nanovoltmeter
+    # g) baudrate of nanovoltmeter and current source should be 19.2K and flow control on nanovoltmeter: NONE
+    
+    # """
+
+    # messagebox.showinfo("Make_Sure", info_text, icon='info')
+
+    CONNECTION_SETTINGS()
+
+    # After the first popup is closed, call the second popup function
     SETTINGS_WIDGET_TEMPERATURE_CONTROL()
+
+    # # Wait for the SETTINGS_WIDGET to be destroyed
+    # INTERFACE.wait_window(settings_window)
 
     
     INTERFACE.mainloop()
