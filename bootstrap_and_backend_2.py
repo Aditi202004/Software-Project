@@ -356,7 +356,7 @@ def SYNC_GET():
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:HIGH?"))
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:LOW?"))
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_WIDTH, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:WIDT?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_INTERVAL, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:INT?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:INT?"))
 
         # For Resistance vs Temperature 
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_START_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STAR?"))
@@ -605,10 +605,10 @@ def CHECK_AND_SET_ALL_VALUES():
     global INPUT_CHANNEL_OF_CTC, OUTPUT_CHANNEL_OF_CTC
     global HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC
     global P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
-    global START_TEMPERATURE, END_TEMPERATURE,  INCREASING_INTERVAL_OF_TEMPERATURE, TOLERANCE, THRESHOLD, DELAY_OF_CTC
+    global START_TEMPERATURE, END_TEMPERATURE, INCREASING_INTERVAL_OF_TEMPERATURE, TOLERANCE, THRESHOLD, DELAY_OF_CTC
     global COMPLETE_CYCLE, TITLE
     global START_CURRENT, STOP_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, DELAY_OF_CURRENT_SOURCE
-    global MEASURING_TIME, TIME
+    global MEASURING_TIME, HIGH_PULSE, LOW_PULSE, PULSE_WIDTH, NUMBER_OF_PULSES_PER_SECOND
 
     # Assigning the parameters of CTC given by user to the variables and Setting those to CTC if they are in correct format...
 
@@ -707,7 +707,16 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
-        if not START_CURRENT < 1:
+        if START_CURRENT >= 1:
+            messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+            return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
+        return False
+    
+    try:
+        STOP_CURRENT = float(ENTRY_OF_STOP_CURRENT.get())
+        if not STOP_CURRENT < 1:
             messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
             return False
     except:
@@ -726,6 +735,48 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showwarning("Alert","Invalid Input for Increase Current Interval at a Temperature!")
         return False
 
+    try:
+        DELAY_OF_CURRENT_SOURCE = float(ENTRY_OF_DELAY_OF_CURRENT_SOURCE.get())
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
+        return False
+
+    try:
+        HIGH_PULSE = float(ENTRY_OF_HIGH_PULSE.get())
+        if abs(HIGH_PULSE) > 105e-3:
+            messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
+            return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for High Pulse Value!")
+        return False
+    
+    try:
+        LOW_PULSE = float(ENTRY_OF_LOW_PULSE.get())
+        if abs(LOW_PULSE) > 105e-3:
+            messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
+            return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Low Pulse Value!")
+        return False
+    
+    try:
+        PULSE_WIDTH = float(ENTRY_OF_PULSE_WIDTH.get())
+        if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
+            messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
+            return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
+        return False
+    
+    try:
+        NUMBER_OF_PULSES_PER_SECOND = float(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.get())
+        if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
+            messagebox.showwarning("Alert!", "Enter the Pulse Interval in range [1 to 12] A!")
+            return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
+        return False
+    
 
     # The title should not consists the following invalid characters...
     invalid_characters=['\\','/',':','*','?','"','<','>','|']
@@ -1299,11 +1350,11 @@ if __name__=="__main__":
     MEASURING_TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
     
 
-    PULSE_INTERVAL_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white")
-    PULSE_INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+    NUMBER_OF_PULSES_PER_SECOND_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white")
+    NUMBER_OF_PULSES_PER_SECOND_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    PULSE_INTERVAL_ENTRY = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
-    PULSE_INTERVAL_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    NUMBER_OF_PULSES_PER_SECOND_ENTRY = Entry(NUMBER_OF_PULSES_PER_SECOND_LFRAME, font=(10), width=20)
+    NUMBER_OF_PULSES_PER_SECOND_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
      #CURRENT_CONTROLS
     CURRENT_CONTROLS_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Current Controls", fg="white")
@@ -1327,11 +1378,11 @@ if __name__=="__main__":
     ENTRY_OF_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
     ENTRY_OF_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
-    PULSE_INTERVAL_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white")
-    PULSE_INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
+    NUMBER_OF_PULSES_PER_SECOND_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white")
+    NUMBER_OF_PULSES_PER_SECOND_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_PULSE_INTERVAL = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
-    ENTRY_OF_PULSE_INTERVAL.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND = Entry(NUMBER_OF_PULSES_PER_SECOND_LFRAME, font=(10), width=20)
+    ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
 
 
