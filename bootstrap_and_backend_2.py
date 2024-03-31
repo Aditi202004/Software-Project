@@ -144,7 +144,7 @@ def SET_R_vs_Temp_Graph(GRAPH_TAB_R_vs_Time):
     global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
     global temperature_combobox
 
-    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
+    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB_R_vs_Time) 
 
     LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text = "Resistance Vs. Temperature") # Adding label/title for the graph
 
@@ -206,7 +206,7 @@ def SET_R_vs_Time_Graph(GRAPH_TAB_R_vs_Time):
     global temperature_combobox
     global selected_temperature
 
-    FRAME_OF_GRAPH_R_vs_Time = tb.Frame(GRAPH_TAB) 
+    # FRAME_OF_GRAPH_R_vs_Time = tb.Frame(GRAPH_TAB) 
     FRAME_OF_GRAPH_R_vs_Time = tb.Frame(GRAPH_TAB_R_vs_Time) 
 
     LABEL_OF_GRAPH_R_vs_Time = tk.Label(FRAME_OF_GRAPH_R_vs_Time, text="Current Temperature :") 
@@ -1062,10 +1062,6 @@ def UPDATE_COMBOBOX(event):
     
     # Populate the Combobox with the extracted values
     temperature_combobox['values'] = values
-    
-    
-    
-
 
 
 
