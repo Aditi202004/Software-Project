@@ -19,6 +19,8 @@ from tkinter import *
 from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
 from threading import Thread
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
 
 
 # Required imports for maintaining the data
@@ -698,9 +700,6 @@ def CHECK_AND_SET_ALL_VALUES():
     except:
         messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
         return False
-    
-    COMPLETE_CYCLE = int(ENTRY_OF_COMPLETE_CYCLE.get()) # No need to check it as it is a checkbox...
-
 
 
     # Assigning the parameters of Current Source given by user to the variables if they are in correct format...
@@ -810,13 +809,13 @@ def insert_into_sorted_array(arr, elem):
 # Function to start the Experiment...
 ARRAY_OF_ALL_TEMPERATURES = []
 def START_EXPERIMENT():
-    if TEMPERATURE_EXPERIMENT == 1:
+    if int(TEMPERATURE_EXPERIMENT.get()):
         curr_temp = START_TEMPERATURE
         while curr_temp <= END_TEMPERATURE:
             ARRAY_OF_ALL_TEMPERATURES.append(curr_temp)
             curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
             
-    if TIME_EXPERIMENT == 1:
+    if int(TIME_EXPERIMENT.get()):
         entered_temperatures = temperature_combobox["values"]
         for temperature in entered_temperatures:
             ARRAY_OF_ALL_TEMPERATURES = insert_into_sorted_array(FINAL_TEMPERATURES, temperature)
@@ -832,7 +831,7 @@ def START_EXPERIMENT():
         INTERFACE.update()
         return
     
-    if not TO_ABORT and TEMPERATURE_EXPERIMENT == 1 and COMPLETE_CYCLE:
+    if not TO_ABORT and int(TEMPERATURE_EXPERIMENT.get()) and int(COMPLETE_CYCLE.get()):
         GET_RESISTANCE_AT_ALL_TEMPERATURES(-1)
         
     # If experiment is aborted then the function will break
@@ -845,9 +844,6 @@ def START_EXPERIMENT():
     if not TO_ABORT:
         SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
         print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
-
-
-
 
 
 # Function to trigger the Experiment... 
@@ -870,6 +866,8 @@ def ABORT_TRIGGER():
 
     TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
     INTERFACE.update()
+
+
 
 ####---------------------------------------- Interface Part -------------------------------------------------####
 
@@ -918,18 +916,20 @@ def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY):
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
         LABEL_OF_OUTPUT_DIRECTORY.config(text = directory)
 
-def CONNECTION_SETTINGS():
-    CONNECTION_WIDGET = Toplevel(INTERFACE)
 
-    CONNECTION_WIDGET.title("Make Sure")
-    CONNECTION_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
-    CONNECTION_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2.7)
-    CONNECTION_WIDGET.geometry(CENTER_THE_WIDGET(CONNECTION_WIDGET_Temp_width, CONNECTION_WIDGET_Temp_height))
-    CONNECTION_WIDGET.resizable(False,False)
-    CONNECTION_WIDGET.grid_columnconfigure(0,weight=1)
-    CONNECTION_WIDGET.grid_columnconfigure(1,weight=1)
+# Function to display the requirements widget...
+def DISPLAY_REQUIREMENTS():
+    REQUIREMENTS_WIDGET = Toplevel(INTERFACE)
 
-    label=Label(CONNECTION_WIDGET, text = """a) gpib : current source to cpu
+    REQUIREMENTS_WIDGET.title("Make Sure the following...")
+    REQUIREMENTS_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
+    REQUIREMENTS_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2.7)
+    REQUIREMENTS_WIDGET.geometry(CENTER_THE_WIDGET(REQUIREMENTS_WIDGET_Temp_width, REQUIREMENTS_WIDGET_Temp_height))
+    REQUIREMENTS_WIDGET.resizable(False,False)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(0,weight=1)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(1,weight=1)
+
+    label=Label(REQUIREMENTS_WIDGET, text = """a) gpib : current source to cpu
 	b) rs232 : male-to-male between curr source and voltmeter 
 	c) trigger link cable : between curr source and voltmeter
 	d) telnet : ctc to cpu
@@ -940,17 +940,17 @@ def CONNECTION_SETTINGS():
     label.config(font=("Arial", 12, "bold"))
 
     def confirm_connections():
-        CONNECTION_WIDGET.destroy()
+        REQUIREMENTS_WIDGET.destroy()
 
-    Button(CONNECTION_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(70,0), pady=20)
+    Button(REQUIREMENTS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(70,0), pady=20)
     
-    CONNECTION_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(CONNECTION_WIDGET))
-    CONNECTION_WIDGET.grab_set()
-    CONNECTION_WIDGET.mainloop()
+    REQUIREMENTS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(REQUIREMENTS_WIDGET))
+    REQUIREMENTS_WIDGET.grab_set()
+    REQUIREMENTS_WIDGET.mainloop()
 
 
-# 
-def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
+# Function for getting what experiments user wants to do from user...
+def DISPLAY_SELECTING_EXPERIMENTS_WIDGET(): 
      
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
@@ -978,7 +978,7 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
             CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
             CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
-            ENTRY_OF_COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
+            COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
             COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
             SETTINGS_WIDGET.destroy()
 
@@ -1081,7 +1081,8 @@ def OPEN_SETTINGS_WIDGET():
 def SHOW_INFO_OF_DEVICES(): 
 
     if CONNECT_INSTRUMENTS() :
-        info_of_nanovoltmeter = str(NANOVOLTMETER.query("*IDN?"))
+        SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND “*IDN?”')
+        info_of_nanovoltmeter = SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
         info_of_current_source = str(SEND_COMMAND_TO_CURRENT_SOURCE("*IDN?"))
         info_of_ctc = str(SEND_COMMAND_TO_CTC("description?"))
 
@@ -1099,12 +1100,12 @@ def SYNC_SETTINGS():
 
     else:
         SETTINGS = {"device_name":"GPIB0::6::INSTR",
-            "Directory":"./",
-            "CTC_Address":"192.168.0.2",
-            "Telnet_Port":"23",
-            "RS232_Port":"COM1",
-            "max_retry":"10"
-            }  # If the file doesn't exist, initialize SETTINGS some default values
+                    "Directory":"./",
+                    "CTC_Address":"192.168.0.2",
+                    "Telnet_Port":"23",
+                    "RS232_Port":"COM1",
+                    "max_retry":"10"
+                    }  # If the file doesn't exist, initialize SETTINGS some default values
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
 
     MAX_RETRY = int(SETTINGS["max_retry"])
@@ -1138,18 +1139,12 @@ if __name__=="__main__":
 
     ## Creating a Tkinter Interface ##
     INTERFACE = tb.Window(themename="yeti") # Made a root Interface
-    # style = tb.Style("yeti")
     INTERFACE.wm_title("TD-Controller") # Set title to the interface widget
     # INTERFACE.geometry("1000x700") # Set Geometry of the interface widget
     INTERFACE.grid_columnconfigure(0, weight=1) 
     INTERFACE.grid_rowconfigure(0, weight=1)
     INTERFACE.grid_columnconfigure(1, weight=0) 
     
-    # root = tk.Tk()
-    
-    
- 
-  
 
     # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
     SIDE_BAR = tk.Frame(INTERFACE,bootstyle="info")
@@ -1311,8 +1306,8 @@ if __name__=="__main__":
     ENTRY_OF_DELAY_OF_CTC.grid(row = 1, column = 5, pady = 10, ipady = 3, sticky = "ew")
 
     # Complete Cycle entry
-    ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    COMPLETE_CYCLE_CHECKBUTTON=tk.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE = IntVar()
+    COMPLETE_CYCLE_CHECKBUTTON=tk.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = COMPLETE_CYCLE, bootstyle="primary-round-toggle")
     COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
  # Title
@@ -1428,7 +1423,7 @@ if __name__=="__main__":
     INTERFACE.minsize(root_width,root_height)
     
     # SETTINGS_WIDGET_TEMPERATURE_CONTROL()
-    CONNECTION_SETTINGS()
+    DISPLAY_REQUIREMENTS()
     SETTINGS_WIDGET_TEMPERATURE_CONTROL()
 
     
