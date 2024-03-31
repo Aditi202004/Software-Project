@@ -816,10 +816,9 @@ def MERGE_BOTH_TEMPERATURES(arr1, arr2):
 
 
 # Function to start the Experiment...
-ARRAY_OF_ALL_TEMPERATURES = []
-ARRAY_OF_SELECTED_TEMPERATURES = temperature_combobox["values"]
 
 def START_EXPERIMENT():
+    global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES
     if int(TEMPERATURE_EXPERIMENT.get()):
         curr_temp = START_TEMPERATURE
         while curr_temp <= END_TEMPERATURE:
@@ -827,6 +826,7 @@ def START_EXPERIMENT():
             curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
             
     if int(TIME_EXPERIMENT.get()):
+        ARRAY_OF_SELECTED_TEMPERATURES = temperature_combobox["values"]
         ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting the array
         ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURES(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
 
@@ -967,7 +967,8 @@ def DISPLAY_REQUIREMENTS():
 
 # Function for getting what experiments user wants to do from user...
 def DISPLAY_SELECTING_EXPERIMENTS_WIDGET(): 
-     
+    global TIME_EXPERIMENT, TEMPERATURE_EXPERIMENT
+
     # Creating Settings Widget...
     SELECTING_EXP_WIDGET = Toplevel(INTERFACE)
     SELECTING_EXP_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
@@ -983,13 +984,13 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
     label.config(font = ("Arial", 12, "bold"))
     
     TIME_EXPERIMENT = IntVar()
-    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
-   
+    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+
     TEMPERATURE_EXPERIMENT = IntVar()
-    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
     def confirm_settings():
-        if ENTRY_OF_TIME_EXPERIMENT.get() == 1 and ENTRY_OF_TEMPERATURE_EXPERIMENT.get() == 0:
+        if TIME_EXPERIMENT.get() == 1 and TEMPERATURE_EXPERIMENT.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
             CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
@@ -998,7 +999,7 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
             SELECTING_EXP_WIDGET.destroy()
 
 
-        elif ENTRY_OF_TEMPERATURE_EXPERIMENT.get() == 1 and ENTRY_OF_TIME_EXPERIMENT.get() == 0:
+        elif TEMPERATURE_EXPERIMENT.get() == 1 and TIME_EXPERIMENT.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Time_final)
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
             CONTROL_PANEL.hide(GRAPH_R_vs_Time)
@@ -1440,7 +1441,7 @@ if __name__=="__main__":
     
     # SETTINGS_WIDGET_TEMPERATURE_CONTROL()
     DISPLAY_REQUIREMENTS()
-    SETTINGS_WIDGET_TEMPERATURE_CONTROL()
+    DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
 
     
     INTERFACE.mainloop()
