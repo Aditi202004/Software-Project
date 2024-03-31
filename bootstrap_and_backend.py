@@ -202,12 +202,12 @@ def SET_R_vs_Temp_Graph(GRAPH_TAB):
     CANVAS_OF_GRAPH.get_tk_widget().pack()
     FRAME_OF_GRAPH.pack()
 
-def SET_R_vs_Time_Graph(GRAPH_TAB):
+def SET_R_vs_Time_Graph(GRAPH_TAB_R_vs_Time):
     global FRAME_OF_GRAPH_R_vs_Time, LABEL_OF_GRAPH_R_vs_Time, FIGURE_OF_GRAPH_R_vs_Time, CANVAS_OF_GRAPH_R_vs_Time, GRAPH_R_vs_Time, TOOLBAR_OF_GRAPH_R_vs_Time, Y_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time, X_COORDINATE_OF_LAST_ADDED_POINT_R_vs_Time
     global temperature_combobox
     global selected_temperature
     
-    FRAME_OF_GRAPH_R_vs_Time = tb.Frame(GRAPH_TAB) 
+    FRAME_OF_GRAPH_R_vs_Time = tb.Frame(GRAPH_TAB_R_vs_Time) 
 
     LABEL_OF_GRAPH_R_vs_Time = tk.Label(FRAME_OF_GRAPH_R_vs_Time, text="Current Temperature :") 
     LABEL_OF_GRAPH_R_vs_Time.config(font=('Times', 20)) # Adding label/title for the graph
@@ -889,12 +889,17 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
     def confirm_settings():
         if ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 1 and ENTRY_OF_TEMPERATURE_RANGE.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
+            CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
+            FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
+            ENTRY_OF_COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
+            COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
             SETTINGS_WIDGET.destroy()
         
             
         elif ENTRY_OF_TEMPERATURE_RANGE.get() == 1 and ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 0:
+            CONTROL_PANEL.hide(GRAPH_R_vs_Time_final)
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
-            CONTROL_PANEL.hide(GRAPH_R_vs_Time)
+            
             SETTINGS_WIDGET.destroy()
       
         else:
@@ -1090,13 +1095,13 @@ if __name__=="__main__":
     CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
     TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
     GRAPH_R_vs_Temp = tb.Frame(CONTROL_PANEL) 
-    GRAPH_R_vs_Time = tb.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Time_final = tb.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
     CONTROL_PANEL.add(TEMPERATURE_TAB, text = ' Temperature\n Setup ')
     CONTROL_PANEL.add(GRAPH_R_vs_Temp, text = ' Graph\n (R vs Temp) ')
-    CONTROL_PANEL.add(GRAPH_R_vs_Time, text = ' Graph\n (R vs Time) ')
+    CONTROL_PANEL.add(GRAPH_R_vs_Time_final, text = ' Graph\n (R vs Time) ')
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
    
    
@@ -1222,56 +1227,57 @@ if __name__=="__main__":
 
     # Complete Cycle entry
     ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle").grid(row = 8, column = 0, pady = (20,10),padx=50)
-    tab_bg="#575757"
+    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
+    
 
  # Title
-    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white", bg=tab_bg)
+    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white")
     TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=300, pady=(60, 35))
 
     ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
     ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
  
  # Drive
-    DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white", bg=tab_bg)
+    DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white")
     DRIVE_LFRAME.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=300, pady=30)
 
-    CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white", bg=tab_bg)
+    CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white")
     CURRENT_START_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_START_CURRENT = Entry(CURRENT_START_LFRAME, font=(10), width=20)
     ENTRY_OF_START_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
     
-    CURRENT_STOP_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Stop Value (A)", fg="white", bg=tab_bg)
+    CURRENT_STOP_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Stop Value (A)", fg="white")
     CURRENT_STOP_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_STOP_CURRENT = Entry(CURRENT_STOP_LFRAME, font=(10), width=20)
     ENTRY_OF_STOP_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
    
-    INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Count(Number of Current Intervals at a Temperature)", fg="white", bg=tab_bg)
+    INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Count(Number of Current Intervals at a Temperature)", fg="white")
     INTERVALNO_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(INTERVALNO_LFRAME, font=(10), width=20)
     ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
 
-    INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Step (Increase Current Interval at a Temperature)(A)", fg="white", bg=tab_bg)
+    INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Step (Increase Current Interval at a Temperature)(A)", fg="white")
     INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(INTERVAL_LFRAME, font=(10), width=20)
     ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
-    DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay (Pulse Width)", fg="white", bg=tab_bg)
+    DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay (Pulse Width)", fg="white")
     DELAY_LFRAME.grid(row=4, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_DELAY = Entry(DELAY_LFRAME, font=(10), width=20)
     ENTRY_OF_DELAY.grid(row=0, column=0,  pady=10, padx=10,ipady=5,ipadx=20,sticky="w")
 
     # Temperature Tab
-    TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white", bg=tab_bg)
+    TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white")
     TERMPERATURE_LFRAME.grid(row=0, column=0, rowspan=3,sticky="nsew", padx=(180,60), pady=150)
 
-    SELECT_TEMP_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Temperature(s)(in K)", fg="white", bg=tab_bg)
+    SELECT_TEMP_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Temperature(s)(in K)", fg="white")
     SELECT_TEMP_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
     TEMPERATURES_ENTRY = Text(SELECT_TEMP_LFRAME, font=(10), width=20, height=1)
@@ -1280,42 +1286,42 @@ if __name__=="__main__":
     TEMPERATURES_ENTRY.bind("<KeyRelease>", UPDATE_COMBOBOX) 
    
 
-    MEASURING_TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white", bg=tab_bg)
+    MEASURING_TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white")
     MEASURING_TIME_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
     MEASURING_TIME_ENTRY = Entry(MEASURING_TIME_LFRAME, font=(10), width=20)
     MEASURING_TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
     
 
-    PULSE_INTERVAL_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white", bg=tab_bg)
+    PULSE_INTERVAL_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white")
     PULSE_INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
     PULSE_INTERVAL_ENTRY = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
     PULSE_INTERVAL_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
      #CURRENT_CONTROLS
-    CURRENT_CONTROLS_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Current Controls", fg="white", bg=tab_bg)
+    CURRENT_CONTROLS_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Current Controls", fg="white")
     CURRENT_CONTROLS_LFRAME.grid(row=0, column=1, rowspan=4, sticky="nsew", padx=(60,180), pady=100)
 
-    HIGH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="High current of pulse(A)", fg="white", bg=tab_bg)
+    HIGH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="High current of pulse(A)", fg="white")
     HIGH_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_HIGH = Entry(HIGH_LFRAME, font=(10), width=20)
     ENTRY_OF_HIGH.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
     
-    LOW_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Low current of pulse(A)", fg="white", bg=tab_bg)
+    LOW_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Low current of pulse(A)", fg="white")
     LOW_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_LOW = Entry(LOW_LFRAME, font=(10), width=20)
     ENTRY_OF_LOW.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
    
-    WIDTH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Width of the pulse(s)", fg="white", bg=tab_bg)
+    WIDTH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Width of the pulse(s)", fg="white")
     WIDTH_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
     ENTRY_OF_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
     
-    PULSE_INTERVAL_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white", bg=tab_bg)
+    PULSE_INTERVAL_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Pulse Interval(s)", fg="white")
     PULSE_INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
 
     ENTRY_OF_PULSE_INTERVAL = Entry(PULSE_INTERVAL_LFRAME, font=(10), width=20)
@@ -1325,7 +1331,7 @@ if __name__=="__main__":
 
     # Setup the graph_tab...
     SET_R_vs_Temp_Graph(GRAPH_R_vs_Temp)
-    SET_R_vs_Time_Graph(GRAPH_R_vs_Time)
+    SET_R_vs_Time_Graph(GRAPH_R_vs_Time_final)
     
             ### other ###
     # INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
@@ -1337,7 +1343,7 @@ if __name__=="__main__":
     INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
     INTERFACE.minsize(root_width,root_height)
     
-    # SETTINGS_WIDGET_TEMPERATURE_CONTROL()
+  
     SETTINGS_WIDGET_TEMPERATURE_CONTROL()
 
     
