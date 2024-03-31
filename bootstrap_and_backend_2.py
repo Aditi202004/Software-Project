@@ -40,7 +40,7 @@ from os.path import exists
 from os import mkdir
 
 
-####-------------------------------------- Graph Plotting Part -------------------------------------------------####
+####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
 # Array to store the lines...
 ARRAY_OF_PLOTTING_LINES = [] 
@@ -260,7 +260,7 @@ def SET_R_vs_Time_Graph(GRAPH_TAB_R_vs_Time):
     FRAME_OF_GRAPH_R_vs_Time.pack()
 
 
-####---------------------------------------- Experiment Part ---------------------------------------------------####
+####---------------------------------------- Experiment Part --------------------------------------------------####
 
 # Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
@@ -325,7 +325,6 @@ def CONNECT_INSTRUMENTS():
 # Arrays to store input channels and output channels and the stored below are just default, these will be changed in SYNC_GET function defined below...
 INPUT_CHANNELS_LIST_OF_CTC = ['In 1', 'In 2', 'In 3', 'In 4']
 OUTPUT_CHANNELS_LIST_OF_CTC = ['Out 1', 'Out 2']
-
 
 # Function to take data from CTC, save it in config_data.json and display it on the GUI...
 def SYNC_GET():
@@ -600,7 +599,6 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
         WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
         ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
 
-
         if direction and (present_temperature in ARRAY_OF_SELECTED_TEMPERATURES):
             GET_RESISTANCES_WITH_TIME_AT(present_temperature)
     
@@ -616,7 +614,7 @@ def CHECK_AND_SET_ALL_VALUES():
     global HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC
     global P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
     global START_TEMPERATURE, END_TEMPERATURE, INCREASING_INTERVAL_OF_TEMPERATURE, TOLERANCE, THRESHOLD, DELAY_OF_CTC
-    global COMPLETE_CYCLE, TITLE
+    global TITLE
     global START_CURRENT, STOP_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, DELAY_OF_CURRENT_SOURCE
     global MEASURING_TIME, HIGH_PULSE, LOW_PULSE, PULSE_WIDTH, NUMBER_OF_PULSES_PER_SECOND
 
@@ -819,6 +817,8 @@ def merge_sorted_arrays(arr1, arr2):
 
 # Function to start the Experiment...
 ARRAY_OF_ALL_TEMPERATURES = []
+ARRAY_OF_SELECTED_TEMPERATURES = temperature_combobox["values"]
+
 def START_EXPERIMENT():
     if int(TEMPERATURE_EXPERIMENT.get()):
         curr_temp = START_TEMPERATURE
@@ -827,9 +827,8 @@ def START_EXPERIMENT():
             curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
             
     if int(TIME_EXPERIMENT.get()):
-        entered_temperatures = temperature_combobox["values"]
-        entered_temperatures.sort()  # sorting 
-        ARRAY_OF_ALL_TEMPERATURES = merge_sorted_arrays(ARRAY_OF_ALL_TEMPERATURES, entered_temperatures)
+        ARRAY_OF_SELECTED_TEMPERATURES.sort()  # sorting 
+        ARRAY_OF_ALL_TEMPERATURES = merge_sorted_arrays(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
 
 
     if not TO_ABORT:
@@ -1323,8 +1322,8 @@ if __name__=="__main__":
     ENTRY_OF_DELAY_OF_CTC.grid(row = 1, column = 5, pady = 10, ipady = 3, sticky = "ew")
 
     # Complete Cycle entry
-    ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE = IntVar()
+    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = COMPLETE_CYCLE, bootstyle="primary-round-toggle")
     COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
  # Title
