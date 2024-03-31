@@ -1,9 +1,8 @@
 #### By Sai Pranay Deep, Aditi Wekhande, Devanshi Chhatbar, Saket Meshram, Jay Solanki.... ####
 
-# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232 cable for AC/DC current source. The code may change if you use different cables... :)
+# Note :- We have used Ethernet cable for connection between PC and CTC device, GPIB cable for connection between PC and AC/DC current source,  RS232 cable for connection between AC/DC current source and Nanovoltmeter... :)
 
-
-# Required imports for connecting the device
+# Required imports for connecting the devices with PC
 import pyvisa, telnetlib
 
 
@@ -20,8 +19,6 @@ from tkinter import *
 from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
 from threading import Thread
-import ttkbootstrap as tb
-from ttkbootstrap.constants import *
 
 
 # Required imports for maintaining the data
@@ -40,7 +37,7 @@ from os.path import exists
 from os import mkdir
 
 
-####-------------------------------------- Graph Plotting Part -------------------------------------------------####
+####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
 # Array to store the lines...
 ARRAY_OF_PLOTTING_LINES = [] 
@@ -259,8 +256,7 @@ def SET_R_vs_Time_Graph(GRAPH_TAB_R_vs_Time):
     CANVAS_OF_GRAPH_R_vs_Time.get_tk_widget().pack()
     FRAME_OF_GRAPH_R_vs_Time.pack()
 
-
-####---------------------------------------- Experiment Part ---------------------------------------------------####
+####---------------------------------------- Experiment Part --------------------------------------------------####
 
 # Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
@@ -542,7 +538,7 @@ def GET_PRESENT_RESISTANCE():
 def GET_RESISTANCES_WITH_TIME_AT(temperature):
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF") # OFF the sweeping mode
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM") # Arming the 
-    SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM")) # triggering
+    SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM") # triggering
 
     time.sleep(1.5) # time required to execute above three commands by the device
 
@@ -606,8 +602,13 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
 def CHECK_AND_SET_ALL_VALUES(): 
 
-    global INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, TITLE, P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
-
+    global INPUT_CHANNEL_OF_CTC, OUTPUT_CHANNEL_OF_CTC
+    global HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC
+    global P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
+    global START_TEMPERATURE, END_TEMPERATURE,  INCREASING_INTERVAL_OF_TEMPERATURE, TOLERANCE, THRESHOLD, DELAY_OF_CTC
+    global COMPLETE_CYCLE, TITLE
+    global START_CURRENT, STOP_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, DELAY_OF_CURRENT_SOURCE
+    global MEASURING_TIME, TIME
 
     # Assigning the parameters of CTC given by user to the variables and Setting those to CTC if they are in correct format...
 
