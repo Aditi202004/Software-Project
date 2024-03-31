@@ -867,7 +867,7 @@ def CONNECTION_SETTINGS():
 
     CONNECTION_WIDGET.title("Make Sure")
     CONNECTION_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
-    CONNECTION_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
+    CONNECTION_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 1.75)
     CONNECTION_WIDGET.geometry(CENTER_THE_WIDGET(CONNECTION_WIDGET_Temp_width, CONNECTION_WIDGET_Temp_height))
     CONNECTION_WIDGET.resizable(False, False)
     CONNECTION_WIDGET.grid_columnconfigure(0, weight=1)
