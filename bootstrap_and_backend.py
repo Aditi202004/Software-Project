@@ -866,43 +866,42 @@ def CONNECTION_SETTINGS():
     CONNECTION_WIDGET = Toplevel(INTERFACE)
 
     CONNECTION_WIDGET.title("Make Sure")
-    CONNECTION_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
-    CONNECTION_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2)
+    CONNECTION_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
+    CONNECTION_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
     CONNECTION_WIDGET.geometry(CENTER_THE_WIDGET(CONNECTION_WIDGET_Temp_width, CONNECTION_WIDGET_Temp_height))
-    CONNECTION_WIDGET.resizable(False,False)
-    CONNECTION_WIDGET.grid_columnconfigure(0,weight=1)
-    CONNECTION_WIDGET.grid_columnconfigure(1,weight=1)
-    title=Label(CONNECTION_WIDGET, text = "Make Sure the Following ")
-    title.grid(row = 0,column = 0,  sticky = "wens",  pady = (10,10))
-    title.config(font=("Times New Roman", 15,"bold"))
-    
-    label=Label(CONNECTION_WIDGET, text = """
-    a) gpib : current source to cpu
-    b) rs232 : male-to-male between curr source and voltmeter 
-    c) trigger link cable : between curr source and voltmeter
-    d) telnet : ctc to cpu
-    e) set GPIB interface for current source
-    f) set RS232 interface for nanovoltmeter
-    g) baudrate of nanovoltmeter and current source should be 
-    19.2K and flow control on nanovoltmeter: NONE
-    """, fg = "white", justify='left', wraplength=500)
+    CONNECTION_WIDGET.resizable(False, False)
+    CONNECTION_WIDGET.grid_columnconfigure(0, weight=1)
+    CONNECTION_WIDGET.grid_columnconfigure(1, weight=1)
+    title = Label(CONNECTION_WIDGET, text="Make Sure the Following ")
+    title.grid(row=0, column=0, sticky="wens", pady=(10, 10))
+    title.config(font=("Times New Roman", 15, "bold"))
 
-    label.grid(row = 1,column = 0,  sticky = "wens",  pady = (0,10))
+    label_text = """
+    • GPIB: current source to CPU
+    • RS-232: male-to-male between current source and 
+      voltmeter 
+    • Trigger Llink Cable: between current source and voltmeter
+    • Telnet: CTC to CPU
+    • set GPIB interface for current source
+    • set RS-232 interface for nanovoltmeter
+    • baudrate of nanovoltmeter and current source should be 
+      19.2K and flow control on nanovoltmeter: NONE
+    """
+    label = Label(CONNECTION_WIDGET, text=label_text, fg="white", justify='left', wraplength=500)
+
+    label.grid(row=1, column=0, sticky="wens", pady=(0, 10))
     label.config(font=("Times New Roman", 12))
 
     def confirm_connections():
         CONNECTION_WIDGET.destroy()
-        # CONNECTION_WIDGET.grab_set()
-        # INTERFACE.wait_window(CONNECTION_WIDGET)
 
-    Button(CONNECTION_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(70,0), pady=20)
-    
-    CONNECTION_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(CONNECTION_WIDGET))
-    # CONNECTION_WIDGET.grab_set()
-    # CONNECTION_WIDGET.mainloop()
+    Button(CONNECTION_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(15, 0), pady=20)
+
+    CONNECTION_WIDGET.protocol("WM_DELETE_WINDOW", lambda: CLOSE_WIDGET(CONNECTION_WIDGET))
     CONNECTION_WIDGET.transient(INTERFACE)
     CONNECTION_WIDGET.grab_set()
     INTERFACE.wait_window(CONNECTION_WIDGET)
+
 def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
     
      
@@ -1077,11 +1076,11 @@ def UPDATE_COMBOBOX(event):
     # Split the input_text into individual values based on comma
     values = input_text.split(",")
     
-    # Strip leading and trailing whitespaces from each value
-    values= [value.strip() for value in values if value.strip()]  # Include placeholder text
+    # Filter out non-numeric values
+    numeric_values = [value for value in values if value.replace('.', '', 1).isdigit()]
     
-    # Populate the Combobox with the extracted values
-    temperature_combobox['values'] = values
+    # Populate the Combobox with the extracted numeric values
+    temperature_combobox['values'] = numeric_values
     
     
     
