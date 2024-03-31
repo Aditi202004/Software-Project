@@ -39,6 +39,7 @@ import os
 from os.path import exists
 from os import mkdir
 
+from tkinter import Toplevel, Label, Text, Button
 
 ####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
@@ -1018,7 +1019,6 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
         elif TEMPERATURE_EXPERIMENT.get() == 1 and TIME_EXPERIMENT.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Time_final)
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
-            CONTROL_PANEL.hide(GRAPH_R_vs_Time)
 
             SELECTING_EXP_WIDGET.destroy()
 
