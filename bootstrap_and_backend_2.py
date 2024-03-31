@@ -804,7 +804,7 @@ def CHECK_AND_SET_ALL_VALUES():
     return True
 
 
-
+# Function to merge two sorted arrays...
 def MERGE_BOTH_TEMPERATURES(arr1, arr2):
     final_arr = []
     n = len(arr1)
@@ -823,7 +823,6 @@ def MERGE_BOTH_TEMPERATURES(arr1, arr2):
 
 
 # Function to start the Experiment...
-
 def START_EXPERIMENT():
     global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES
     if int(TEMPERATURE_EXPERIMENT.get()):
@@ -881,8 +880,8 @@ def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
 
-    is_armed = SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?")
-    if int(is_armed) == 1:
+    is_armed = int(SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?"))
+    if is_armed:
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
 
     print("Aborted!")
