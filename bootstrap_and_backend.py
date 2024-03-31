@@ -1,6 +1,6 @@
 #### By Sai Pranay Deep, Aditi Wekhande, Devanshi Chhatbar, Saket Meshram, Jay Solanki.... ####
 
-# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232_Port cable for AC/DC current source. The code may change if you use different cables... :)
+# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232 cable for AC/DC current source. The code may change if you use different cables... :)
 
 
 # Required imports for connecting the device
@@ -20,6 +20,9 @@ from tkinter import *
 from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
 from threading import Thread
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+
 
 # Required imports for maintaining the data
 import csv, json
@@ -36,7 +39,7 @@ import os
 from os.path import exists
 from os import mkdir
 
-####---------------------------------------- Graph Plotting Part ----------------------------------------------####
+####-------------------------------------- Graph Plotting Part -------------------------------------------------####
 
 # Array to store the lines...
 ARRAY_OF_PLOTTING_LINES = [] 
@@ -95,10 +98,10 @@ def KEY_PRESS_HANDLER(event, canvas, toolbar):
 
 
 # Function to add the new point to the graph...
-def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE, ind = 0):
+def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
     global X_COORDINATE_OF_LAST_ADDED_POINT, Y_COORDINATE_OF_LAST_ADDED_POINT, ARRAY_OF_PLOTTING_LINES, CANVAS_OF_GRAPH
 
-    PLOTTING_LINE = ARRAY_OF_PLOTTING_LINES[ind]
+    PLOTTING_LINE = ARRAY_OF_PLOTTING_LINES[0]
     PLOTTING_LINE.set_data(np.append(PLOTTING_LINE.get_xdata(), NEW_X_COORDINATE), np.append(PLOTTING_LINE.get_ydata(), NEW_Y_COORDINATE))
     # update the view limits as per the newly added points
     GRAPH.relim()
@@ -107,7 +110,6 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE, ind = 0):
     if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
     if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
 
-
 # Function to save the graph plot image to selected directory...
 def SAVE_THE_GRAPH_INTO(directory):
     IMAGE_FILE_NAME = "Plot of "+ TITLE + ".png"
@@ -115,20 +117,33 @@ def SAVE_THE_GRAPH_INTO(directory):
     CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
 
 
+
+# temperature_combobox = ttk.Combobox(temperature_lframe, font=("Arial", 10), state = 'readonly')
+# temperature_combobox.grid(row=3, column=0, pady=10, padx=10, ipady=5)
 # Function to setup the Graph in Graph tab...
-def SET_GRAPH_IN_TAB(GRAPH_TAB):
+def SET_R_vs_Temp_Graph(GRAPH_TAB):
 
     global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
+    global temperature_combobox
 
-    FRAME_OF_GRAPH = Frame(GRAPH_TAB) 
+    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
 
     LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text = "Resistance Vs. Temperature") # Adding label/title for the graph
 
-    LABEL_OF_GRAPH.config(font=('Times', 32)) # Changing the default font style and size to Times and 32
+    LABEL_OF_GRAPH.config(font=('Times', 25)) # Changing the default font style and size to Times and 32
+    # temperature_combobox = ttk.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+    # temperature_combobox.current(0)
 
-    FIGURE_OF_GRAPH = Figure() # Created a figure to add graph
+    # FIGURE_OF_GRAPH = Figure(figsize=(5, 4)) # Created a figure to add graph
 
-    CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master = FRAME_OF_GRAPH) # Created a canvas to plot graph
+    # CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master = FRAME_OF_GRAPH) # Created a canvas to plot graph
+    # FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
+
+    FIGURE_OF_GRAPH = Figure(figsize=(6, 5))  # Adjust the figsize parameter to set a smaller figure size (e.g., 4x3 inches)
+
+    CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master=FRAME_OF_GRAPH)
+   
+
 
     GRAPH = FIGURE_OF_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
 
@@ -162,34 +177,93 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
 
     # Making Canvas, Label, Frame visible in the tab by packing
     LABEL_OF_GRAPH.pack()
-    CANVAS_OF_GRAPH.get_tk_widget().pack(fill="both", expand=True)
-    FRAME_OF_GRAPH.pack(fill="both", expand=True)
+    # temperature_combobox.pack(padx=10, pady=10)
+    CANVAS_OF_GRAPH.get_tk_widget().pack()
+    FRAME_OF_GRAPH.pack()
+
+def SET_R_vs_Time_Graph(GRAPH_TAB):
+
+    global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT,text_var
+    global temperature_combobox
+    
+    FRAME_OF_GRAPH = tb.Frame(GRAPH_TAB) 
+    text_var = tk.StringVar()
+    text_var.set("Initial Text")  # Set initial text
 
 
-####---------------------------------------- Experiment Part --------------------------------------------------####
+    
+    LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text="Current Temperature :") 
+    # LABEL_OF_TERMINAL = tk.Label(FRAME_OF_GRAPH,textvariable=text_var)
+    # update_label_text()
+    LABEL_OF_GRAPH.config(font=('Times', 20)) # Adding label/title for the graph
 
-# Function to check whether all the instruments are connected or not. If not, will try to connect...
+    temperature_combobox = tb.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+
+    # Function to update label with combobox value
+    def update_label(*args):
+        selected_temperature = temperature_combobox.get()
+        LABEL_OF_GRAPH.config(text="Temperature is " + selected_temperature+ " K")
+
+    # Associate the update_label function with the combobox
+    temperature_combobox.bind("<<ComboboxSelected>>", update_label)
+
+
+    FIGURE_OF_GRAPH = Figure(figsize=(6, 4.5))  # Adjust the figsize parameter to set a smaller figure size (e.g., 4x3 inches)
+
+    CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master=FRAME_OF_GRAPH)
+   
+
+
+    GRAPH = FIGURE_OF_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
+
+    GRAPH.set_xlabel("TIME") # Set X label
+    GRAPH.set_ylabel("RESISTANCE") # Set Y label
+    GRAPH.grid() # Added grids to graph
+    GRAPH.axhline(linewidth=2, color='black') # Added X axis
+    GRAPH.axvline(linewidth=2, color='black') # Added Y axis
+
+    ANNOTATION = GRAPH.annotate("", xy=(0,0), xytext=(-150,25),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")) # Annotion means when we hover cursor to a point a small box will appear displaying the x and y co-ordinates
+
+    ANNOTATION.set_visible(False) # Making it invisible initially (We will make it visible when we hover the cursor in DISPLAY_ANNOTATION_WHEN_HOVER Function)
+
+    TOOLBAR_OF_GRAPH = NavigationToolbar2Tk(CANVAS_OF_GRAPH, FRAME_OF_GRAPH) # Added toolbar for graph
+    TOOLBAR_OF_GRAPH.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
+
+    Y_COORDINATE_OF_LAST_ADDED_POINT = None
+    X_COORDINATE_OF_LAST_ADDED_POINT = None
+
+    
+    PLOTTING_LINE, = GRAPH.plot([], [], color="orange", linestyle="-", marker="o", markerfacecolor="blue", markeredgewidth=1, markeredgecolor="black" ) # Plotted an empty graph...
+    ARRAY_OF_PLOTTING_LINES.append(PLOTTING_LINE) # Appending the line(plot) to ARRAY_OF_PLOTTING_LINES...
+    #  Adjusting the limits of x and y axes to display in the first quadrant only
+    GRAPH.set_xlim(0, None)  # X-axis starts from 0 and extends towards positive infinity
+    GRAPH.set_ylim(0, None)  # Y-axis starts from 0 and extends towards positive infinity
+
+
+
+    # Making zooming, hovering by mouse
+    CANVAS_OF_GRAPH.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_OF_GRAPH, TOOLBAR_OF_GRAPH))
+    CANVAS_OF_GRAPH.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
+    CANVAS_OF_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES
+    , ANNOTATION))
+
+
+    # Making Canvas, Label, Frame visible in the tab by packing
+    
+    temperature_combobox.pack(padx=10, pady=(30,20))
+    LABEL_OF_GRAPH.pack(pady=(0,0))
+    # LABEL_OF_TERMINAL.pack(pady=(0,0)) 
+    CANVAS_OF_GRAPH.get_tk_widget().pack()
+    FRAME_OF_GRAPH.pack()
+
+
+####---------------------------------------- Experiment Part ---------------------------------------------------####
+
+# Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
     global NANOVOLTMETER, CURRENT_SOURCE, CTC
-
     number_of_connected_devices = 0
     retry_number = 0
-
-    # Connecting Nanovoltmeter
-    while True:
-        try:
-            rm = pyvisa.ResourceManager()
-            NANOVOLTMETER = rm.open_resource(SETTINGS["device_name"])
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","NANOVOLTMETER is not connected... Check its connections!!")
-                retry_number = 0
-                break
-            retry_number += 1
-
     # Connecting Current source
     while True:
         try:
@@ -224,7 +298,6 @@ def CONNECT_INSTRUMENTS():
         return True 
     else: 
         return False
-
 
 # Arrays to store input channels and output channels and the stored below are just default, these will be changed in SYNC_GET function defined below...
 INPUT_CHANNELS_LIST_OF_CTC = ['In 1', 'In 2', 'In 3', 'In 4']
@@ -460,7 +533,7 @@ def GET_PRESENT_RESISTANCE():
         reading_number += 1
     
     SEND_COMMAND_TO_CURRENT_SOURCE("OUTP OFF") # Switching Current_Source output OFF
-
+    
     if TO_ABORT: return float('-inf')
 
     return sum(resistance_readings) / len(resistance_readings)
@@ -470,10 +543,19 @@ def GET_PRESENT_RESISTANCE():
 def WRITE_DATA_TO_CSV(temperature, resistance):
     CSV_FILE_NAME = TITLE + ".csv"
     CSV_FILE_PATH = os.path.join(SETTINGS["Directory"], CSV_FILE_NAME)
-    with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([temperature, resistance])
-
+    
+    data = [temperature, resistance]
+    
+    while True:
+        try:
+            with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(data)
+                csvfile.flush()  # Flush the buffer to ensure immediate write
+            break
+        except (PermissionError, OSError) as e:
+            print(f"Error writing to file: {e}. Retrying in 1 second...")
+            time.sleep(1)
 
 # Function to get the resistances at all temperatures...
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
@@ -517,7 +599,6 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
 
     # Switching CTC output OFF
     SEND_COMMAND_TO_CTC("outputEnable off")
-
 
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
 def CHECK_AND_SET_ALL_VALUES(): 
@@ -687,71 +768,6 @@ def START_EXPERIMENT():
 
 
 
-def GET_RESISTANCE_WITH_PULSE(time):
-    voltage_and_time = []
-    Time = 0
-    current = 10e-3
-    # Start a pulses with each 1ms long and 1ms gap...
-    # Get voltage values 
-    voltage_reading = GET_PRESENT_VOLTAGE_READING() # Have to do this every ms...
-    voltage_and_time.append((Time, voltage_reading))
-    # store time in ms and voltage values...
-
-    # Get resistance 
-    for i in range(len(voltage_and_time)):
-        ADD_POINT_TO_GRAPH(voltage_and_time[i][1] / current, voltage_and_time[i][0], ind = -1)
-
-
-
-######### Use this if required...
-        
-# import visa
-# import time
-
-# def configure_current_source(visa_address):
-#     rm = visa.ResourceManager()
-#     current_source = rm.open_resource(visa_address)
-    
-#     # Set source to current mode
-#     current_source.write(":SOUR:FUNC CURR")
-    
-#     # Set current level to 1 mA
-#     current_source.write(":SOUR:CURR:LEV 0.001")
-    
-#     # Set pulse width to 1 millisecond
-#     current_source.write(":SOUR:PULS:WIDTH 0.001")
-    
-#     # Set pulse period to 2 milliseconds (1 ms pulse + 1 ms gap)
-#     current_source.write(":SOUR:PULS:PER 0.002")
-    
-#     return current_source
-
-# def start_pulse_sequence(current_source):
-#     current_source.write(":OUTP ON")  # Turn output on
-    
-# def stop_pulse_sequence(current_source):
-#     current_source.write(":OUTP OFF")  # Turn output off
-    
-# def main():
-#     visa_address = "GPIB0::1::INSTR"  # Update with the correct VISA address
-    
-#     current_source = configure_current_source(visa_address)
-    
-#     try:
-#         start_pulse_sequence(current_source)
-#         print("Pulse sequence started.")
-#         time.sleep(10)  # Run the pulse sequence for 10 seconds (adjust as needed)
-#     except KeyboardInterrupt:
-#         print("Pulse sequence stopped by user.")
-#     finally:
-#         stop_pulse_sequence(current_source)
-#         current_source.close()
-
-
-
-
-
-
 # Function to trigger the Experiment... 
 def TRIGGER():
 
@@ -820,30 +836,69 @@ def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY):
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
         LABEL_OF_OUTPUT_DIRECTORY.config(text = directory)
 
+def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
+     
+    # Creating Settings Widget...
+    SETTINGS_WIDGET = Toplevel(INTERFACE)
+  
+    SETTINGS_WIDGET.title("Experiment Settings")
+    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 270))
+    SETTINGS_WIDGET.resizable(False,False)
+    SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
+    SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
+   
+    label=Label(SETTINGS_WIDGET, text = "Choose the experiment(s) you want to perform : ", fg = "white", bg = "#575757")
+    label.grid(row = 0,column = 0,  sticky = "we",  pady = 25)
+    label.config(font=("Arial", 12, "bold"))
+    
+    ENTRY_OF_SPECIFIC_TEMPERATURES = IntVar()
+    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_SPECIFIC_TEMPERATURES, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+   
+    ENTRY_OF_TEMPERATURE_RANGE = IntVar()
+    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_RANGE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    
+    # Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2).grid(row =3 , column = 0, padx = (90,0), pady = 20)
+    def confirm_settings():
+        if ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 1 and ENTRY_OF_TEMPERATURE_RANGE.get() == 0:
+            CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
+            SETTINGS_WIDGET.destroy()
+        
+            
+        elif ENTRY_OF_TEMPERATURE_RANGE.get() == 1 and ENTRY_OF_SPECIFIC_TEMPERATURES.get() == 0:
+            CONTROL_PANEL.hide(TEMPERATURE_TAB)
+            CONTROL_PANEL.hide(GRAPH_R_vs_Time)
+            SETTINGS_WIDGET.destroy()
+      
+        else:
+            SETTINGS_WIDGET.destroy()
+          
+    Button(SETTINGS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(90,0), pady=20)
+    
+     
+    
+    SETTINGS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SETTINGS_WIDGET))
+    SETTINGS_WIDGET.grab_set()
+    SETTINGS_WIDGET.mainloop()
 
 # Function to Create and Open Settings Widget and saving the changes if any are done in this widget...
 def OPEN_SETTINGS_WIDGET(): 
 
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
-    SETTINGS_WIDGET.config(bg = "#575757")
+    # SETTINGS_WIDGET.config()
     SETTINGS_WIDGET.title("Settings")
-    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 270))
+    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 350))
     SETTINGS_WIDGET.resizable(False,False)
     SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
     SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
+    Label(SETTINGS_WIDGET, text = "Nanovoltmeter :", fg = "white", bg = "#575757").grid(row = 1, column = 0, rowspan = 2, sticky = "e", padx = (0,10), pady = 10)
 
-    # Creating Combobox for selecting GPIB Cabel connected to Nanovoltmeter...
-    Label(SETTINGS_WIDGET, text = "Nanovoltmeter :", fg = "white", bg = "#575757").grid(row = 0,column = 0, rowspan = 2, sticky = "e", padx = (0,10), pady = 10)
-    
     ENTRY_OF_DEVICE = StringVar(value = SETTINGS["device_name"]) # Assigning the variable with the cabel which is in settings (Simply setting default)
     cabels_available = pyvisa.ResourceManager().list_resources()
 
     DROPDOWN_OF_GPIB_DEVICE = ttk.Combobox(SETTINGS_WIDGET, width = 27,textvariable = ENTRY_OF_DEVICE, values = cabels_available, state = "readonly")
     DROPDOWN_OF_GPIB_DEVICE.bind('<<ComboboxSelected>>', lambda x: SET_SETTINGS("device_name", DROPDOWN_OF_GPIB_DEVICE.get()))
     DROPDOWN_OF_GPIB_DEVICE.grid(row = 0, column = 1, sticky = "w", pady = 10)
-    # DROPDOWN_OF_GPIB_DEVICE.current(2)
-
 
     # Creating an entry field to enter the address of the CTC device...
     Label(SETTINGS_WIDGET,text = "CTC Address:", fg = "white", bg = "#575757").grid(row = 2, column = 0, sticky = "e", padx = (0,10), pady = 10)
@@ -888,6 +943,8 @@ def OPEN_SETTINGS_WIDGET():
     LABEL_OF_OUTPUT_DIRECTORY = Label(SETTINGS_WIDGET,text = SETTINGS["Directory"], anchor = "w", width = 25, fg = "white", bg = "#575757")
     LABEL_OF_OUTPUT_DIRECTORY.grid(row = 6, column = 1, sticky = "w", padx = (0,10), pady = 10)
     Button(SETTINGS_WIDGET, text = "Select Folder", command = lambda: OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY)).grid(row = 6, column = 1, padx = (150,0), pady = 10)
+ 
+    Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2).grid(row =7 , column = 1 ,sticky="w",pady = 20)
 
     SETTINGS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SETTINGS_WIDGET))
     SETTINGS_WIDGET.grab_set()
@@ -931,21 +988,49 @@ def SYNC_SETTINGS():
 def SET_SETTINGS(key,val): 
     SETTINGS[key] = val
     WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
+    
+
+def UPDATE_COMBOBOX(event):
+    global temperature_combobox
+   
+    # Get the content of the Text widget
+    input_text = TEMPERATURES_ENTRY.get("1.0", "end-1c")
+    
+    # Split the input_text into individual values based on comma
+    values = input_text.split(",")
+    
+    # Strip leading and trailing whitespaces from each value
+    values= [value.strip() for value in values if value.strip()]  # Include placeholder text
+    
+    # Populate the Combobox with the extracted values
+    temperature_combobox['values'] = values
+    
+    
+    
+
 
 
 
 if __name__=="__main__":
+    global INTERFACE 
 
     ## Creating a Tkinter Interface ##
-    INTERFACE = Tk() # Made a root Interface
+    INTERFACE = tb.Window(themename="yeti") # Made a root Interface
+    # style = tb.Style("yeti")
     INTERFACE.wm_title("TD-Controller") # Set title to the interface widget
-    INTERFACE.geometry("850x600") # Set Geometry of the interface widget
+    INTERFACE.geometry("1000x700") # Set Geometry of the interface widget
     INTERFACE.grid_columnconfigure(0, weight=1) 
     INTERFACE.grid_rowconfigure(0, weight=1)
+    
+    
+    # root = tb.Tk()
+    
+    
+ 
+  
 
-
-    ## Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
-    SIDE_BAR = Frame(INTERFACE, bg="#878787")
+    # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
+    SIDE_BAR = tb.Frame(INTERFACE,bootstyle="info")
     SIDE_BAR.grid(row=0, column=1, rowspan=2, sticky="nswe")
 
     SETTINGS_BUTTON = Button(SIDE_BAR, text = "Settings", height = 2, command = OPEN_SETTINGS_WIDGET)
@@ -954,10 +1039,10 @@ if __name__=="__main__":
     INFO_BUTTON = Button(SIDE_BAR, text = "Info", height = 2, command = SHOW_INFO_OF_DEVICES)
     INFO_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
-    SYNC_SET_BUTTON = Button(SIDE_BAR, text = "Sync Set", height= 2, command = CHECK_AND_SET_ALL_VALUES)
+    SYNC_SET_BUTTON = Button(SIDE_BAR, text = "Sync Set", height= 2)
     SYNC_SET_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
-    SYNC_GET_BUTTON= Button(SIDE_BAR, text = "Sync Get", height = 2, command = SYNC_GET)
+    SYNC_GET_BUTTON=Button(SIDE_BAR, text = "Sync Get", height = 2)
     SYNC_GET_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
     TRIGGER_BUTTON = Button(SIDE_BAR, text = "Trigger", height = 2, command = TRIGGER)
@@ -967,16 +1052,21 @@ if __name__=="__main__":
     TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
-    CONTROL_PANEL = ttk.Notebook(INTERFACE)
+    CONTROL_PANEL = tb.Notebook(INTERFACE,bootstyle="primary")
 
-    CTC_TAB = Frame(CONTROL_PANEL,bg="#575757") 
-    CURRENT_SOURCE_TAB = Frame(CONTROL_PANEL,bg="#575757") 
-    GRAPH_TAB = Frame(CONTROL_PANEL) 
+    CTC_TAB = tb.Frame(CONTROL_PANEL) 
+    CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
+    TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
+    GRAPH_R_vs_Temp = tb.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Time = tb.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
-    CONTROL_PANEL.add(GRAPH_TAB, text = ' Graph\n Setup ')
+    CONTROL_PANEL.add(TEMPERATURE_TAB, text = ' Temperature\n Setup ')
+    CONTROL_PANEL.add(GRAPH_R_vs_Temp, text = ' Graph\n (R vs Temp) ')
+    CONTROL_PANEL.add(GRAPH_R_vs_Time, text = ' Graph\n (R vs Time) ')
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
+   
    
 
     ## Creating Dropdowns for selecting input and output channels of CTC...
@@ -987,10 +1077,10 @@ if __name__=="__main__":
     LABEL_OF_INPUT_CHANNEL = Label(FRAME_OF_CHANNELS_SELECTION, text = 'Input Channel:', bg = "#575757", fg = 'white')
     LABEL_OF_INPUT_CHANNEL.grid(row = 0, column = 0, sticky = "ew", padx = (20,20), pady = 20)
 
-
+    input_options = ['In 1', 'In 2', 'In 3', 'In 4']
     ENTRY_OF_INPUT_CHANNEL = StringVar()
 
-    DROPDOWN_OF_INPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_INPUT_CHANNEL,  values = INPUT_CHANNELS_LIST_OF_CTC, state = 'readonly')
+    DROPDOWN_OF_INPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_INPUT_CHANNEL,  values = input_options, state = 'readonly')
     DROPDOWN_OF_INPUT_CHANNEL.grid(row = 0, column = 1, rowspan = 3, sticky = "ew", pady = (10,10))
     DROPDOWN_OF_INPUT_CHANNEL.current(0)
 
@@ -998,9 +1088,10 @@ if __name__=="__main__":
     LABEL_OF_OUTPUT_CHANNEL = Label(FRAME_OF_CHANNELS_SELECTION, text = 'Output Channel:', bg = "#575757",  fg = 'white')
     LABEL_OF_OUTPUT_CHANNEL.grid(row = 0, column = 2, sticky = "ew", padx = (20,20), pady = 20)
 
+    output_options = ['Out 1', 'Out 2']
     ENTRY_OF_OUTPUT_CHANNEL = StringVar()
 
-    DROPDOWN_OF_OUTPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_OUTPUT_CHANNEL, values = OUTPUT_CHANNELS_LIST_OF_CTC, state = 'readonly')
+    DROPDOWN_OF_OUTPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_OUTPUT_CHANNEL, values = output_options, state = 'readonly')
     DROPDOWN_OF_OUTPUT_CHANNEL.grid(row = 0, column = 3, rowspan = 3, sticky = "ew", pady = (10,10))
     DROPDOWN_OF_OUTPUT_CHANNEL.current(1)
     
@@ -1010,25 +1101,25 @@ if __name__=="__main__":
     FRAME_OF_POWER_CONTROLS.grid(row = 3, column = 0, rowspan = 2, pady = (20, 10), padx = 120, sticky = 'nwes')
 
     # Low Power Limit entry
-    LABEL_OF_LOW_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Low Limit :', bg = "#575757", fg = 'white')
+    LABEL_OF_LOW_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Low Limit(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_LOW_POWER_LIMIT.grid(row = 0, column = 0, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_LOW_POWER_LIMIT = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_LOW_POWER_LIMIT.grid(row = 0, column = 1, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
 
     # High Power Limit entry
-    LABEL_OF_HIGH_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'High Limit :', bg = "#575757", fg = 'white')
+    LABEL_OF_HIGH_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'High Limit(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_HIGH_POWER_LIMIT.grid(row = 0, column = 2, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_HIGH_POWER_LIMIT = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_HIGH_POWER_LIMIT.grid(row = 0, column = 3, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
 
     # Increase Power Limit entry
-    LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC = Label(FRAME_OF_POWER_CONTROLS, text = 'Increase Limit by :', bg = "#575757", fg = 'white')
+    LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC = Label(FRAME_OF_POWER_CONTROLS, text = 'Increase Limit by(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC.grid(row = 1, column = 0, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_INCREASE_POWER_LIMIT_OF_CTC = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_INCREASE_POWER_LIMIT_OF_CTC.grid(row = 1, column = 1, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
 
     # Max Power Limit entry
-    LABEL_OF_MAXIMUM_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Max Limit :', bg = "#575757", fg = 'white')
+    LABEL_OF_MAXIMUM_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Max Limit(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_MAXIMUM_POWER_LIMIT.grid(row = 1, column = 2, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_MAXIMUM_POWER_LIMIT = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_MAXIMUM_POWER_LIMIT.grid(row = 1, column = 3, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
@@ -1062,19 +1153,19 @@ if __name__=="__main__":
     FRAME_OF_TEMPERATURE_CONTROLS.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
 
     # Start Temperature entry
-    LABEL_OF_START_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Start Temperature :', bg = "#575757", fg = 'white')
+    LABEL_OF_START_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Start Temperature(K) :', bg = "#575757", fg = 'white')
     LABEL_OF_START_TEMPERATURE.grid(row = 0, column = 0, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_START_TEMPERATURE = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_START_TEMPERATURE.grid(row = 0, column = 1, pady = 10, ipady = 3, sticky = "ew")
 
     # Stop Temperature entry
-    LABEL_OF_STOP_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Stop Temperature :', bg = "#575757", fg = 'white')
+    LABEL_OF_STOP_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Stop Temperature(K) :', bg = "#575757", fg = 'white')
     LABEL_OF_STOP_TEMPERATURE.grid(row = 0,  column = 2, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_STOP_TEMPERATURE = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_STOP_TEMPERATURE.grid(row = 0, column = 3, pady = 10, ipady = 3, sticky = "ew")
 
     # Increasing interval of Temperature entry
-    LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Increasing by :', bg = "#575757", fg = 'white')
+    LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Increasing by(K) :', bg = "#575757", fg = 'white')
     LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE.grid(row = 0, column = 4, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE.grid(row = 0, column = 5, pady = 10, ipady = 3, sticky = "ew")
@@ -1092,63 +1183,92 @@ if __name__=="__main__":
     ENTRY_OF_TOLERANCE.grid(row = 1, column = 3, pady = 10, ipady = 3, sticky = "ew")
 
     # Delay of CTC entry
-    LABEL_OF_DELAY_OF_CTC = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Delay of CTC :', bg = "#575757", fg = 'white')
+    LABEL_OF_DELAY_OF_CTC = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Delay of CTC(s):', bg = "#575757", fg = 'white')
     LABEL_OF_DELAY_OF_CTC.grid(row = 1, column = 4, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_DELAY_OF_CTC = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_DELAY_OF_CTC.grid(row = 1, column = 5, pady = 10, ipady = 3, sticky = "ew")
 
     # Complete Cycle entry
     ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    Checkbutton(CTC_TAB, text = "Complete Cycle", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_COMPLETE_CYCLE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black").grid(row = 8, column = 0, pady = 20, sticky = "ew")
+    tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle").grid(row = 8, column = 0, pady = (20,10),padx=50)
+    tab_bg="#575757"
 
+ # Title
+    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white", bg=tab_bg)
+    TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=300, pady=(60, 35))
 
-    # Title
-    FRAME_OF_TITLE = LabelFrame(CURRENT_SOURCE_TAB, text = "Title", fg = "white", bg = "#575757")
-    FRAME_OF_TITLE.grid(row = 0, column = 0, rowspan = 1, sticky = "nsew", padx = 250, pady = (40,25))
-
-    ENTRY_OF_TITLE = Entry(FRAME_OF_TITLE, font = (10), width = 20)
-    ENTRY_OF_TITLE.pack(pady = (0,5), padx = 10, ipady = 5)
+    ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
+    ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
  
 
     # Drive
-    FRAME_OF_CURRENT_CONTROLS = LabelFrame(CURRENT_SOURCE_TAB, text = "Current Controls", fg = "white", bg = "#575757")
-    FRAME_OF_CURRENT_CONTROLS.grid(row = 1, column = 0, rowspan = 3, sticky = "nsew", padx = 250, pady = 25)
+    DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white", bg=tab_bg)
+    DRIVE_LFRAME.grid(row=1, column=0, rowspan=3, sticky="nsew", padx=300, pady=30)
 
-    LABELFRAME_OF_START_CURRENT = LabelFrame(FRAME_OF_CURRENT_CONTROLS, text = "Current Start Value (A)", fg = "white", bg = "#575757")
-    LABELFRAME_OF_START_CURRENT.grid(row = 0, column = 0, padx = 10, pady = (5,10), sticky = "w")
+    CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white", bg=tab_bg)
+    CURRENT_START_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_START_CURRENT = Entry(LABELFRAME_OF_START_CURRENT, font = (10), width = 20)
-    ENTRY_OF_START_CURRENT.grid(row = 0, column = 0, rowspan = 2, pady = 10, padx = 10, ipady = 5)
+    ENTRY_OF_START_CURRENT = Entry(CURRENT_START_LFRAME, font=(10), width=20)
+    ENTRY_OF_START_CURRENT.grid(row=0, column=0, rowspan=2, pady=10, padx=10, ipady=5)
    
 
-    LABELFRAME_OF_NUMBER_OF_CURRENT_INTERVALS = LabelFrame(FRAME_OF_CURRENT_CONTROLS, text = "Number of Current Intervals at a Temperature", fg = "white", bg = "#575757")
-    LABELFRAME_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row = 1, column = 0, padx = 10, pady = (5,10), sticky = "w")
+    INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Number of Current Intervals at a Temperature", fg="white", bg=tab_bg)
+    INTERVALNO_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(LABELFRAME_OF_NUMBER_OF_CURRENT_INTERVALS, font = (10), width = 20)
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row = 0, column = 0, rowspan = 3, pady = 10, padx = 10, ipady = 5)
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(INTERVALNO_LFRAME, font=(10), width=20)
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
 
-    LABELFRAME_OF_NUMBER_OF_INCREASING_INTERVAL_OF_CURRENT = LabelFrame(FRAME_OF_CURRENT_CONTROLS, text = "Increase Current Interval at a Temperature", fg = "white", bg = "#575757")
-    LABELFRAME_OF_NUMBER_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row = 2, column = 0, padx = 10, pady = (5,10), sticky = "w")
+    INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Increase Current Interval at a Temperature(A)", fg="white", bg=tab_bg)
+    INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
 
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(LABELFRAME_OF_NUMBER_OF_INCREASING_INTERVAL_OF_CURRENT, font = (10), width = 20)
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row = 0, column = 0, rowspan = 3, pady = 10, padx = 10, ipady = 5)
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(INTERVAL_LFRAME, font=(10), width=20)
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
     
+    # Temperature Tab
+    TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white", bg=tab_bg)
+    TERMPERATURE_LFRAME.grid(row=0, column=0, rowspan=3,sticky="nsew", padx=350, pady=150)
+
+    SELECT_TEMP_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Temperature(s)(in K)", fg="white", bg=tab_bg)
+    SELECT_TEMP_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    TEMPERATURES_ENTRY = Text(SELECT_TEMP_LFRAME, font=(10), width=20, height=1)
+    TEMPERATURES_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
+    
+    TEMPERATURES_ENTRY.bind("<KeyRelease>", UPDATE_COMBOBOX) 
+   
+
+    TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white", bg=tab_bg)
+    TIME_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    TIME_ENTRY = Entry(TIME_LFRAME, font=(10), width=20)
+    TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
+    
+
+    TIME_INTERVAL_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Time Interval(in s)", fg="white", bg=tab_bg)
+    TIME_INTERVAL_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+
+    TIME_INTERVAL_ENTRY = Entry(TIME_INTERVAL_LFRAME, font=(10), width=20)
+    TIME_INTERVAL_ENTRY.grid(row=0, column=0, rowspan=3, pady=10, padx=10, ipady=5)
+    
+
 
     # Setup the graph_tab...
-    SET_GRAPH_IN_TAB(GRAPH_TAB)
-
-    # Sync the settings from settings.json file if it exits to entry boxes of settings
-    SYNC_SETTINGS()
-
-
-    INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
+    SET_R_vs_Temp_Graph(GRAPH_R_vs_Temp)
+    SET_R_vs_Time_Graph(GRAPH_R_vs_Time)
+    
+            ### other ###
+    # INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     INTERFACE.wait_visibility()
     INTERFACE.update()
     
+    root_width=INTERFACE.winfo_width()
+    root_height=INTERFACE.winfo_height()
+    INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
+    INTERFACE.minsize(root_width,root_height)
+    
+    # SETTINGS_WIDGET_TEMPERATURE_CONTROL()
+    SETTINGS_WIDGET_TEMPERATURE_CONTROL()
 
-    INTERFACE.geometry(CENTER_THE_WIDGET(INTERFACE.winfo_width(), INTERFACE.winfo_height()))
-    INTERFACE.minsize(INTERFACE.winfo_width(), INTERFACE.winfo_height())
-
-
+    
     INTERFACE.mainloop()
