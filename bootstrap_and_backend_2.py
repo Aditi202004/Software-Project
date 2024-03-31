@@ -1,8 +1,9 @@
 #### By Sai Pranay Deep, Aditi Wekhande, Devanshi Chhatbar, Saket Meshram, Jay Solanki.... ####
 
-# Note :- We have used Ethernet cable for connection between PC and CTC device, GPIB cable for connection between PC and AC/DC current source,  RS232 cable for connection between AC/DC current source and Nanovoltmeter... :)
+# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232 cable for AC/DC current source. The code may change if you use different cables... :)
 
-# Required imports for connecting the devices with PC
+
+# Required imports for connecting the device
 import pyvisa, telnetlib
 
 
@@ -19,6 +20,8 @@ from tkinter import *
 from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
 from threading import Thread
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
 
 
 # Required imports for maintaining the data
@@ -37,7 +40,7 @@ from os.path import exists
 from os import mkdir
 
 
-####---------------------------------------- Graph Plotting Part ----------------------------------------------####
+####-------------------------------------- Graph Plotting Part -------------------------------------------------####
 
 # Array to store the lines...
 ARRAY_OF_PLOTTING_LINES = [] 
@@ -256,7 +259,8 @@ def SET_R_vs_Time_Graph(GRAPH_TAB_R_vs_Time):
     CANVAS_OF_GRAPH_R_vs_Time.get_tk_widget().pack()
     FRAME_OF_GRAPH_R_vs_Time.pack()
 
-####---------------------------------------- Experiment Part --------------------------------------------------####
+
+####---------------------------------------- Experiment Part ---------------------------------------------------####
 
 # Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
@@ -525,7 +529,11 @@ def GET_PRESENT_RESISTANCE():
     SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM") # Triggering the pulse mode
 
     # Wait for some time until it calculates the resistances
-    time.sleep(NUMBER_OF_CURRENT_INTERVALS + 0.5) # This value is set by our observations after many iterations
+    # This value is set by our observations after many trials
+    for i in range(NUMBER_OF_CURRENT_INTERVALS + 0.5):
+        if TO_ABORT:
+            return -1
+        time.sleep(1)
 
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR") # Aborting the sweep process
 
@@ -538,7 +546,7 @@ def GET_PRESENT_RESISTANCE():
 def GET_RESISTANCES_WITH_TIME_AT(temperature):
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF") # OFF the sweeping mode
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM") # Arming the 
-    SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM") # triggering
+    SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM")) # triggering
 
     time.sleep(1.5) # time required to execute above three commands by the device
 
@@ -547,6 +555,8 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
 
     present_csvfile = TITLE + "_Resistance_vs_Time_at_" + temperature + ".csv"
     while present_time <= MEASURING_TIME:
+        if TO_ABORT:
+            break
         present_time += 5
         time.sleep(5)
         resistance_readings, time_stamps = GET_RESISTANCES()
@@ -602,13 +612,8 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
 def CHECK_AND_SET_ALL_VALUES(): 
 
-    global INPUT_CHANNEL_OF_CTC, OUTPUT_CHANNEL_OF_CTC
-    global HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC
-    global P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
-    global START_TEMPERATURE, END_TEMPERATURE,  INCREASING_INTERVAL_OF_TEMPERATURE, TOLERANCE, THRESHOLD, DELAY_OF_CTC
-    global COMPLETE_CYCLE, TITLE
-    global START_CURRENT, STOP_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, DELAY_OF_CURRENT_SOURCE
-    global MEASURING_TIME, TIME
+    global INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, TITLE, P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
+
 
     # Assigning the parameters of CTC given by user to the variables and Setting those to CTC if they are in correct format...
 
@@ -741,19 +746,22 @@ def CHECK_AND_SET_ALL_VALUES():
     return True
 
 
-# Helper function to insert into sorted array using insertion sort
-def insert_into_sorted_array(arr, elem):
-    # If the array is empty or the element is greater than the last element, append it.
-    if len(arr) == 0 or elem >= arr[-1]:
-        arr.append(elem)
-        return arr
 
-    # Find the position where the element should be inserted.
-    for i in range(len(arr)):
-        if arr[i] >= elem:
-            # Once the position is found, insert the element at that position
-            arr.insert(i, elem)
-            return arr
+def merge_sorted_arrays(arr1, arr2):
+    final_arr = []
+    n = len(arr1)
+    m = len(arr2)
+    i = 0
+    j = 0
+    while i<n or j<m :
+        if (i<n and j>=m) or ((i<n and j<m) and (arr1[i] <= arr2[j])) :
+            final_arr.append(arr1[i])
+            i+=1
+        elif (i>=n and j<m) or ((i<n and j<m) and (arr1[i] > arr2[j])) :
+            final_arr.append(arr2[j])
+            j+=1
+    
+    return final_arr
 
 
 # Function to start the Experiment...
@@ -767,8 +775,9 @@ def START_EXPERIMENT():
             
     if TIME_EXPERIMENT == 1:
         entered_temperatures = temperature_combobox["values"]
-        for temperature in entered_temperatures:
-            ARRAY_OF_ALL_TEMPERATURES = insert_into_sorted_array(FINAL_TEMPERATURES, temperature)
+        entered_temperatures.sort()  # sorting 
+        ARRAY_OF_ALL_TEMPERATURES = merge_sorted_arrays(ARRAY_OF_ALL_TEMPERATURES, entered_temperatures)
+
 
     if not TO_ABORT:
         # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
@@ -815,6 +824,11 @@ def TRIGGER():
 def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
+
+    is_armed = SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?")
+    if int(is_armed) == 1:
+        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+
     print("Aborted!")
 
     TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
@@ -899,29 +913,28 @@ def CONNECTION_SETTINGS():
 
 
 # 
-def SETTINGS_WIDGET_TEMPERATURE_CONTROL(): 
+def DISPLAY_SELECTING_EXPERIMENTS_WIDGETS(): 
      
     # Creating Settings Widget...
-    SETTINGS_WIDGET = Toplevel(INTERFACE)
-    SETTINGS_WIDGET_Temp_width=int(INTERFACE.winfo_width()/2)
-    SETTINGS_WIDGET_Temp_height=int(INTERFACE.winfo_height()/2.7)
-    SETTINGS_WIDGET.title("Experiment Settings")
-    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(SETTINGS_WIDGET_Temp_width,SETTINGS_WIDGET_Temp_height))
-    SETTINGS_WIDGET.resizable(False,False)
-    SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
-    SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
+    SELECTING_EXP_WIDGET = Toplevel(INTERFACE)
+    SELECTING_EXP_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
+    SELECTING_EXP_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2.7)
+    SELECTING_EXP_WIDGET.title("Experiment Settings")
+    SELECTING_EXP_WIDGET.geometry(CENTER_THE_WIDGET(SELECTING_EXP_WIDGET_Temp_width, SELECTING_EXP_WIDGET_Temp_height))
+    SELECTING_EXP_WIDGET.resizable(False,False)
+    SELECTING_EXP_WIDGET.grid_columnconfigure(0, weight=1)
+    SELECTING_EXP_WIDGET.grid_columnconfigure(1, weight=1)
    
-    label=Label(SETTINGS_WIDGET, text = "Choose the experiment(s) you want to perform : ", fg = "white", bg = "#575757")
+    label = Label(SELECTING_EXP_WIDGET, text = "Choose the experiment(s) you want to perform : ", fg = "white", bg = "#575757")
     label.grid(row = 0,column = 0,  sticky = "we",  pady = 25)
-    label.config(font=("Arial", 12, "bold"))
+    label.config(font = ("Arial", 12, "bold"))
     
     ENTRY_OF_TIME_EXPERIMENT = IntVar()
-    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
    
     ENTRY_OF_TEMPERATURE_EXPERIMENT = IntVar()
-    Checkbutton(SETTINGS_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
-    # Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2).grid(row =3 , column = 0, padx = (90,0), pady = 20)
     def confirm_settings():
         if ENTRY_OF_TIME_EXPERIMENT.get() == 1 and ENTRY_OF_TEMPERATURE_EXPERIMENT.get() == 0:
             CONTROL_PANEL.hide(GRAPH_R_vs_Temp)
@@ -929,7 +942,7 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
             FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
             ENTRY_OF_COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
             COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
-            SETTINGS_WIDGET.destroy()
+            SELECTING_EXP_WIDGET.destroy()
 
 
         elif ENTRY_OF_TEMPERATURE_EXPERIMENT.get() == 1 and ENTRY_OF_TIME_EXPERIMENT.get() == 0:
@@ -937,18 +950,17 @@ def SETTINGS_WIDGET_TEMPERATURE_CONTROL():
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
             CONTROL_PANEL.hide(GRAPH_R_vs_Time)
 
-            SETTINGS_WIDGET.destroy()
+            SELECTING_EXP_WIDGET.destroy()
 
         else:
-            SETTINGS_WIDGET.destroy()
+            SELECTING_EXP_WIDGET.destroy()
           
-    Button(SETTINGS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(70,0), pady=20)
+    Button(SELECTING_EXP_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(70,0), pady=20)
     
-     
     
-    SETTINGS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SETTINGS_WIDGET))
-    SETTINGS_WIDGET.grab_set()
-    SETTINGS_WIDGET.mainloop()
+    SELECTING_EXP_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SELECTING_EXP_WIDGET))
+    SELECTING_EXP_WIDGET.grab_set()
+    SELECTING_EXP_WIDGET.mainloop()
 
 
 # Function to Create and Open Settings Widget and saving the changes if any are done in this widget...
@@ -956,9 +968,7 @@ def OPEN_SETTINGS_WIDGET():
 
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
-    # SETTINGS_WIDGET.config()
     SETTINGS_WIDGET.title("Settings")
-    # SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 350))
     SETTINGS_WIDGET_width=int(INTERFACE.winfo_width()/2)
     SETTINGS_WIDGET_height=int(INTERFACE.winfo_height()/2.5)
     SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(SETTINGS_WIDGET_width,SETTINGS_WIDGET_height))
@@ -1073,12 +1083,16 @@ def UPDATE_COMBOBOX(event):
     
     # Split the input_text into individual values based on comma
     values = input_text.split(",")
-    
+
     # Strip leading and trailing whitespaces from each value
-    values= [value.strip() for value in values if value.strip()]  # Include placeholder text
-    
-    # Populate the Combobox with the extracted values
-    temperature_combobox['values'] = values
+    values = [value.strip() for value in values if value.strip()]  # Include placeholder text
+    # Filter out non-numeric values
+    numeric_values = [value for value in values if value.replace('.', '', 1).isdigit()]
+
+    # # Populate the Combobox with the extracted values
+    # temperature_combobox['values'] = values
+    # Populate the Combobox with the extracted numeric values
+    temperature_combobox['values'] = numeric_values
 
 
 
@@ -1094,14 +1108,14 @@ if __name__=="__main__":
     INTERFACE.grid_rowconfigure(0, weight=1)
     INTERFACE.grid_columnconfigure(1, weight=0) 
     
-    # root = tk.Tk()
+    # root = tb.Tk()
     
     
  
   
 
     # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
-    SIDE_BAR = tk.Frame(INTERFACE,bootstyle="info")
+    SIDE_BAR = tb.Frame(INTERFACE,bootstyle="info")
     SIDE_BAR.grid(row=0, column=1, rowspan=2, sticky="nswe")
 
     SETTINGS_BUTTON = Button(SIDE_BAR, text = "Settings", height = 2, command = OPEN_SETTINGS_WIDGET)
@@ -1123,13 +1137,13 @@ if __name__=="__main__":
     TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
-    CONTROL_PANEL = tk.Notebook(INTERFACE,bootstyle="primary")
+    CONTROL_PANEL = tb.Notebook(INTERFACE,bootstyle="primary")
 
-    CTC_TAB = tk.Frame(CONTROL_PANEL) 
-    CURRENT_SOURCE_TAB = tk.Frame(CONTROL_PANEL) 
-    TEMPERATURE_TAB = tk.Frame(CONTROL_PANEL)
-    GRAPH_R_vs_Temp = tk.Frame(CONTROL_PANEL) 
-    GRAPH_R_vs_Time_final  = tk.Frame(CONTROL_PANEL) 
+    CTC_TAB = tb.Frame(CONTROL_PANEL) 
+    CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
+    TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
+    GRAPH_R_vs_Temp = tb.Frame(CONTROL_PANEL) 
+    GRAPH_R_vs_Time_final  = tb.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
@@ -1261,7 +1275,7 @@ if __name__=="__main__":
 
     # Complete Cycle entry
     ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    COMPLETE_CYCLE_CHECKBUTTON=tk.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = ENTRY_OF_COMPLETE_CYCLE, bootstyle="primary-round-toggle")
     COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
  # Title
