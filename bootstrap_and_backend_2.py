@@ -945,7 +945,7 @@ def DISPLAY_REQUIREMENTS():
 
     REQUIREMENTS_WIDGET.title("Make Sure")
     REQUIREMENTS_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
-    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2)
+    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 1.75)
     REQUIREMENTS_WIDGET.geometry(CENTER_THE_WIDGET(REQUIREMENTS_WIDGET_Temp_width, REQUIREMENTS_WIDGET_Temp_height))
     REQUIREMENTS_WIDGET.resizable(False, False)
     REQUIREMENTS_WIDGET.grid_columnconfigure(0, weight=1)
@@ -958,15 +958,16 @@ def DISPLAY_REQUIREMENTS():
     • GPIB: current source to CPU
     • RS-232: male-to-male between current source and 
       voltmeter 
-    • Trigger Llink Cable: between current source and voltmeter
+    • Trigger Link Cable: between current source and voltmeter
     • Telnet: CTC to CPU
     • set GPIB interface for current source
     • set RS-232 interface for nanovoltmeter
     • baudrate of nanovoltmeter and current source should be 
       19.2K and flow control on nanovoltmeter: NONE
     """
-    label = Label(REQUIREMENTS_WIDGET, text=label_text, fg="white", justify='left', wraplength=500)
-
+    label = Text(REQUIREMENTS_WIDGET, wrap='word', height=10, width=50)
+    label.insert('1.0', label_text)
+    label.config(state='disabled')
     label.grid(row=1, column=0, sticky="wens", pady=(0, 10))
     label.config(font=("Times New Roman", 12))
 
