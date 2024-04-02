@@ -1,10 +1,15 @@
 #### By Sai Pranay Deep, Aditi Wekhande, Devanshi Chhatbar, Saket Meshram, Jay Solanki.... ####
 
-# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232_Port cable for AC/DC current source. The code may change if you use different cables... :)
+# Note :- We have used Ethernet cable for CTC device, GPIB cable for Nanovoltmeter, RS232 cable for AC/DC current source. The code may change if you use different cables... :)
 
+
+
+
+
+####---------------------------------------- IMPORTS ----------------------------------------------####
 
 # Required imports for connecting the device
-import pyvisa, serial, telnetlib
+import pyvisa, telnetlib
 
 
 # Required imports for plotting the graph
@@ -20,6 +25,10 @@ from tkinter import *
 from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
 from threading import Thread
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from tkinter import Toplevel, Label, Text, Button
+
 
 # Required imports for maintaining the data
 import csv, json
@@ -36,10 +45,12 @@ import os
 from os.path import exists
 from os import mkdir
 
+
 ####---------------------------------------- Graph Plotting Part ----------------------------------------------####
 
 # Array to store the lines...
 ARRAY_OF_PLOTTING_LINES = [] 
+DATA = {"ResVsTemp": [[], []]}
 
 # Function to updates the content in the annotation...
 def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
@@ -54,7 +65,7 @@ def DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES, annotations):
     try:
         vis = annotations.get_visible()
         if event.inaxes:
-            for line in ARRAY_OF_PLOTTING_LINES:
+            for line in ARRAY_OF_PLOTTING_LINES.values():
                 cont, ind = line.contains(event)
                 if cont:
                     UPDATE_ANNOTATION(ind, line, annotations)
@@ -88,51 +99,106 @@ def ZOOM_INOUT_USING_MOUSE(event):
     except:
         pass
 
-  
+
 # Function which enables the functionality of all keys(Ctrl, Shift,etc..) ...
 def KEY_PRESS_HANDLER(event, canvas, toolbar):
     key_press_handler(event, canvas, toolbar)
 
 
 # Function to add the new point to the graph...
-def ADD_POINT_TO_GRAPH(NEW_X_COORDINATE, NEW_Y_COORDINATE):
-    global X_COORDINATE_OF_LAST_ADDED_POINT, Y_COORDINATE_OF_LAST_ADDED_POINT, ARRAY_OF_PLOTTING_LINES, CANVAS_OF_GRAPH
+def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
+    global CANVAS_OF_GRAPH,DATA1
 
-    PLOTTING_LINE = ARRAY_OF_PLOTTING_LINES[0]
-    PLOTTING_LINE.set_data(np.append(PLOTTING_LINE.get_xdata(), NEW_X_COORDINATE), np.append(PLOTTING_LINE.get_ydata(), NEW_Y_COORDINATE))
+    if temp:
+        DATA[str(temp)][0].append(NEW_X_COORDINATES)
+        DATA[str(temp)][1].append(NEW_Y_COORDINATES)
+    else:
+        DATA["ResVsTemp"][0].append(NEW_X_COORDINATES)
+        DATA["ResVsTemp"][1].append(NEW_Y_COORDINATES)
+
+
+    if temp:
+        LABEL_OF_GRAPH.config(text="Resistance Vs Time at "+str(temp)+" K")
+        PLOTTING_LINE.set_data(np.array(DATA[str(temp)][0]),np.array(DATA[str(temp)][1]))
+        GRAPH.set_xlabel("TIME") # Set X label
+        GRAPH.set_ylabel("RESISTANCE") # Set Y label
+        temperature_combobox.set(str(temp))
+
+    else:
+        LABEL_OF_GRAPH.config(text="Resistance Vs. Temperature")
+        PLOTTING_LINE.set_data(np.array(DATA["ResVsTemp"][0]),np.array(DATA["ResVsTemp"][1]))
+        GRAPH.set_xlabel("TEMPERATURE") # Set X label
+        GRAPH.set_ylabel("RESISTANCE") # Set Y label
+        temperature_combobox.set("ResVsTemp")
+
+    # UPDATE_COMBOBOX
     # update the view limits as per the newly added points
     GRAPH.relim()
     GRAPH.autoscale_view()
     CANVAS_OF_GRAPH.draw_idle()
-    if(X_COORDINATE_OF_LAST_ADDED_POINT): X_COORDINATE_OF_LAST_ADDED_POINT = NEW_X_COORDINATE
-    if(Y_COORDINATE_OF_LAST_ADDED_POINT): Y_COORDINATE_OF_LAST_ADDED_POINT = NEW_Y_COORDINATE
 
 
 # Function to save the graph plot image to selected directory...
 def SAVE_THE_GRAPH_INTO(directory):
-    IMAGE_FILE_NAME = "Plot of "+ TITLE + ".png"
-    GRAPH_IMAGE_PATH = os.path.join(directory, IMAGE_FILE_NAME)
-    CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
+    for key in DATA: 
+        PLOTTING_LINE.set_data(np.array(DATA[key][0]),np.array(DATA[key][1]))
+        GRAPH.relim()
+        GRAPH.autoscale_view()
+        CANVAS_OF_GRAPH.draw_idle()
+        IMAGE_FILE_NAME = "Plot at "+str(key)+ " K "+ TITLE + ".png"
+        GRAPH_IMAGE_PATH = os.path.join(directory, IMAGE_FILE_NAME)
+        CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
+
+
+# Function to update the graph when we select the temperature from the combobox...
+def UPDATE_GRAPH(*args):
+    global selected_temperature
+    selected_temperature = str(temperature_combobox.get())
+
+    if selected_temperature == "ResVsTemp":
+        LABEL_OF_GRAPH.config(text="Resistance Vs. Temperature")
+        PLOTTING_LINE.set_data(np.array(DATA["ResVsTemp"][0]),np.array(DATA["ResVsTemp"][1]))
+        GRAPH.set_xlabel("TEMPERATURE") # Set X label
+        GRAPH.set_ylabel("RESISTANCE") # Set Y label
+
+    else:
+        LABEL_OF_GRAPH.config(text="Resistance Vs Time at "+selected_temperature+" K")
+        PLOTTING_LINE.set_data(np.array(DATA[selected_temperature][0]),np.array(DATA[selected_temperature][1]))
+        GRAPH.set_xlabel("TIME") # Set X label
+        GRAPH.set_ylabel("RESISTANCE") # Set Y label
+
+    GRAPH.relim()
+    GRAPH.autoscale_view()
+    CANVAS_OF_GRAPH.draw_idle()
 
 
 # Function to setup the Graph in Graph tab...
 def SET_GRAPH_IN_TAB(GRAPH_TAB):
-
-    global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, Y_COORDINATE_OF_LAST_ADDED_POINT, X_COORDINATE_OF_LAST_ADDED_POINT
+    global FRAME_OF_GRAPH, LABEL_OF_GRAPH, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, temperature_combobox,PLOTTING_LINE
 
     FRAME_OF_GRAPH = Frame(GRAPH_TAB) 
 
-    LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text = "Resistance Vs. Temperature") # Adding label/title for the graph
-
+    LABEL_OF_GRAPH = tk.Label(FRAME_OF_GRAPH, text = "Resistance Vs Temperature") # Adding label/title for the graph
+    if not TEMPERATURE_EXPERIMENT.get(): 
+        LABEL_OF_GRAPH.config(text="Resistance Vs Time")
+        
     LABEL_OF_GRAPH.config(font=('Times', 32)) # Changing the default font style and size to Times and 32
 
-    FIGURE_OF_GRAPH = Figure() # Created a figure to add graph
+    # if TIME_EXPERIMENT.get():
+    #     temperature_combobox = tb.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+    #     temperature_combobox.bind("<<ComboboxSelected>>", UPDATE_GRAPH)
+    #     temperature_combobox.pack(padx=10, pady=(30,20))
+    progress = tb.Panedwindow(FRAME_OF_GRAPH,bootstyle="info")
+    progress.pack(padx=10, pady=(30,20))
+
+    FIGURE_OF_GRAPH = Figure(figsize=(6, 4.5)) # Created a figure to add graph
 
     CANVAS_OF_GRAPH = FigureCanvasTkAgg(FIGURE_OF_GRAPH, master = FRAME_OF_GRAPH) # Created a canvas to plot graph
 
     GRAPH = FIGURE_OF_GRAPH.add_subplot(111)  # Add a subplot with index (e.g., 111) for a single subplot
 
-    GRAPH.set_xlabel("TEMPERATURE") # Set X label
+    if TEMPERATURE_EXPERIMENT.get(): GRAPH.set_xlabel("TEMPERATURE") # Set X label
+    else: GRAPH.set_xlabel("TIME") # Set X label
     GRAPH.set_ylabel("RESISTANCE") # Set Y label
     GRAPH.grid() # Added grids to graph
     GRAPH.axhline(linewidth=2, color='black') # Added X axis
@@ -145,87 +211,104 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
     TOOLBAR_OF_GRAPH = NavigationToolbar2Tk(CANVAS_OF_GRAPH, FRAME_OF_GRAPH) # Added toolbar for graph
     TOOLBAR_OF_GRAPH.pan() # Made the graph is in pan mode... Simply pan mode is selected... Pan mode means the mode where you can move the graph... (+ kind of symbol in the toolbar)...
 
-    Y_COORDINATE_OF_LAST_ADDED_POINT = None
-    X_COORDINATE_OF_LAST_ADDED_POINT = None
-
-    
     PLOTTING_LINE, = GRAPH.plot([], [], color="orange", linestyle="-", marker="o", markerfacecolor="blue", markeredgewidth=1, markeredgecolor="black" ) # Plotted an empty graph...
-    ARRAY_OF_PLOTTING_LINES.append(PLOTTING_LINE) # Appending the line(plot) to ARRAY_OF_PLOTTING_LINES...
-
+    ARRAY_OF_PLOTTING_LINES.append(PLOTTING_LINE)
 
     # Making zooming, hovering by mouse
     CANVAS_OF_GRAPH.mpl_connect("key_press_event", lambda event: KEY_PRESS_HANDLER(event, CANVAS_OF_GRAPH, TOOLBAR_OF_GRAPH))
     CANVAS_OF_GRAPH.mpl_connect('scroll_event', ZOOM_INOUT_USING_MOUSE)
-    CANVAS_OF_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES
-    , ANNOTATION))
-
+    CANVAS_OF_GRAPH.mpl_connect("motion_notify_event", lambda event: DISPLAY_ANNOTATION_WHEN_HOVER(event, ARRAY_OF_PLOTTING_LINES, ANNOTATION))
 
     # Making Canvas, Label, Frame visible in the tab by packing
-    LABEL_OF_GRAPH.pack()
-    CANVAS_OF_GRAPH.get_tk_widget().pack(fill="both", expand=True)
+    LABEL_OF_GRAPH.pack(pady=(0,0))
+    CANVAS_OF_GRAPH.get_tk_widget().pack()
     FRAME_OF_GRAPH.pack(fill="both", expand=True)
 
+
+# Function to update the combobox if user gives required temperature inputs...
+def UPDATE_COMBOBOX(event):
+    global temperature_combobox, DATA
+   
+    # Get the content of the Text widget
+    input_text = TEMPERATURES_ENTRY.get("1.0", "end-1c")
+    
+    # Split the input_text into individual values based on comma
+    values = input_text.split(",")
+
+    # Strip leading and trailing whitespaces from each value
+    values = [value.strip() for value in values if value.strip()]  # Include placeholder text
+
+    # Filter out non-numeric values
+    numeric_values = [float(value) for value in values if value.replace('.', '', 1).isdigit()]
+    if TEMPERATURE_EXPERIMENT.get(): numeric_values.insert(0, "ResVsTemp")
+
+    # Populate the Combobox with the extracted numeric values
+    temperature_combobox['values'] = numeric_values
+
+    for key in numeric_values[1:]: DATA[str(float(key))] = [[], []]
+
+    print(DATA)
 
 ####---------------------------------------- Experiment Part --------------------------------------------------####
 
 # Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
-    global NANOVOLTMETER, CURRENT_SOURCE, CTC
+    global CURRENT_SOURCE, CTC
+    return True
+    # number_of_connected_devices = 0
+    # retry_number = 0
 
-    number_of_connected_devices = 0
-    retry_number = 0
+    # # Connecting Current source to PC...
+    # while True:
+    #     try:
+    #         rm = pyvisa.ResourceManager()
+    #         CURRENT_SOURCE = rm.open_resource(SETTINGS["device_name"])
+    #         retry_number = 0
+    #         number_of_connected_devices += 1
+    #         break
+    #     except:
+    #         if retry_number == MAX_RETRY:
+    #             messagebox.showerror("Alert","CURRENT_SOURCE(6221) is not connected to PC... Check its connections!!")
+    #             retry_number = 0
+    #             break
+    #         retry_number += 1
 
-    # Connecting Nanovoltmeter
-    while not TO_ABORT:
-        try:
-            rm = pyvisa.ResourceManager()
-            NANOVOLTMETER = rm.open_resource(SETTINGS["device_name"])
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","NANOVOLTMETER is not connected... Check its connections!!")
-                retry_number = 0
-                break
-            retry_number += 1
-
-    # Connecting Current source
-    while not TO_ABORT:
-        try:
-            CURRENT_SOURCE = serial.Serial(SETTINGS["RS232_Port"], baudrate = 9600, timeout = 10)
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","CURRENT SOURCE is not connected... Check its connections!")
-                retry_number = 0
-                break
-            retry_number += 1
-
-    # connecting CTC
-    while not TO_ABORT:
-        try:
-            CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = SETTINGS["Telnet_Port"], timeout = 10)
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","CTC is not connected... Check its connections!")
-                retry_number = 0
-                break
-            retry_number += 1
+    # # Connecting CTC to PC...
+    # while True:
+    #     try:
+    #         CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = int(SETTINGS["Telnet_Port"]), timeout = 10)
+    #         retry_number = 0
+    #         number_of_connected_devices += 1
+    #         break
+    #     except:
+    #         if retry_number == MAX_RETRY:
+    #             messagebox.showerror("Alert","CTC is not connected to PC... Check its connections!")
+    #             retry_number = 0
+    #             break
+    #         retry_number += 1
     
-    if TO_ABORT:
-        TO_ABORT = False
+    # # Checking whether Nanovoltmeter is connected to Current Source or not...
+    # while True:
+    #     try:
+    #         # Checking by sending the commands to Nanovoltmeter via Current Source...
+    #         SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND “*IDN?”')
+    #         SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
+    #         retry_number = 0
+    #         number_of_connected_devices += 1
+    #         break
+    #     except:
+    #         if retry_number == MAX_RETRY:
+    #             messagebox.showerror("Alert","NANOVOLTMETER(2182A) is not connected to CURRENT SOURCE(6221)... Check its connections!")
+    #             retry_number = 0
+    #             break
+    #         retry_number += 1
 
-    # Returning 1 if all three devices are connected, otherwise -1
-    if number_of_connected_devices == 3: 
-        return True 
-    else: 
-        return False
+    
+    # # Returning True if all three devices are connected, otherwise False
+    # if number_of_connected_devices == 3: 
+    #     return True 
+    # else: 
+    #     return False
 
 
 # Arrays to store input channels and output channels and the stored below are just default, these will be changed in SYNC_GET function defined below...
@@ -235,84 +318,138 @@ OUTPUT_CHANNELS_LIST_OF_CTC = ['Out 1', 'Out 2']
 # Function to take data from CTC, save it in config_data.json and display it on the GUI...
 def SYNC_GET():
     
-    # if CONNECT_INSTRUMENTS():
-        CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
+    if CONNECT_INSTRUMENTS():
 
-        # Clearing the default channels before appending actual channels...
-        INPUT_CHANNELS_LIST_OF_CTC.clear() 
-        OUTPUT_CHANNELS_LIST_OF_CTC.clear()
+        # ## Syncing CTC data ##
+        # CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
 
-        for channel in CHANNELS_LIST:
-            if channel[0] == 'I':
-                INPUT_CHANNELS_LIST_OF_CTC.append(channel)
-            else:
-                OUTPUT_CHANNELS_LIST_OF_CTC.append(channel)
+        # # Clearing the default channels before appending actual channels...
+        # INPUT_CHANNELS_LIST_OF_CTC.clear() 
+        # OUTPUT_CHANNELS_LIST_OF_CTC.clear()
 
-        if(ENTRY_OF_INPUT_CHANNEL.get() == ""):
-            ENTRY_OF_INPUT_CHANNEL.set(INPUT_CHANNELS_LIST_OF_CTC[0])
-        if(ENTRY_OF_OUTPUT_CHANNEL.get() == ""):
-            ENTRY_OF_OUTPUT_CHANNEL.set(OUTPUT_CHANNELS_LIST_OF_CTC[0])
+        # INPUT_CHANNELS_LIST_OF_CTC = [channel for channel in CHANNELS_LIST if channel.startswith('I')]
+        # OUTPUT_CHANNELS_LIST_OF_CTC = [channel for channel in CHANNELS_LIST if not channel.startswith('I')]
+
+        # if ENTRY_OF_INPUT_CHANNEL.get() == "":
+        #     ENTRY_OF_INPUT_CHANNEL.set(INPUT_CHANNELS_LIST_OF_CTC[0])
+        # if ENTRY_OF_OUTPUT_CHANNEL.get() == "":
+        #     ENTRY_OF_OUTPUT_CHANNEL.set(OUTPUT_CHANNELS_LIST_OF_CTC[0])
 
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.LowLmt?"'))
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.HiLmt?"'))
 
-        DISPLAY_VALUE_IN_ENTRY_BOX(P_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.P?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(I_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.I?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(D_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.D?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_P_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.P?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_I_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.I?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_D_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.D?"'))
+
+        ## Syncing CURRENT SOURCE data ##
+
+        # For Resistance vs Time 
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:HIGH?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:LOW?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_WIDTH, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:WIDT?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:INT?"))
+
+        # For Resistance vs Temperature 
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_START_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STAR?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_STOP_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STOP?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STEP?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:COUN?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_DELAY_OF_CURRENT_SOURCE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:DEL?"))
+
+        
 
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
 def SEND_COMMAND_TO_CTC(command): 
-    return float(input(command))
+    return float(1)
+    # retry_number = 0 
+
+    # while(retry_number < MAX_RETRY):
+
+    #     try:
+    #         CTC.write((command+'\n').encode())
+    #         return CTC.read_until(b"\n",1).decode('ascii')
+
+    #     except Exception as e:
+    #         print(f"Error occurred while sending command to CTC: {e}... Retrying")
+    #         retry_number += 1
+    #         time.sleep(0.5) # Adding a short delay before retrying
+            
+    # raise Exception("OOPS!!! Couldn't send command to CTC even after maximun number of tries")
+
 
 # Function to convert the command to correct format, which Current Source will understand and sends it to Current Source...
 def SEND_COMMAND_TO_CURRENT_SOURCE(command):
-    return float(input(command))
+    return float(1)
+    # retry_number = 0 
+    # while(retry_number < MAX_RETRY):
 
+    #     try:
+    #         return CURRENT_SOURCE.query(command)
 
-
-# Function to get the voltage reading from the Nanovoltmeter...
-def GET_PRESENT_VOLTAGE_READING():
-    return float(input("Get Voltage : "))
+    #     except Exception as e:
+    #         print(f"Error occurred while sending command to Current Source: {e}... Retrying")
+    #         retry_number += 1
+    #         time.sleep(0.5) # Adding a short delay before retrying
+            
+    # raise Exception("OOPS!!! Couldn't send command to Current Source even after maximum number of tries")
 
 
 # Function to get the current temperature of sample from ctc...
-def GET_PRESENT_TEMPERATURE_OF_CTC():  
-    return float(input("Get Temperature : "))
+def GET_PRESENT_TEMPERATURE_OF_CTC(required_temperature):  
+    print("Temp ")
+    return float(required_temperature)
+    # retry_number = 0
+    # while(retry_number < MAX_RETRY):
+
+    #     try:
+    #         return float(SEND_COMMAND_TO_CTC('"channel.'+INPUT_CHANNEL_OF_CTC+'?"'))
+        
+    #     except Exception as e:
+    #         print(f"Error occurred while getting temperature of CTC: {e}... Retrying")
+    #         retry_number += 1
+    #         time.sleep(0.5) # Adding a short delay before retrying
+
+    # raise Exception("Couldn't get temperature from ctc!") 
 
 
 # Function to Achieve and Stabilize required temperature...
 def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature): 
-    global HIGH_POWER_LIMIT_OF_CTC 
+    global HIGH_POWER_LIMIT_OF_CTC
 
     print("*************************************************************************")
-    h.config(text = "===> Achieving" + str(required_temperature) + "K...")
+    print("===> Achieving", required_temperature, "K...")
 
-    # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.HiLmt" '+str(HIGH_POWER_LIMIT_OF_CTC)) # Setting High Limit of CTC to HIGH_POWER_LIMIT_OF_CTC...
 
-    # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
+    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature)) # Setting the setpoint of CTC to required_temperature...
 
-    curr_increase_num = 0
     retry_number = 0
-    temperature_before_stabilizing = GET_PRESENT_TEMPERATURE_OF_CTC()
+    temperature_before_stabilizing = GET_PRESENT_TEMPERATURE_OF_CTC(required_temperature)
+    # initial_temperature_difference = required_temperature - temperature_before_stabilizing
 
     lower_bound = required_temperature - THRESHOLD
     upper_bound = required_temperature + THRESHOLD
 
-    while(not TO_ABORT):
+    time_elapsed = 0
+
+    while not TO_ABORT:
 
         # time.sleep(3)
-        present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
+        time_elapsed+=3
+        present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC(required_temperature)
 
         if lower_bound <= present_temperature <= upper_bound :
-            h.config(text = str(required_temperature) + "K is achieved but not stabilized...")
+            print(required_temperature, "K is achieved but not stabilized...")
             break
 
         else:
-            p.config(text = "Current Temperature is" + str(present_temperature) + "... Waiting to achieve required temperature " + str(required_temperature) + "K...")
-            retry_number += 1
+            print("Current Temperature is", present_temperature, "... Waiting to achieve required temperature ", required_temperature, "K...")
+            if abs(present_temperature - temperature_before_stabilizing) < 0.03*time_elapsed: # 0.04 is the max ramp rate currently set in CTC 
+                retry_number += 1
+            else: retry_number = 0                
 
-        if retry_number == 20 : # Increasing the high limit of power if possible...
+        if retry_number == 10 : # Increasing the high limit of power if possible...
 
             if HIGH_POWER_LIMIT_OF_CTC + INCREASE_POWER_LIMIT_OF_CTC <= MAXIMUM_POWER_LIMIT_OF_CTC :
 
@@ -323,38 +460,33 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
                     print(required_temperature," K is not achieving by current high power limit of CTC...")
                     print("So, Increased high power limit of CTC by "+str(INCREASE_POWER_LIMIT_OF_CTC)," W...")
-                    print("New High power limit of CTC is ",HIGH_POWER_LIMIT_OF_CTC,"...")
+                    print("New High power limit of CTC is ", HIGH_POWER_LIMIT_OF_CTC,"...")
 
                     # We are starting again by increasing high power limit of ctc... So...
                     retry_number = 0 
                     temperature_before_stabilizing = present_temperature
-                    curr_increase_num+=1
 
             else:
                 messagebox.showwarning("Alert","Cannot Achieve all the temperatures by given Maximum limit of Power!!")
                 raise Exception("Cannot Achieve all the temperatures by given Maximum limit of Power")
 
-    
+    if TO_ABORT: return
 
-    # if current temperature is reached in less power then we decrease the high power limit
-    if(curr_increase_num < PREV_INCREASE_NUMBER):
-        HIGH_POWER_LIMIT_OF_CTC = HIGH_POWER_LIMIT_OF_CTC - (PREV_INCREASE_NUMBER - curr_increase_num)
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
 
     print("______________________________________________________________________")
-    h.config(text = "===> Stabilizing at" + str(required_temperature) + "K...")
+    print("===> Stabilizing at", required_temperature, "K...")
 
-    while(not TO_ABORT):
+    while not TO_ABORT:
 
-        minimum_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
+        minimum_temperature = GET_PRESENT_TEMPERATURE_OF_CTC(required_temperature)
         maximum_temperature = minimum_temperature
         retry_number = 0
 
-        while(not TO_ABORT and retry_number < MAX_RETRY):
+        while not TO_ABORT and retry_number < MAX_RETRY:
 
-            present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
+            present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC(required_temperature)
 
-            p.config(text = "Current temperature =" + str(present_temperature) + " K")
+            print("Current temperature =", present_temperature, " K")
 
             if present_temperature > maximum_temperature: maximum_temperature = present_temperature
             if present_temperature < minimum_temperature: minimum_temperature = present_temperature
@@ -363,111 +495,138 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
             retry_number += 1
 
+        if TO_ABORT: return
+
         if maximum_temperature - minimum_temperature < TOLERANCE:
-            h.config(text = str(required_temperature) + " K is achieved and stabilized...")
+            print(required_temperature, " K is achieved and stabilized...")
             break
 
         else:
-            h.config(text = "Temperature is not stabilized yet... Retrying...")
+            print("Temperature is not stabilized yet... Retrying...")
 
 
-# Function to get the current resistance of the sample at current temperature...
+# Function to get resistance at a particular instant...
+import random
+
+def GET_RESISTANCES():
+    # The data received from the current source is a string having resistances and time stamps... Eg:4.2Ω,0.00s,4.3Ω,0.01s,...\n
+    # Collect all data (resistance and time) in string format
+    x = []
+    y = []
+    for i in range(5):
+        random_number = random.uniform(0, 2)
+        print("x ",random_number)
+        x.append(random_number)
+    for i in range(5):
+        random_number = random.uniform(0, 2)
+        print("y ",random_number)
+        y.append(random_number)
+    
+    # Separate resistances and time stamps using list slicing
+    resistance_readings = np.array(x, dtype=float)  # Convert to numpy array with dtype=float
+    time_stamps = np.array(y, dtype=float)  # Convert to numpy array with dtype=float
+
+    return resistance_readings, time_stamps
+
+
+# Function to get current average resistance(Using to get resistance at a temperature in Resistance vs Temperature)...
 def GET_PRESENT_RESISTANCE():
+    # We are doing this by using Pulse Sweep Step...
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE ON") # ON the sweeping mode
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM") # Arming the pulse mode
+    SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM") # Triggering the pulse mode
 
-    # SEND_COMMAND_TO_CURRENT_SOURCE("OUTP ON") # Switching Current_Source output ON...
+    # Wait for some time until it calculates the resistances
+    # This value is set by our observations after many trials
+    for i in range(int(NUMBER_OF_CURRENT_INTERVALS + 0.5)):
+        if TO_ABORT:
+            return -1
+        time.sleep(1)
 
-    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR") # Aborting the sweep process
 
-    reading_number = 0
-    present_current = START_CURRENT
+    resistance_readings, _ = GET_RESISTANCES()  # Only need resistance readings, so ignore time stamps
 
-    resistance_readings = [] # Array to store resistance values at five different DC Currents...
+    return np.mean(resistance_readings)  # Calculate mean resistance
 
-    while(not TO_ABORT and reading_number < NUMBER_OF_CURRENT_INTERVALS):
 
-        # Sending command to set the output current to present_current...
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR " + str(present_current))
+# Function to get resistances with time at a temperature(Used in Resistance vs Time at a temperature)...
+def GET_RESISTANCES_WITH_TIME_AT(temperature):
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF") # OFF the sweeping mode
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM") # Arming the 
+    SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM")) # triggering
 
-        # time.sleep(3) # Waiting some time...
+    time.sleep(1.5) # time required to execute above three commands by the device
 
-        # Get the voltage reading...
-        positive_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
+    present_time = 0
+    index_of_last_update = 0
 
-        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",abs(positive_cycle_voltage) / present_current, "...")
+    present_csvfile = TITLE + "_Resistance_vs_Time_at_" + str(temperature) + ".csv"
+    while present_time <= MEASURING_TIME:
+        if TO_ABORT:
+            break
+        present_time += 5
+        # time.sleep(5)
+        resistance_readings, time_stamps = GET_RESISTANCES()
 
-        resistance_readings.append(abs(positive_cycle_voltage) / present_current)
+        WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
+        ADD_POINT_TO_GRAPH(time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:], str(temperature))
+        # code to save to csv and plot the points in resistance_readings and time_stamps in that graph of that temperature
+        index_of_last_update = len(resistance_readings)
 
-        # Sending command to set the output current to -present_current...
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR -" + str(present_current))
-
-        # time.sleep(3) # Waiting some time...
-
-        # Get the voltage reading...
-        negative_cycle_voltage = GET_PRESENT_VOLTAGE_READING()
-        resistance_readings.append(abs(negative_cycle_voltage) / present_current)
-
-        print("Current :",present_current, ", Voltage :",positive_cycle_voltage, ", Resistance :",(abs(positive_cycle_voltage) / present_current), "...")
-
-        present_current += INCREASING_INTERVAL_OF_CURRENT
-        reading_number += 1
-    
-    # SEND_COMMAND_TO_CURRENT_SOURCE("OUTP OFF") # Switching Current_Source output OFF
-    
-    return sum(resistance_readings) / len(resistance_readings)
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR") # stops the sweeping process
 
 
 # Function to write the temperature and resistance values into csv file
-def WRITE_DATA_TO_CSV(temperature, resistance):
-    CSV_FILE_NAME = TITLE + ".csv"
-    CSV_FILE_PATH = os.path.join(SETTINGS["Directory"], CSV_FILE_NAME)
-    with open(CSV_FILE_PATH, 'a', newline='') as csvfile:
+def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances):
+    filepath = os.path.join(SETTINGS["Directory"], filename)
+    
+    with open(filepath, 'a', newline='') as csvfile:  # Open file in write mode
         writer = csv.writer(csvfile)
-        writer.writerow([temperature, resistance])
+        for TemperatureOrTime, resistance in zip(TemperatureOrTimes, resistances):
+            writer.writerow([TemperatureOrTime, resistance])
 
 
 # Function to get the resistances at all temperatures...
-def GET_RESISTANCE_AT_ALL_TEMPERATURES(start_temperature, end_temperature):
-    global PREV_INCREASE_NUMBER
+def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 
-    # Switching CTC output ON
-    # SEND_COMMAND_TO_CTC("outputEnable on")
+    SEND_COMMAND_TO_CTC("outputEnable on") # Switching CTC output ON
+    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100") # Making Compliance as 100V...
 
-    # Making direction 1 in forward cycle and -1 in backward cycle...
-    direction = 1 if start_temperature <= end_temperature else -1
+    filename = TITLE + "_Resistance_vs_Temperature.csv" 
 
-    present_temperature = start_temperature
-
-    PREV_INCREASE_NUMBER = 0
-    while(not TO_ABORT and present_temperature * direction < end_temperature * direction):
-
+    for present_temperature in ARRAY_OF_ALL_TEMPERATURES[::direction]:
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
-        # time.sleep(DELAY_OF_CTC) # Delaying some time...
+        # for i in range(int(DELAY_OF_CTC)): # Delaying some time...
+        #     if TO_ABORT: break  
+        #     time.sleep(1) 
+        if TEMPERATURE_EXPERIMENT.get():
+            present_resistance = GET_PRESENT_RESISTANCE()
+            print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
-        # Getting current resistance of the sample at current temmperature...
-        present_resistance = GET_PRESENT_RESISTANCE() 
-        
-        print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
+            WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
+            ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
 
-        # Writing the present temperature and resistance into csv file...
-        WRITE_DATA_TO_CSV(present_temperature, present_resistance)
+        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
+            GET_RESISTANCES_WITH_TIME_AT(present_temperature)
+    
 
-        # Plotting the present point in the graph...
-        ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
+    SEND_COMMAND_TO_CTC("outputEnable off") # Switching CTC output OFF
 
-        # Increase or decrease the temperature according to the direction...
-        present_temperature += INCREASING_INTERVAL_OF_TEMPERATURE * direction 
-
-    # Switching CTC output OFF
-    # SEND_COMMAND_TO_CTC("outputEnable off")
 
 
 # Function to check whether the input values given by the user are in correct data types and are in correct range or not.. If they are correct the value will be set to the devices..
 def CHECK_AND_SET_ALL_VALUES(): 
 
-    global INPUT_CHANNEL_OF_CTC, TOLERANCE, OUTPUT_CHANNEL_OF_CTC, HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC, THRESHOLD, START_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, START_TEMPERATURE, END_TEMPERATURE, DELAY_OF_CTC, INCREASING_INTERVAL_OF_TEMPERATURE, COMPLETE_CYCLE, TITLE, P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
-
+    global INPUT_CHANNEL_OF_CTC, OUTPUT_CHANNEL_OF_CTC
+    global HIGH_POWER_LIMIT_OF_CTC, LOW_POWER_LIMIT_OF_CTC, INCREASE_POWER_LIMIT_OF_CTC, MAXIMUM_POWER_LIMIT_OF_CTC
+    global P_VALUE_OF_CTC, I_VALUE_OF_CTC, D_VALUE_OF_CTC
+    global START_TEMPERATURE, END_TEMPERATURE, INCREASING_INTERVAL_OF_TEMPERATURE, TOLERANCE, THRESHOLD, DELAY_OF_CTC
+    global TITLE
+    global START_CURRENT, STOP_CURRENT, NUMBER_OF_CURRENT_INTERVALS, INCREASING_INTERVAL_OF_CURRENT, DELAY_OF_CURRENT_SOURCE
+    global MEASURING_TIME, HIGH_PULSE, LOW_PULSE, PULSE_WIDTH, NUMBER_OF_PULSES_PER_SECOND
 
     # Assigning the parameters of CTC given by user to the variables and Setting those to CTC if they are in correct format...
 
@@ -477,7 +636,7 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         HIGH_POWER_LIMIT_OF_CTC = float(ENTRY_OF_HIGH_POWER_LIMIT.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
+        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC)) 
     except:
         messagebox.showwarning("Alert","Invalid Input for: High Limit !")
         return False
@@ -489,17 +648,17 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showwarning("Alert","Invalid Input for: Low Limit !")
         return False
 
-    try:
-        INCREASE_POWER_LIMIT_OF_CTC = float(ENTRY_OF_INCREASE_POWER_LIMIT_OF_CTC.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Increase By !")
-        return False
+    # try:
+    #     INCREASE_POWER_LIMIT_OF_CTC = float(ENTRY_OF_INCREASE_POWER_LIMIT_OF_CTC.get())
+    # except:
+    #     messagebox.showwarning("Alert","Invalid Input for Increase By !")
+    #     return False
     
-    try:
-        MAXIMUM_POWER_LIMIT_OF_CTC = float(ENTRY_OF_MAXIMUM_POWER_LIMIT.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Max Limit !")
-        return False
+    # try:
+    #     MAXIMUM_POWER_LIMIT_OF_CTC = float(ENTRY_OF_MAXIMUM_POWER_LIMIT.get())
+    # except:
+    #     messagebox.showwarning("Alert","Invalid Input for Max Limit !")
+    #     return False
 
     try:
         P_VALUE_OF_CTC = float(ENTRY_OF_P_VALUE_OF_CTC.get())
@@ -522,59 +681,71 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showwarning("Alert","Invalid Input for D !")
         return False
     
-    try:
-        START_TEMPERATURE = float(ENTRY_OF_START_TEMPERATURE.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Start Temp!")
-        return False
+    # if TEMPERATURE_EXPERIMENT.get():
+    #     try:
+    #         START_TEMPERATURE = float(ENTRY_OF_START_TEMPERATURE.get())
+    #     except:
+    #         messagebox.showwarning("Alert","Invalid Input for Start Temp!")
+    #         return False
     
-    try:
-        END_TEMPERATURE = float(ENTRY_OF_STOP_TEMPERATURE.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Stop Temp!")
-        return False
+    # if TEMPERATURE_EXPERIMENT.get():
+    #     try:
+    #         END_TEMPERATURE = float(ENTRY_OF_STOP_TEMPERATURE.get())
+    #     except:
+    #         messagebox.showwarning("Alert","Invalid Input for Stop Temp!")
+    #         return False
     
-    try:
-        INCREASING_INTERVAL_OF_TEMPERATURE = float(ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Interval Temp!")
-        return False
+    # if TEMPERATURE_EXPERIMENT.get():
+    #     try:
+    #         INCREASING_INTERVAL_OF_TEMPERATURE = float(ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE.get())
+    #     except:
+    #         messagebox.showwarning("Alert","Invalid Input for Interval Temp!")
+    #         return False
     
-    try:
-        THRESHOLD = float(ENTRY_OF_THRESHOLD.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Threshold!")
-        return False
+    # try:
+    #     if TEMPERATURE_EXPERIMENT.get(): THRESHOLD = float(ENTRY_OF_THRESHOLD.get())
+    #     else: THRESHOLD = float(ENTRY_OF_THRESHOLD_2.get())
+    # except:
+    #     messagebox.showwarning("Alert","Invalid Input for Threshold!")
+    #     return False
     
-    try:
-        TOLERANCE = float(ENTRY_OF_TOLERANCE.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Tolerance!")
-        return False
+    # try:
+    #     if TEMPERATURE_EXPERIMENT.get(): TOLERANCE = float(ENTRY_OF_TOLERANCE.get())
+    #     else: TOLERANCE = float(ENTRY_OF_TOLERANCE_2.get())
+    # except:
+    #     messagebox.showwarning("Alert","Invalid Input for Tolerance!")
+    #     return False
     
-    try:
-        DELAY_OF_CTC = float(ENTRY_OF_DELAY_OF_CTC.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
-        return False
-    
-    COMPLETE_CYCLE = int(ENTRY_OF_COMPLETE_CYCLE.get()) # No need to check it as it is a checkbox...
-
+    # if TEMPERATURE_EXPERIMENT.get():
+    #     try:
+    #         DELAY_OF_CTC = float(ENTRY_OF_DELAY_OF_CTC.get())
+    #     except:
+    #         messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
+    #         return False
 
 
     # Assigning the parameters of Current Source given by user to the variables if they are in correct format...
 
     try:
         START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
-        if not START_CURRENT < 1:
-            messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
-            return False
+        # if START_CURRENT >= 1:
+        #     messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+        #     return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
+        return False
+    
+    try:
+        STOP_CURRENT = float(ENTRY_OF_STOP_CURRENT.get())
+        # if not STOP_CURRENT < 1:
+        #     messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+        #     return False
     except:
         messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
         return False
 
     try:
-        NUMBER_OF_CURRENT_INTERVALS = int(ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.get())
+        NUMBER_OF_CURRENT_INTERVALS = float(ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.get())
     except:
         messagebox.showwarning("Alert","Invalid Input for Number of Current Intervals at a Temperature!")
         return False
@@ -585,11 +756,63 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showwarning("Alert","Invalid Input for Increase Current Interval at a Temperature!")
         return False
 
+    try:
+        DELAY_OF_CURRENT_SOURCE = float(ENTRY_OF_DELAY_OF_CURRENT_SOURCE.get())
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
+        return False
+
+    try:
+        HIGH_PULSE = float(ENTRY_OF_HIGH_PULSE.get())
+        # if abs(HIGH_PULSE) > 105e-3:
+        #     messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
+        #     return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for High Pulse Value!")
+        return False
+    
+    try:
+        LOW_PULSE = float(ENTRY_OF_LOW_PULSE.get())
+        # if abs(LOW_PULSE) > 105e-3:
+        #     messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
+        #     return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Low Pulse Value!")
+        return False
+    
+    try:
+        PULSE_WIDTH = float(ENTRY_OF_PULSE_WIDTH.get())
+        # if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
+        #     messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
+        #     return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
+        return False
+    
+    try:
+        NUMBER_OF_PULSES_PER_SECOND = float(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.get())
+        # if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
+        #     messagebox.showwarning("Alert!", "Enter the Pulse Interval in range [1 to 12] A!")
+        #     return False
+    except:
+        messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
+        return False
+    
+    
+    # try:
+    #     MEASURING_TIME = float(MEASURING_TIME_ENTRY.get())
+    #     # if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
+    #     #     messagebox.showwarning("Alert!", "Enter the Pulse Interval in range [1 to 12] A!")
+    #     #     return False
+    # except:
+    #     messagebox.showwarning("Alert","Invalid Input for Total Time Value!")
+    #     return False
+    
 
     # The title should not consists the following invalid characters...
     invalid_characters=['\\','/',':','*','?','"','<','>','|']
-    TITLE = ENTRY_OF_TITLE.get() + " " + datetime.now().strftime('%H_%M_%S %d-%B-%Y')
-
+    # TITLE = ENTRY_OF_TITLE.get() + " " + datetime.now().strftime('%H_%M_%S %d-%B-%Y')
+    TITLE = "helloo"
     if TITLE == "" : messagebox.showwarning("Alert",'No input is given for Title!')
     for Character in invalid_characters:
         if Character in TITLE:
@@ -597,48 +820,119 @@ def CHECK_AND_SET_ALL_VALUES():
             messagebox.showwarning("Alert",'Invalid Input for Title !\nCannot contain \\ / : * ? " < > |')
             return False
 
+
+    INCREASE_POWER_LIMIT_OF_CTC = 1
+    MAXIMUM_POWER_LIMIT_OF_CTC = 11
+    START_TEMPERATURE = 0
+    END_TEMPERATURE = 15
+    INCREASING_INTERVAL_OF_TEMPERATURE = 5
+    THRESHOLD = 1
+    TOLERANCE = 1
+    DELAY_OF_CTC = 1
+    MEASURING_TIME = 1
+    
     return True
 
 
+# Function to merge two sorted arrays...
+def MERGE_BOTH_TEMPERATURES(arr1, arr2):
+    print(arr1)
+    print(arr2)
+    final_arr = []
+    n = len(arr1)
+    m = len(arr2)
+    i = 0
+    j = 0
+    last_added = None
+    while i < n or j < m:
+        if (i < n and j >= m) or ((i < n and j < m) and (arr1[i] <= arr2[j])):
+            if arr1[i] != last_added:
+                final_arr.append(arr1[i])
+                last_added = arr1[i]
+            i += 1
+        elif (i >= n and j < m) or ((i < n and j < m) and (arr1[i] > arr2[j])):
+            if arr2[j] != last_added:
+                final_arr.append(arr2[j])
+                last_added = arr2[j]
+            j += 1
+    
+    print(final_arr)
+    return final_arr
+
+
+
+ARRAY_OF_ALL_TEMPERATURES = []
+ARRAY_OF_SELECTED_TEMPERATURES = []
+
 # Function to start the Experiment...
 def START_EXPERIMENT():
-
-    # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
-    GET_RESISTANCE_AT_ALL_TEMPERATURES(START_TEMPERATURE, END_TEMPERATURE)
+    global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES
     
-    if COMPLETE_CYCLE : GET_RESISTANCE_AT_ALL_TEMPERATURES(END_TEMPERATURE, START_TEMPERATURE)
+    if TEMPERATURE_EXPERIMENT.get():
+        curr_temp = START_TEMPERATURE
+        while curr_temp <= END_TEMPERATURE:
+            ARRAY_OF_ALL_TEMPERATURES.append(float(curr_temp))
+            curr_temp += INCREASING_INTERVAL_OF_TEMPERATURE
+            
+    if TIME_EXPERIMENT.get():
+        if TEMPERATURE_EXPERIMENT.get(): ARRAY_OF_SELECTED_TEMPERATURES = [float(temp) for temp in temperature_combobox["values"][1:]]
+        ARRAY_OF_SELECTED_TEMPERATURES.sort()  # Sorting the array
+        ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURES(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
 
-    SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
-    print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
+
+
+    if not TO_ABORT:
+        # Getting resistances from starting temperature to end temperature(forward cycle)... The function is defined above...
+        GET_RESISTANCE_AT_ALL_TEMPERATURES(1)
+    
+    # If experiment is aborted then the function will break
+    if TO_ABORT: 
+        print("ABORTED !")
+        TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        INTERFACE.update()
+        return
+    
+    if not TO_ABORT and TEMPERATURE_EXPERIMENT.get() and COMPLETE_CYCLE.get():
+        GET_RESISTANCE_AT_ALL_TEMPERATURES(-1)
+        
+    # If experiment is aborted then the function will break
+    if TO_ABORT: 
+        print("ABORTED !")
+        TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        INTERFACE.update()
+        return
+    
+    if not TO_ABORT:
+        SAVE_THE_GRAPH_INTO(SETTINGS["Directory"]) # Saving the Image of plot into required directory...
+        print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
 
 
 # Function to trigger the Experiment... 
 def TRIGGER():
 
-    # if CONNECT_INSTRUMENTS():
+    if CONNECT_INSTRUMENTS():
         if CHECK_AND_SET_ALL_VALUES(): # Checking and Setting all values...
-
-            # Making the trigger button to Abort button...
-            TRIGGER_BUTTON.config(text= "Abort", command=ABORT_TRIGGER)
-            INTERFACE.update()
-
 
             CONTROL_PANEL.select(2) # Displaying Graph tab when experiment is started...
 
             print("Checking Devices....")
             Thread(target = START_EXPERIMENT).start() # Starting the experiment and threading to make GUI accessable even after the experiment is start... 
-        
 
-global TO_ABORT
-TO_ABORT = False
+
 # Function to abort the experiment
 def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
+
+    is_armed = int(SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?"))
+    if is_armed:
+        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+
     print("Aborted!")
-    # Making the trigger button to Abort button...
+
     TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
     INTERFACE.update()
+
 
 
 ####---------------------------------------- Interface Part -------------------------------------------------####
@@ -651,9 +945,9 @@ def CONFIRM_TO_QUIT():
 
 
 # Function to display entry in a widget
-def DISPLAY_VALUE_IN_ENTRY_BOX(widget, value):
-    widget.delete(0,'end')
-    widget.insert(0,str(value).strip())
+def DISPLAY_VALUE_IN_ENTRY_BOX(entry_box, value):
+    entry_box.delete(0,'end')
+    entry_box.insert(0,str(value).strip())
 
 
 # Function to write the settings of the devices into json file...
@@ -684,9 +978,108 @@ def CLOSE_WIDGET(widget):
 def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY): 
     directory = filedialog.askdirectory()
     if directory:
-        SETTINGS["Directory"] = directory
-        WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
+        # SETTINGS["Directory"] = directory
+        # WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
         LABEL_OF_OUTPUT_DIRECTORY.config(text = directory)
+
+
+# Function to display the requirements widget...
+def DISPLAY_REQUIREMENTS():
+    REQUIREMENTS_WIDGET = Toplevel(INTERFACE)
+
+    REQUIREMENTS_WIDGET.title("Make Sure")
+    REQUIREMENTS_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
+    REQUIREMENTS_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 1.75)
+    REQUIREMENTS_WIDGET.geometry(CENTER_THE_WIDGET(REQUIREMENTS_WIDGET_Temp_width, REQUIREMENTS_WIDGET_Temp_height))
+    REQUIREMENTS_WIDGET.resizable(False, False)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(0, weight=1)
+    REQUIREMENTS_WIDGET.grid_columnconfigure(1, weight=1)
+    title = Label(REQUIREMENTS_WIDGET, text="Make Sure the Following ")
+    title.grid(row=0, column=0, sticky="wens", pady=(10, 10))
+    title.config(font=("Times New Roman", 15, "bold"))
+
+    label_text = """
+    • GPIB: current source to CPU
+    • RS-232: male-to-male between current source and 
+      voltmeter 
+    • Trigger Link Cable: between current source and voltmeter
+    • Telnet: CTC to CPU
+    • set GPIB interface for current source
+    • set RS-232 interface for nanovoltmeter
+    • baudrate of nanovoltmeter and current source should be 
+      19.2K and flow control on nanovoltmeter: NONE
+    """
+    label = Text(REQUIREMENTS_WIDGET, wrap='word', height=10, width=50)
+    label.insert('1.0', label_text)
+    label.config(state='disabled')
+    label.grid(row=1, column=0, sticky="wens", pady=(0, 10))
+    label.config(font=("Times New Roman", 12))
+
+    def confirm_connections():
+        REQUIREMENTS_WIDGET.destroy()
+
+    Button(REQUIREMENTS_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row=3, column=0, padx=(15, 0), pady=20)
+
+    REQUIREMENTS_WIDGET.protocol("WM_DELETE_WINDOW", lambda: CLOSE_WIDGET(REQUIREMENTS_WIDGET))
+    REQUIREMENTS_WIDGET.transient(INTERFACE)
+    REQUIREMENTS_WIDGET.grab_set()
+    INTERFACE.wait_window(REQUIREMENTS_WIDGET)
+
+
+# Function for getting what experiments user wants to do from user...
+def DISPLAY_SELECTING_EXPERIMENTS_WIDGET(): 
+    global TIME_EXPERIMENT, TEMPERATURE_EXPERIMENT
+
+    # Creating Settings Widget...
+    SELECTING_EXP_WIDGET = Toplevel(INTERFACE)
+    SELECTING_EXP_WIDGET_Temp_width = int(INTERFACE.winfo_width() / 2)
+    SELECTING_EXP_WIDGET_Temp_height = int(INTERFACE.winfo_height() / 2.7)
+    SELECTING_EXP_WIDGET.title("Experiment Settings")
+    SELECTING_EXP_WIDGET.geometry(CENTER_THE_WIDGET(SELECTING_EXP_WIDGET_Temp_width, SELECTING_EXP_WIDGET_Temp_height))
+    SELECTING_EXP_WIDGET.resizable(False,False)
+    SELECTING_EXP_WIDGET.grid_columnconfigure(0, weight=1)
+    SELECTING_EXP_WIDGET.grid_columnconfigure(1, weight=1)
+   
+    label = Label(SELECTING_EXP_WIDGET, text = "Choose the experiment(s) you want to perform : ", fg = "white", bg = "#575757")
+    label.grid(row = 0,column = 0,  sticky = "we",  pady = 25)
+    label.config(font = ("Arial", 12, "bold"))
+    
+    TIME_EXPERIMENT = IntVar()
+    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Time at specific temperatures", fg = "white", bg = "#575757", highlightthickness = 0, variable = TIME_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 1, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+
+    TEMPERATURE_EXPERIMENT = IntVar()
+    Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
+    
+
+    def confirm_settings():
+        if TIME_EXPERIMENT.get() and not TEMPERATURE_EXPERIMENT.get():
+            CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
+            FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
+            COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
+            COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
+            SELECTING_EXP_WIDGET.destroy()
+            SET_GRAPH_IN_TAB(GRAPH_TAB)
+
+        elif TEMPERATURE_EXPERIMENT.get() and not TIME_EXPERIMENT.get():
+            CONTROL_PANEL.hide(TEMPERATURE_TAB)
+            FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
+            SELECTING_EXP_WIDGET.destroy()
+            SET_GRAPH_IN_TAB(GRAPH_TAB)
+
+        elif TEMPERATURE_EXPERIMENT.get() and TIME_EXPERIMENT.get():
+            FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
+            SELECTING_EXP_WIDGET.destroy()
+            SET_GRAPH_IN_TAB(GRAPH_TAB)
+        else:
+            messagebox.showwarning("Alert", "Select options!")
+          
+    Button(SELECTING_EXP_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(70,0), pady=20)
+    
+    # Setup the graph_tab...
+    
+    SELECTING_EXP_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SELECTING_EXP_WIDGET))
+    SELECTING_EXP_WIDGET.grab_set()
+    SELECTING_EXP_WIDGET.mainloop()
 
 
 # Function to Create and Open Settings Widget and saving the changes if any are done in this widget...
@@ -694,24 +1087,21 @@ def OPEN_SETTINGS_WIDGET():
 
     # Creating Settings Widget...
     SETTINGS_WIDGET = Toplevel(INTERFACE)
-    SETTINGS_WIDGET.config(bg = "#575757")
     SETTINGS_WIDGET.title("Settings")
-    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(500, 270))
+    SETTINGS_WIDGET_width=int(INTERFACE.winfo_width()/2)
+    SETTINGS_WIDGET_height=int(INTERFACE.winfo_height()/2)
+    SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(SETTINGS_WIDGET_width,SETTINGS_WIDGET_height))
     SETTINGS_WIDGET.resizable(False,False)
     SETTINGS_WIDGET.grid_columnconfigure(0,weight=1)
     SETTINGS_WIDGET.grid_columnconfigure(1,weight=1)
+    Label(SETTINGS_WIDGET, text = "Nanovoltmeter :", fg = "white", bg = "#575757").grid(row = 0, column = 0, rowspan = 2, sticky = "e", padx = (0,10), pady = 10)
 
-    # Creating Combobox for selecting GPIB Cabel connected to Nanovoltmeter...
-    Label(SETTINGS_WIDGET, text = "Nanovoltmeter :", fg = "white", bg = "#575757").grid(row = 0,column = 0, rowspan = 2, sticky = "e", padx = (0,10), pady = 10)
-    
     ENTRY_OF_DEVICE = StringVar(value = SETTINGS["device_name"]) # Assigning the variable with the cabel which is in settings (Simply setting default)
     cabels_available = pyvisa.ResourceManager().list_resources()
 
     DROPDOWN_OF_GPIB_DEVICE = ttk.Combobox(SETTINGS_WIDGET, width = 27,textvariable = ENTRY_OF_DEVICE, values = cabels_available, state = "readonly")
     DROPDOWN_OF_GPIB_DEVICE.bind('<<ComboboxSelected>>', lambda x: SET_SETTINGS("device_name", DROPDOWN_OF_GPIB_DEVICE.get()))
     DROPDOWN_OF_GPIB_DEVICE.grid(row = 0, column = 1, sticky = "w", pady = 10)
-    # DROPDOWN_OF_GPIB_DEVICE.current(2)
-
 
     # Creating an entry field to enter the address of the CTC device...
     Label(SETTINGS_WIDGET,text = "CTC Address:", fg = "white", bg = "#575757").grid(row = 2, column = 0, sticky = "e", padx = (0,10), pady = 10)
@@ -720,7 +1110,6 @@ def OPEN_SETTINGS_WIDGET():
 
     ENTRY_OF_CTC_ADDRESS = Entry(SETTINGS_WIDGET, font = (10), width = 15, textvariable = VARIABLE_OF_CTC_ADDRESS)
     ENTRY_OF_CTC_ADDRESS.grid(row = 2, column = 1, pady = 0, sticky = "w")
-    ENTRY_OF_CTC_ADDRESS.bind("<KeyRelease>", lambda x: SET_SETTINGS("CTC_Address", VARIABLE_OF_CTC_ADDRESS.get())) #updates ctc_adress on any key release event
 
 
     # Creating an entry field to enter the CTC Telnet...
@@ -730,7 +1119,6 @@ def OPEN_SETTINGS_WIDGET():
 
     ENTRY_OF_TELNET_PORT = Entry(SETTINGS_WIDGET, font = (10), width = 15, textvariable = VARIABLE_OF_TELNET_PORT)
     ENTRY_OF_TELNET_PORT.grid(row = 3, column = 1, pady = 0, sticky = "w")
-    ENTRY_OF_TELNET_PORT.bind("<KeyRelease>",lambda x: SET_SETTINGS("Telnet_Port", VARIABLE_OF_TELNET_PORT.get()))
     
 
     # Creating an entry field to enter the port of RS232 cabel connected to AC/DC Current Source...
@@ -740,7 +1128,7 @@ def OPEN_SETTINGS_WIDGET():
 
     ENTRY_OF_RS232_PORT = Entry(SETTINGS_WIDGET, font = (10), width = 15, textvariable = VARIABLE_OF_RS232_PORT)
     ENTRY_OF_RS232_PORT.grid(row = 4, column = 1, pady = 0, sticky = "w")
-    ENTRY_OF_RS232_PORT.bind("<KeyRelease>", lambda x: SET_SETTINGS("RS232_Port", VARIABLE_OF_RS232_PORT.get()))
+
 
     # Creating an entry field to enter the Max_retry number...
     Label(SETTINGS_WIDGET, text = "Max_Retry :", fg = "white", bg = "#575757").grid(row = 5, column = 0, sticky = "e", padx = (0,10), pady = 10)
@@ -749,13 +1137,23 @@ def OPEN_SETTINGS_WIDGET():
 
     ENTRY_OF_MAX_RETRY = Entry(SETTINGS_WIDGET, font = (10), width = 10, textvariable = VARIABLE_OF_MAX_RETRY)
     ENTRY_OF_MAX_RETRY.grid(row = 5, column = 1, pady = 0, sticky = "w")
-    ENTRY_OF_MAX_RETRY.bind("<KeyRelease>", lambda x: SET_SETTINGS("max_retry", VARIABLE_OF_MAX_RETRY.get()))
+
 
     # Creating a dialougebox for selecting the directory...
     Label(SETTINGS_WIDGET, text = "Directory:", fg = "white", bg = "#575757").grid(row = 6, column = 0, sticky = "e", padx = (0,10), pady = 10)
     LABEL_OF_OUTPUT_DIRECTORY = Label(SETTINGS_WIDGET,text = SETTINGS["Directory"], anchor = "w", width = 25, fg = "white", bg = "#575757")
     LABEL_OF_OUTPUT_DIRECTORY.grid(row = 6, column = 1, sticky = "w", padx = (0,10), pady = 10)
     Button(SETTINGS_WIDGET, text = "Select Folder", command = lambda: OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY)).grid(row = 6, column = 1, padx = (150,0), pady = 10)
+
+    def confirm_connections():
+        SET_SETTINGS("CTC_Address", VARIABLE_OF_CTC_ADDRESS.get())
+        SET_SETTINGS("Telnet_Port", VARIABLE_OF_TELNET_PORT.get())
+        SET_SETTINGS("RS232_Port", VARIABLE_OF_RS232_PORT.get())
+        SET_SETTINGS("max_retry", VARIABLE_OF_MAX_RETRY.get())
+        SET_SETTINGS("Directory", LABEL_OF_OUTPUT_DIRECTORY.cget("text"))
+        SETTINGS_WIDGET.destroy()
+
+    Button(SETTINGS_WIDGET,text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_connections).grid(row =7 , column = 1 ,sticky="w",pady = 20)
 
     SETTINGS_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SETTINGS_WIDGET))
     SETTINGS_WIDGET.grab_set()
@@ -766,7 +1164,8 @@ def OPEN_SETTINGS_WIDGET():
 def SHOW_INFO_OF_DEVICES(): 
 
     if CONNECT_INSTRUMENTS() :
-        info_of_nanovoltmeter = str(NANOVOLTMETER.query("*IDN?"))
+        SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND “*IDN?”')
+        info_of_nanovoltmeter = SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
         info_of_current_source = str(SEND_COMMAND_TO_CURRENT_SOURCE("*IDN?"))
         info_of_ctc = str(SEND_COMMAND_TO_CTC("description?"))
 
@@ -784,12 +1183,12 @@ def SYNC_SETTINGS():
 
     else:
         SETTINGS = {"device_name":"GPIB0::6::INSTR",
-            "Directory":"./",
-            "CTC_Address":"192.168.0.2",
-            "Telnet_Port":"23",
-            "RS232_Port":"COM1",
-            "max_retry":"10"
-            }  # If the file doesn't exist, initialize SETTINGS some default values
+                    "Directory":"./",
+                    "CTC_Address":"192.168.0.2",
+                    "Telnet_Port":"23",
+                    "RS232_Port":"COM1",
+                    "max_retry":"10"
+                    }  # If the file doesn't exist, initialize SETTINGS some default values
         WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
 
     MAX_RETRY = int(SETTINGS["max_retry"])
@@ -799,69 +1198,63 @@ def SYNC_SETTINGS():
 def SET_SETTINGS(key,val): 
     SETTINGS[key] = val
     WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
-
+    
 
 
 if __name__=="__main__":
+    global INTERFACE 
 
     ## Creating a Tkinter Interface ##
-    INTERFACE = Tk() # Made a root Interface
+    INTERFACE = tb.Window(themename="yeti") # Made a root Interface
     INTERFACE.wm_title("TD-Controller") # Set title to the interface widget
-    INTERFACE.geometry("850x600") # Set Geometry of the interface widget
+    # INTERFACE.geometry("1000x700") # Set Geometry of the interface widget
     INTERFACE.grid_columnconfigure(0, weight=1) 
     INTERFACE.grid_rowconfigure(0, weight=1)
+    INTERFACE.grid_columnconfigure(1, weight=0) 
+    
 
-
-    ## Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
-    SIDE_BAR = Frame(INTERFACE, bg="#878787")
+    # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
+    SIDE_BAR = tb.Frame(INTERFACE,bootstyle="info")
     SIDE_BAR.grid(row=0, column=1, rowspan=2, sticky="nswe")
 
     SETTINGS_BUTTON = Button(SIDE_BAR, text = "Settings", height = 2, command = OPEN_SETTINGS_WIDGET)
     SETTINGS_BUTTON.pack(side="bottom",pady=(5,0),fill='x',padx=2)
 
-    INFO_BUTTON = Button(SIDE_BAR, text = "Info", height = 2)
+    INFO_BUTTON = Button(SIDE_BAR, text = "Info", height = 2, command = SHOW_INFO_OF_DEVICES)
     INFO_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
-    SYNC_SET_BUTTON = Button(SIDE_BAR, text = "Sync Set", height= 2, command = CHECK_AND_SET_ALL_VALUES)
+    SYNC_SET_BUTTON = Button(SIDE_BAR, text = "Sync Set", height= 2, command=CHECK_AND_SET_ALL_VALUES)
     SYNC_SET_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
-    SYNC_GET_BUTTON= Button(SIDE_BAR, text = "Sync Get", height = 2, command = SYNC_GET)
+    SYNC_GET_BUTTON=Button(SIDE_BAR, text = "Sync Get", height = 2, command = SYNC_GET)
     SYNC_GET_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
     TRIGGER_BUTTON = Button(SIDE_BAR, text = "Trigger", height = 2, command = TRIGGER)
     TRIGGER_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
+    global TO_ABORT
+    TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
-    CONTROL_PANEL = ttk.Notebook(INTERFACE)
+    CONTROL_PANEL = tb.Notebook(INTERFACE,bootstyle="primary")
 
-    CTC_TAB = Frame(CONTROL_PANEL,bg="#575757") 
-    CURRENT_SOURCE_TAB = Frame(CONTROL_PANEL,bg="#575757") 
-    GRAPH_TAB = Frame(CONTROL_PANEL) 
-    PROGRESS = Frame(CONTROL_PANEL, bg = "#A19F5A")
+    CTC_TAB = tb.Frame(CONTROL_PANEL) 
+    CURRENT_SOURCE_TAB = tb.Frame(CONTROL_PANEL) 
+    TEMPERATURE_TAB = tb.Frame(CONTROL_PANEL)
+    GRAPH_TAB = tb.Frame(CONTROL_PANEL) 
 
     CONTROL_PANEL.add(CTC_TAB, text = ' CTC\n Setup ')
     CONTROL_PANEL.add(CURRENT_SOURCE_TAB , text = ' Current Source\n      Setup ')
+    CONTROL_PANEL.add(TEMPERATURE_TAB, text = ' Temperature\n Setup ')
     CONTROL_PANEL.add(GRAPH_TAB, text = ' Graph\n Setup ')
-    CONTROL_PANEL.add(PROGRESS, text = ' Progress\n ')
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
    
-    global HEADING, PARAGRAPH
-
-    h = Label(PROGRESS, text = "HEADING", bg="#40413A", font=("Times", 64 * -1))
-    p = Label(PROGRESS, text = "PARAGRAPH", bg = "#40413A", font = ("Times", 64 * -1))
-
-    h.pack()
-    p.pack()
-
-
-
-
-
-
-
-
-
+   
+    # Title   change the location :)
+    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white")
+    TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=300, pady=(60, 35))
+    ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
+    ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
 
     ## Creating Dropdowns for selecting input and output channels of CTC...
     FRAME_OF_CHANNELS_SELECTION = LabelFrame(CTC_TAB, text = "Input/Output Channel", bg = "#575757", fg = "white")
@@ -871,10 +1264,10 @@ if __name__=="__main__":
     LABEL_OF_INPUT_CHANNEL = Label(FRAME_OF_CHANNELS_SELECTION, text = 'Input Channel:', bg = "#575757", fg = 'white')
     LABEL_OF_INPUT_CHANNEL.grid(row = 0, column = 0, sticky = "ew", padx = (20,20), pady = 20)
 
-
+    input_options = ['In 1', 'In 2', 'In 3', 'In 4']
     ENTRY_OF_INPUT_CHANNEL = StringVar()
 
-    DROPDOWN_OF_INPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_INPUT_CHANNEL,  values = INPUT_CHANNELS_LIST_OF_CTC, state = 'readonly')
+    DROPDOWN_OF_INPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_INPUT_CHANNEL,  values = input_options, state = 'readonly')
     DROPDOWN_OF_INPUT_CHANNEL.grid(row = 0, column = 1, rowspan = 3, sticky = "ew", pady = (10,10))
     DROPDOWN_OF_INPUT_CHANNEL.current(0)
 
@@ -882,9 +1275,10 @@ if __name__=="__main__":
     LABEL_OF_OUTPUT_CHANNEL = Label(FRAME_OF_CHANNELS_SELECTION, text = 'Output Channel:', bg = "#575757",  fg = 'white')
     LABEL_OF_OUTPUT_CHANNEL.grid(row = 0, column = 2, sticky = "ew", padx = (20,20), pady = 20)
 
+    output_options = ['Out 1', 'Out 2']
     ENTRY_OF_OUTPUT_CHANNEL = StringVar()
 
-    DROPDOWN_OF_OUTPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_OUTPUT_CHANNEL, values = OUTPUT_CHANNELS_LIST_OF_CTC, state = 'readonly')
+    DROPDOWN_OF_OUTPUT_CHANNEL = ttk.Combobox(FRAME_OF_CHANNELS_SELECTION, textvariable = ENTRY_OF_OUTPUT_CHANNEL, values = output_options, state = 'readonly')
     DROPDOWN_OF_OUTPUT_CHANNEL.grid(row = 0, column = 3, rowspan = 3, sticky = "ew", pady = (10,10))
     DROPDOWN_OF_OUTPUT_CHANNEL.current(1)
     
@@ -894,25 +1288,25 @@ if __name__=="__main__":
     FRAME_OF_POWER_CONTROLS.grid(row = 3, column = 0, rowspan = 2, pady = (20, 10), padx = 120, sticky = 'nwes')
 
     # Low Power Limit entry
-    LABEL_OF_LOW_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Low Limit :', bg = "#575757", fg = 'white')
+    LABEL_OF_LOW_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Low Limit(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_LOW_POWER_LIMIT.grid(row = 0, column = 0, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_LOW_POWER_LIMIT = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_LOW_POWER_LIMIT.grid(row = 0, column = 1, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
 
     # High Power Limit entry
-    LABEL_OF_HIGH_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'High Limit :', bg = "#575757", fg = 'white')
+    LABEL_OF_HIGH_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'High Limit(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_HIGH_POWER_LIMIT.grid(row = 0, column = 2, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_HIGH_POWER_LIMIT = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_HIGH_POWER_LIMIT.grid(row = 0, column = 3, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
 
     # Increase Power Limit entry
-    LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC = Label(FRAME_OF_POWER_CONTROLS, text = 'Increase Limit by :', bg = "#575757", fg = 'white')
+    LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC = Label(FRAME_OF_POWER_CONTROLS, text = 'Increase Limit by(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC.grid(row = 1, column = 0, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_INCREASE_POWER_LIMIT_OF_CTC = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_INCREASE_POWER_LIMIT_OF_CTC.grid(row = 1, column = 1, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
 
     # Max Power Limit entry
-    LABEL_OF_MAXIMUM_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Max Limit :', bg = "#575757", fg = 'white')
+    LABEL_OF_MAXIMUM_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Max Limit(W) :', bg = "#575757", fg = 'white')
     LABEL_OF_MAXIMUM_POWER_LIMIT.grid(row = 1, column = 2, padx = (10, 10), pady = 5, sticky = 'e')
     ENTRY_OF_MAXIMUM_POWER_LIMIT = Entry(FRAME_OF_POWER_CONTROLS, font = (10), width = 15)
     ENTRY_OF_MAXIMUM_POWER_LIMIT.grid(row = 1, column = 3, padx = (10, 10), pady = 10, ipady = 3, sticky = "w")
@@ -944,21 +1338,35 @@ if __name__=="__main__":
     ## Creating entry fileds for Temperature controls of CTC...
     FRAME_OF_TEMPERATURE_CONTROLS = LabelFrame(CTC_TAB, text = 'Temperature Controls', fg = 'white', bg="#575757")
     FRAME_OF_TEMPERATURE_CONTROLS.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+    FRAME_OF_TEMPERATURE_CONTROLS_2 = LabelFrame(CTC_TAB, text = 'Temperature Controls', fg = 'white', bg="#575757")
+    FRAME_OF_TEMPERATURE_CONTROLS_2.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+
+    # Threshold entry
+    LABEL_OF_THRESHOLD_2 = Label(FRAME_OF_TEMPERATURE_CONTROLS_2, text = 'Threshold :', bg = "#575757", fg = 'white')
+    LABEL_OF_THRESHOLD_2.grid(row = 1, column = 0, padx = 30, pady = 5, sticky = 'ew')
+    ENTRY_OF_THRESHOLD_2 = Entry(FRAME_OF_TEMPERATURE_CONTROLS_2, font = (10), width = 7)
+    ENTRY_OF_THRESHOLD_2.grid(row = 1, column = 1, pady = 10, ipady = 3, sticky = "ew")
+
+    # Tolerance entry
+    LABEL_OF_TOLERANCE_2 = Label(FRAME_OF_TEMPERATURE_CONTROLS_2, text = 'Tolerance :', bg = "#575757", fg = 'white')
+    LABEL_OF_TOLERANCE_2.grid(row = 1, column = 2, padx = 30, pady = 5, sticky = 'ew')
+    ENTRY_OF_TOLERANCE_2 = Entry(FRAME_OF_TEMPERATURE_CONTROLS_2, font = (10), width = 7)
+    ENTRY_OF_TOLERANCE_2.grid(row = 1, column = 3, pady = 10, ipady = 3, sticky = "ew")
 
     # Start Temperature entry
-    LABEL_OF_START_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Start Temperature :', bg = "#575757", fg = 'white')
+    LABEL_OF_START_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Start Temperature(K) :', bg = "#575757", fg = 'white')
     LABEL_OF_START_TEMPERATURE.grid(row = 0, column = 0, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_START_TEMPERATURE = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_START_TEMPERATURE.grid(row = 0, column = 1, pady = 10, ipady = 3, sticky = "ew")
 
     # Stop Temperature entry
-    LABEL_OF_STOP_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Stop Temperature :', bg = "#575757", fg = 'white')
+    LABEL_OF_STOP_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Stop Temperature(K) :', bg = "#575757", fg = 'white')
     LABEL_OF_STOP_TEMPERATURE.grid(row = 0,  column = 2, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_STOP_TEMPERATURE = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_STOP_TEMPERATURE.grid(row = 0, column = 3, pady = 10, ipady = 3, sticky = "ew")
 
     # Increasing interval of Temperature entry
-    LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Increasing by :', bg = "#575757", fg = 'white')
+    LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Increasing by(K) :', bg = "#575757", fg = 'white')
     LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE.grid(row = 0, column = 4, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE.grid(row = 0, column = 5, pady = 10, ipady = 3, sticky = "ew")
@@ -976,63 +1384,103 @@ if __name__=="__main__":
     ENTRY_OF_TOLERANCE.grid(row = 1, column = 3, pady = 10, ipady = 3, sticky = "ew")
 
     # Delay of CTC entry
-    LABEL_OF_DELAY_OF_CTC = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Delay of CTC :', bg = "#575757", fg = 'white')
+    LABEL_OF_DELAY_OF_CTC = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Delay of CTC(s):', bg = "#575757", fg = 'white')
     LABEL_OF_DELAY_OF_CTC.grid(row = 1, column = 4, padx = 30, pady = 5, sticky = 'ew')
     ENTRY_OF_DELAY_OF_CTC = Entry(FRAME_OF_TEMPERATURE_CONTROLS, font = (10), width = 7)
     ENTRY_OF_DELAY_OF_CTC.grid(row = 1, column = 5, pady = 10, ipady = 3, sticky = "ew")
 
     # Complete Cycle entry
-    ENTRY_OF_COMPLETE_CYCLE = IntVar()
-    Checkbutton(CTC_TAB, text = "Complete Cycle", fg = "white", bg = "#575757", highlightthickness = 0, variable = ENTRY_OF_COMPLETE_CYCLE, activebackground = "#575757", activeforeground = 'white', selectcolor = "black").grid(row = 8, column = 0, pady = 20, sticky = "ew")
+    COMPLETE_CYCLE = IntVar()
+    COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = COMPLETE_CYCLE, bootstyle="primary-round-toggle")
+    COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
 
-
-    # Title
-    FRAME_OF_TITLE = LabelFrame(CURRENT_SOURCE_TAB, text = "Title", fg = "white", bg = "#575757")
-    FRAME_OF_TITLE.grid(row = 0, column = 0, rowspan = 1, sticky = "nsew", padx = 250, pady = (40,25))
-
-    ENTRY_OF_TITLE = Entry(FRAME_OF_TITLE, font = (10), width = 20)
-    ENTRY_OF_TITLE.pack(pady = (0,5), padx = 10, ipady = 5)
  
-
     # Drive
-    FRAME_OF_CURRENT_CONTROLS = LabelFrame(CURRENT_SOURCE_TAB, text = "Current Controls", fg = "white", bg = "#575757")
-    FRAME_OF_CURRENT_CONTROLS.grid(row = 1, column = 0, rowspan = 3, sticky = "nsew", padx = 250, pady = 25)
+    DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white")
+    DRIVE_LFRAME.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=300, pady=30)
 
-    LABELFRAME_OF_START_CURRENT = LabelFrame(FRAME_OF_CURRENT_CONTROLS, text = "Current Start Value (A)", fg = "white", bg = "#575757")
-    LABELFRAME_OF_START_CURRENT.grid(row = 0, column = 0, padx = 10, pady = (5,10), sticky = "w")
+    CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white")
+    CURRENT_START_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_START_CURRENT = Entry(CURRENT_START_LFRAME, font=(10), width=20)
+    ENTRY_OF_START_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
+    
+    CURRENT_STOP_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Stop Value (A)", fg="white")
+    CURRENT_STOP_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_STOP_CURRENT = Entry(CURRENT_STOP_LFRAME, font=(10), width=20)
+    ENTRY_OF_STOP_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+   
+    INTERVALNO_LFRAME = LabelFrame(DRIVE_LFRAME, text="Count(Number of Current Intervals at a Temperature)", fg="white")
+    INTERVALNO_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(INTERVALNO_LFRAME, font=(10), width=20)
+    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    
 
-    ENTRY_OF_START_CURRENT = Entry(LABELFRAME_OF_START_CURRENT, font = (10), width = 20)
-    ENTRY_OF_START_CURRENT.grid(row = 0, column = 0, rowspan = 2, pady = 10, padx = 10, ipady = 5)
+    INTERVAL_LFRAME = LabelFrame(DRIVE_LFRAME, text="Step (Increase Current Interval at a Temperature)(A)", fg="white")
+    INTERVAL_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(INTERVAL_LFRAME, font=(10), width=20)
+    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    
+    DELAY_LFRAME = LabelFrame(DRIVE_LFRAME, text="Delay of Current Source", fg="white")
+    DELAY_LFRAME.grid(row=4, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_DELAY_OF_CURRENT_SOURCE = Entry(DELAY_LFRAME, font=(10), width=20)
+    ENTRY_OF_DELAY_OF_CURRENT_SOURCE.grid(row=0, column=0,  pady=10, padx=10,ipady=5,ipadx=20,sticky="w")
+
+    # Temperature Tab
+    TERMPERATURE_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Temperature and Time Controls", fg="white")
+    TERMPERATURE_LFRAME.grid(row=0, column=0, rowspan=3,sticky="nsew", padx=(180,60), pady=150)
+
+    SELECT_TEMP_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Temperature(s)(in K)", fg="white")
+    SELECT_TEMP_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
+    TEMPERATURES_ENTRY = Text(SELECT_TEMP_LFRAME, font=(10), width=20, height=1)
+    TEMPERATURES_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
+    TEMPERATURES_ENTRY.bind("<KeyRelease>", UPDATE_COMBOBOX) 
    
 
-    LABELFRAME_OF_NUMBER_OF_CURRENT_INTERVALS = LabelFrame(FRAME_OF_CURRENT_CONTROLS, text = "Number of Current Intervals at a Temperature", fg = "white", bg = "#575757")
-    LABELFRAME_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row = 1, column = 0, padx = 10, pady = (5,10), sticky = "w")
-
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS = Entry(LABELFRAME_OF_NUMBER_OF_CURRENT_INTERVALS, font = (10), width = 20)
-    ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS.grid(row = 0, column = 0, rowspan = 3, pady = 10, padx = 10, ipady = 5)
+    MEASURING_TIME_LFRAME = LabelFrame(TERMPERATURE_LFRAME, text="Total Time( in s)", fg="white")
+    MEASURING_TIME_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+    MEASURING_TIME_ENTRY = Entry(MEASURING_TIME_LFRAME, font=(10), width=20)
+    MEASURING_TIME_ENTRY.grid(row=0, column=0, pady=10, padx=10, ipady=5)
     
 
-    LABELFRAME_OF_NUMBER_OF_INCREASING_INTERVAL_OF_CURRENT = LabelFrame(FRAME_OF_CURRENT_CONTROLS, text = "Increase Current Interval at a Temperature", fg = "white", bg = "#575757")
-    LABELFRAME_OF_NUMBER_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row = 2, column = 0, padx = 10, pady = (5,10), sticky = "w")
-
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT = Entry(LABELFRAME_OF_NUMBER_OF_INCREASING_INTERVAL_OF_CURRENT, font = (10), width = 20)
-    ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row = 0, column = 0, rowspan = 3, pady = 10, padx = 10, ipady = 5)
     
+    #CURRENT_CONTROLS
+    CURRENT_CONTROLS_LFRAME = LabelFrame(TEMPERATURE_TAB, text="Current Controls", fg="white")
+    CURRENT_CONTROLS_LFRAME.grid(row=0, column=1, rowspan=4, sticky="nsew", padx=(60,180), pady=100)
 
-    # Setup the graph_tab...
-    SET_GRAPH_IN_TAB(GRAPH_TAB)
-
+    HIGH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="High current of pulse(A)", fg="white")
+    HIGH_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_HIGH_PULSE = Entry(HIGH_LFRAME, font=(10), width=20)
+    ENTRY_OF_HIGH_PULSE.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20, sticky="w")
+    
+    LOW_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Low current of pulse(A)", fg="white")
+    LOW_LFRAME.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_LOW_PULSE = Entry(LOW_LFRAME, font=(10), width=20)
+    ENTRY_OF_LOW_PULSE.grid(row=0, column=0,  pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+   
+    WIDTH_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Width of the pulse(s)", fg="white")
+    WIDTH_LFRAME.grid(row=2, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_PULSE_WIDTH = Entry(WIDTH_LFRAME, font=(10), width=20)
+    ENTRY_OF_PULSE_WIDTH.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    
+    NUMBER_OF_PULSES_PER_SECOND_LFRAME = LabelFrame(CURRENT_CONTROLS_LFRAME, text="Number of Pulses/sec", fg="white")
+    NUMBER_OF_PULSES_PER_SECOND_LFRAME.grid(row=3, column=0, padx=10, pady=(5, 10), sticky="w")
+    ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND = Entry(NUMBER_OF_PULSES_PER_SECOND_LFRAME, font=(10), width=20)
+    ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.grid(row=0, column=0, pady=10, padx=10, ipady=5,ipadx=20,sticky="w")
+    
     # Sync the settings from settings.json file if it exits to entry boxes of settings
     SYNC_SETTINGS()
 
-
+    ### other ###
     INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     INTERFACE.wait_visibility()
     INTERFACE.update()
     
-
-    INTERFACE.geometry(CENTER_THE_WIDGET(INTERFACE.winfo_width(), INTERFACE.winfo_height()))
-    INTERFACE.minsize(INTERFACE.winfo_width(), INTERFACE.winfo_height())
-
+    root_width=INTERFACE.winfo_width()
+    root_height=INTERFACE.winfo_height()
+    INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
+    INTERFACE.minsize(root_width,root_height)
+    
+    DISPLAY_REQUIREMENTS()
+    DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
 
     INTERFACE.mainloop()
