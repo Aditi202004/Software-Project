@@ -26,9 +26,10 @@ from tkinter import ttk, messagebox, filedialog
 import tkinter as tk
 from threading import Thread
 import ttkbootstrap as tb
+from ttkbootstrap import Style
 from ttkbootstrap.constants import *
 from tkinter import Toplevel, Label, Text, Button
-
+from PIL import ImageTk, Image
 
 # Required imports for maintaining the data
 import csv, json
@@ -184,12 +185,10 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
         
     LABEL_OF_GRAPH.config(font=('Times', 32)) # Changing the default font style and size to Times and 32
 
-    # if TIME_EXPERIMENT.get():
-    #     temperature_combobox = tb.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
-    #     temperature_combobox.bind("<<ComboboxSelected>>", UPDATE_GRAPH)
-    #     temperature_combobox.pack(padx=10, pady=(30,20))
-    progress = tb.Panedwindow(FRAME_OF_GRAPH,bootstyle="info")
-    progress.pack(padx=10, pady=(30,20))
+    if TIME_EXPERIMENT.get():
+        temperature_combobox = tb.Combobox(FRAME_OF_GRAPH, font=("Arial", 10), state='readonly')
+        temperature_combobox.bind("<<ComboboxSelected>>", UPDATE_GRAPH)
+        temperature_combobox.pack(padx=10, pady=(30,20))
 
     FIGURE_OF_GRAPH = Figure(figsize=(6, 4.5)) # Created a figure to add graph
 
@@ -357,8 +356,6 @@ def SYNC_GET():
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_CURRENT_INTERVALS, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:COUN?"))
         DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_DELAY_OF_CURRENT_SOURCE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:DEL?"))
 
-        
-
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
 def SEND_COMMAND_TO_CTC(command): 
@@ -491,7 +488,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             if present_temperature > maximum_temperature: maximum_temperature = present_temperature
             if present_temperature < minimum_temperature: minimum_temperature = present_temperature
             
-            # time.sleep(10) # Waiting for 10 seconds...
+            time.sleep(10) # Waiting for 10 seconds...
 
             retry_number += 1
 
@@ -566,7 +563,7 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
         if TO_ABORT:
             break
         present_time += 5
-        # time.sleep(5)
+        time.sleep(5)
         resistance_readings, time_stamps = GET_RESISTANCES()
 
         WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
@@ -599,9 +596,11 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
-        # for i in range(int(DELAY_OF_CTC)): # Delaying some time...
-        #     if TO_ABORT: break  
-        #     time.sleep(1) 
+        for i in range(int(DELAY_OF_CTC)): # Delaying some time...
+            if TO_ABORT: break  
+            cycle_images()
+            time.sleep(1) 
+
         if TEMPERATURE_EXPERIMENT.get():
             present_resistance = GET_PRESENT_RESISTANCE()
             print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
@@ -1069,7 +1068,7 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
         elif TEMPERATURE_EXPERIMENT.get() and TIME_EXPERIMENT.get():
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
         else:
             messagebox.showwarning("Alert", "Select options!")
           
@@ -1232,6 +1231,7 @@ if __name__=="__main__":
     TRIGGER_BUTTON = Button(SIDE_BAR, text = "Trigger", height = 2, command = TRIGGER)
     TRIGGER_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
+    
     global TO_ABORT
     TO_ABORT = False
 
@@ -1248,7 +1248,40 @@ if __name__=="__main__":
     CONTROL_PANEL.add(TEMPERATURE_TAB, text = ' Temperature\n Setup ')
     CONTROL_PANEL.add(GRAPH_TAB, text = ' Graph\n Setup ')
     CONTROL_PANEL.grid(row = 0, column = 0, sticky = "nswe")
-   
+
+    progress_and_graph = tk.PanedWindow(GRAPH_TAB, orient=tk.HORIZONTAL, sashpad=3, sashrelief='raised')
+    # Add widgets for the left pane
+    left_frame = ttk.Frame(progress_and_graph, width=100, height=200, relief=tk.SUNKEN)
+    heading = tk.Label(left_frame, text="Progress...", width=25, font=(25))
+    paragraph = tk.Label(left_frame, text="Progress...", width=25, font=(15))
+    heading.pack(pady=(100,50))
+    paragraph.pack()
+
+    # Load images
+    image_files = ["Software-Project/loading_1.jpg",
+                "Software-Project/loading_2.jpg",
+                "Software-Project/loading_3.jpg",
+                "Software-Project/loading_4.jpg"]
+    photos = [ImageTk.PhotoImage(Image.open(file).resize((300, 300))) for file in image_files]
+
+    # Function to cycle through images
+    current_photo_index = 0
+    def cycle_images():
+        global current_photo_index
+        photo_label.config(image=photos[current_photo_index])
+        current_photo_index = (current_photo_index + 1) % len(photos)
+        INTERFACE.after(250, cycle_images)
+
+    photo_label = tk.Label(left_frame, image=photos[0])
+    photo_label.pack(pady=(125,50))
+    progress_and_graph.add(left_frame)
+    # Add widgets for the right pane
+    right_frame = ttk.Frame(progress_and_graph, width=100, height=200, relief=tk.SUNKEN)
+    progress_and_graph.add(right_frame)
+
+
+    # Pack the Panedwindow widget
+    progress_and_graph.pack(fill=tk.BOTH, expand=True)
    
     # Title   change the location :)
     TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white")

@@ -529,9 +529,9 @@ def GET_PRESENT_RESISTANCE():
 
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR") # Aborting the sweep process
 
-    resistance_readings, = GET_RESISTANCES()
+    resistance_readings, _ = GET_RESISTANCES()
 
-    return sum(resistance_readings) / len(resistance_readings)
+    return np.mean(resistance_readings)
 
 
 # Function to get resistances with time at a temperature(Used in Resistance vs Time at a temperature)...
@@ -545,7 +545,7 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
     present_time = 0
     index_of_last_update = 0
 
-    present_csvfile = TITLE + "_Resistance_vs_Time_at_" + temperature + ".csv"
+    present_csvfile = TITLE + "_Resistance_vs_Time_at_" + str(temperature) + ".csv"
     while present_time <= MEASURING_TIME:
         if TO_ABORT:
             break
@@ -554,7 +554,7 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
         resistance_readings, time_stamps = GET_RESISTANCES()
 
         WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
-        ADD_POINT_TO_GRAPH(time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
+        ADD_POINT_TO_GRAPH(time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:], str(temperature))
         # code to save to csv and plot the points in resistance_readings and time_stamps in that graph of that temperature
         index_of_last_update = len(resistance_readings)
 
@@ -585,15 +585,17 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 
         for i in range(int(DELAY_OF_CTC)): # Delaying some time...
             if TO_ABORT: break  
+            # cycle_images()
             time.sleep(1) 
 
-        present_resistance = GET_PRESENT_RESISTANCE()
-        print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
+        if TEMPERATURE_EXPERIMENT.get():
+            present_resistance = GET_PRESENT_RESISTANCE()
+            print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
-        WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
-        ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
+            WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
+            ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
 
-        if direction and (present_temperature in ARRAY_OF_SELECTED_TEMPERATURES):
+        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
             GET_RESISTANCES_WITH_TIME_AT(present_temperature)
     
 
@@ -1216,12 +1218,27 @@ if __name__=="__main__":
     paragraph = tk.Label(left_frame, text="Progress...", width=25, font=(15))
     heading.pack(pady=(100,50))
     paragraph.pack()
-    image = Image.open("Software-Project\del.png")
-    image = image.resize((300, 300))  # Resize the image as needed
-    photo = ImageTk.PhotoImage(image)
-    photo_label = tk.Label(left_frame, image=photo)
-    photo_label.image = photo  # This line is necessary to prevent the image from being garbage collected
-    photo_label.pack(pady=(125,50))
+
+
+    # # Load images
+    # image_files = ["Software-Project/loading_1.jpg",
+    #             "Software-Project/loading_2.jpg",
+    #             "Software-Project/loading_3.jpg",
+    #             "Software-Project/loading_4.jpg"]
+    # photos = [ImageTk.PhotoImage(Image.open(file).resize((300, 300))) for file in image_files]
+
+    # # Function to cycle through images
+    # current_photo_index = 0
+    # def cycle_images():
+    #     global current_photo_index
+    #     photo_label.config(image=photos[current_photo_index])
+    #     current_photo_index = (current_photo_index + 1) % len(photos)
+    #     INTERFACE.after(250, cycle_images)
+
+    # photo_label = tk.Label(left_frame, image=photos[0])
+    # photo_label.pack(pady=(125,50))
+
+
     progress_and_graph.add(left_frame)
     # Add widgets for the right pane
     right_frame = ttk.Frame(progress_and_graph, width=100, height=200, relief=tk.SUNKEN)
