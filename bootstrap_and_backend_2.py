@@ -1022,13 +1022,13 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
             COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
             COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
 
         elif TEMPERATURE_EXPERIMENT.get() and not TIME_EXPERIMENT.get():
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
 
         elif TEMPERATURE_EXPERIMENT.get() and TIME_EXPERIMENT.get():
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
