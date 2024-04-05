@@ -593,6 +593,8 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
     filename = TITLE + "_Resistance_vs_Temperature.csv" 
 
     for present_temperature in ARRAY_OF_ALL_TEMPERATURES[::direction]:
+        if TO_ABORT : break
+
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
@@ -601,7 +603,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
             cycle_images()
             time.sleep(1) 
 
-        if TEMPERATURE_EXPERIMENT.get():
+        if not TO_ABORT and TEMPERATURE_EXPERIMENT.get():
             present_resistance = GET_PRESENT_RESISTANCE()
             print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
@@ -865,7 +867,7 @@ ARRAY_OF_SELECTED_TEMPERATURES = []
 
 # Function to start the Experiment...
 def START_EXPERIMENT():
-    global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES
+    global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES, TO_ABORT
     
     if TEMPERATURE_EXPERIMENT.get():
         curr_temp = START_TEMPERATURE
@@ -888,6 +890,7 @@ def START_EXPERIMENT():
     if TO_ABORT: 
         print("ABORTED !")
         TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        TO_ABORT = False
         INTERFACE.update()
         return
     
@@ -898,6 +901,7 @@ def START_EXPERIMENT():
     if TO_ABORT: 
         print("ABORTED !")
         TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        TO_ABORT = False
         INTERFACE.update()
         return
     
@@ -908,7 +912,7 @@ def START_EXPERIMENT():
 
 # Function to trigger the Experiment... 
 def TRIGGER():
-
+    TRIGGER_BUTTON.config(text= "Abort", command=ABORT_TRIGGER)
     if CONNECT_INSTRUMENTS():
         if CHECK_AND_SET_ALL_VALUES(): # Checking and Setting all values...
 
@@ -927,7 +931,7 @@ def ABORT_TRIGGER():
     if is_armed:
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
 
-    print("Aborted!")
+    # print("Aborted!")
 
     TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
     INTERFACE.update()
@@ -1211,6 +1215,8 @@ if __name__=="__main__":
     INTERFACE.grid_rowconfigure(0, weight=1)
     INTERFACE.grid_columnconfigure(1, weight=0) 
     
+    global TO_ABORT
+    TO_ABORT = False
 
     # Creating a Sidebar and adding Trigger, Settings, Info, Sync Set, Sync Get buttons ## 
     SIDE_BAR = tb.Frame(INTERFACE,bootstyle="info")
@@ -1232,8 +1238,6 @@ if __name__=="__main__":
     TRIGGER_BUTTON.pack(side = "bottom", pady = (5,0), fill = 'x', padx = 2)
 
     
-    global TO_ABORT
-    TO_ABORT = False
 
     ## Creating Control Panel and adding CTC tab, Current Source tab and Graph tab ##
     CONTROL_PANEL = tb.Notebook(INTERFACE,bootstyle="primary")
@@ -1258,10 +1262,10 @@ if __name__=="__main__":
     paragraph.pack()
 
     # Load images
-    image_files = ["Software-Project/loading_1.jpg",
-                "Software-Project/loading_2.jpg",
-                "Software-Project/loading_3.jpg",
-                "Software-Project/loading_4.jpg"]
+    image_files = ["./loading_1.jpg",
+                "./loading_2.jpg",
+                "./loading_3.jpg",
+                "./loading_4.jpg"]
     photos = [ImageTk.PhotoImage(Image.open(file).resize((300, 300))) for file in image_files]
 
     # Function to cycle through images

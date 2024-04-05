@@ -1,1 +1,1 @@
-Temperature(s)
+settings
