@@ -580,6 +580,7 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
     filename = TITLE + "_Resistance_vs_Temperature.csv" 
 
     for present_temperature in ARRAY_OF_ALL_TEMPERATURES[::direction]:
+        if TO_ABORT : break
         # Achieving the current temperature... This function is defined above...
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
@@ -800,7 +801,7 @@ def CHECK_AND_SET_ALL_VALUES():
 
 
 # Function to merge two sorted arrays...
-def MERGE_BOTH_TEMPERATURES(arr1, arr2):
+def MERGE_BOTH_TEMPERATURE_ARRAYS(arr1, arr2):
     print(arr1)
     print(arr2)
     final_arr = []
@@ -828,7 +829,7 @@ ARRAY_OF_SELECTED_TEMPERATURES = []
 
 # Function to start the Experiment...
 def START_EXPERIMENT():
-    global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES
+    global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES, TO_ABORT
     
     if TEMPERATURE_EXPERIMENT.get():
         curr_temp = START_TEMPERATURE
@@ -839,7 +840,7 @@ def START_EXPERIMENT():
     if TIME_EXPERIMENT.get():
         if TEMPERATURE_EXPERIMENT.get(): ARRAY_OF_SELECTED_TEMPERATURES = [float(temp) for temp in temperature_combobox["values"][1:]]
         ARRAY_OF_SELECTED_TEMPERATURES.sort()  # Sorting the array
-        ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURES(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
+        ARRAY_OF_ALL_TEMPERATURES = MERGE_BOTH_TEMPERATURE_ARRAYS(ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES)
 
 
     if not TO_ABORT:
@@ -850,6 +851,7 @@ def START_EXPERIMENT():
     if TO_ABORT: 
         print("ABORTED !")
         TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        TO_ABORT = False
         INTERFACE.update()
         return
     
@@ -860,6 +862,7 @@ def START_EXPERIMENT():
     if TO_ABORT: 
         print("ABORTED !")
         TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
+        TO_ABORT = False
         INTERFACE.update()
         return
     
@@ -870,7 +873,7 @@ def START_EXPERIMENT():
 
 # Function to trigger the Experiment... 
 def TRIGGER():
-
+    TRIGGER_BUTTON.config(text= "Abort", command=ABORT_TRIGGER)
     if CONNECT_INSTRUMENTS():
         if CHECK_AND_SET_ALL_VALUES(): # Checking and Setting all values...
 
@@ -889,7 +892,7 @@ def ABORT_TRIGGER():
     if is_armed:
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
 
-    print("Aborted!")
+    # print("Aborted!")
 
     TRIGGER_BUTTON.config(text= "Trigger", command=TRIGGER)
     INTERFACE.update()
@@ -1023,13 +1026,13 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
             COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
             COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
 
         elif TEMPERATURE_EXPERIMENT.get() and not TIME_EXPERIMENT.get():
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
 
         elif TEMPERATURE_EXPERIMENT.get() and TIME_EXPERIMENT.get():
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
