@@ -600,7 +600,6 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 
         for i in range(int(DELAY_OF_CTC)): # Delaying some time...
             if TO_ABORT: break  
-            cycle_images()
             time.sleep(1) 
 
         if not TO_ABORT and TEMPERATURE_EXPERIMENT.get():
@@ -868,6 +867,7 @@ ARRAY_OF_SELECTED_TEMPERATURES = []
 # Function to start the Experiment...
 def START_EXPERIMENT():
     global ARRAY_OF_ALL_TEMPERATURES, ARRAY_OF_SELECTED_TEMPERATURES, TO_ABORT
+    cycle_images()
     
     if TEMPERATURE_EXPERIMENT.get():
         curr_temp = START_TEMPERATURE
@@ -1061,13 +1061,13 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
             COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
             COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
 
         elif TEMPERATURE_EXPERIMENT.get() and not TIME_EXPERIMENT.get():
             CONTROL_PANEL.hide(TEMPERATURE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
-            SET_GRAPH_IN_TAB(GRAPH_TAB)
+            SET_GRAPH_IN_TAB(right_frame)
 
         elif TEMPERATURE_EXPERIMENT.get() and TIME_EXPERIMENT.get():
             FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
@@ -1262,11 +1262,11 @@ if __name__=="__main__":
     paragraph.pack()
 
     # Load images
-    image_files = ["./loading_1.jpg",
-                "./loading_2.jpg",
-                "./loading_3.jpg",
-                "./loading_4.jpg"]
-    photos = [ImageTk.PhotoImage(Image.open(file).resize((300, 300))) for file in image_files]
+    image_files = ["Software-Project\loading_1.png",
+                "Software-Project\loading_2.png",
+                "Software-Project\loading_3.png",
+                "Software-Project\loading_4.png"]
+    photos = [ImageTk.PhotoImage(Image.open(file).resize((150, 150))) for file in image_files]
 
     # Function to cycle through images
     current_photo_index = 0
@@ -1274,7 +1274,7 @@ if __name__=="__main__":
         global current_photo_index
         photo_label.config(image=photos[current_photo_index])
         current_photo_index = (current_photo_index + 1) % len(photos)
-        INTERFACE.after(250, cycle_images)
+        INTERFACE.after(100, cycle_images)
 
     photo_label = tk.Label(left_frame, image=photos[0])
     photo_label.pack(pady=(125,50))
