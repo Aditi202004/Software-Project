@@ -1214,7 +1214,7 @@ if __name__=="__main__":
     INTERFACE.grid_columnconfigure(0, weight=1) 
     INTERFACE.grid_rowconfigure(0, weight=1)
     INTERFACE.grid_columnconfigure(1, weight=0) 
-    
+
     global TO_ABORT
     TO_ABORT = False
 
