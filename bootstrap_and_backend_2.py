@@ -9,7 +9,7 @@
 ####---------------------------------------- IMPORTS ----------------------------------------------####
 
 # Required imports for connecting the device
-import pyvisa, telnetlib
+# import pyvisa, telnetlib
 
 
 # Required imports for plotting the graph
@@ -937,6 +937,9 @@ def CLOSE_WIDGET(widget):
     widget.destroy()
     INTERFACE.update()
 
+def CLOSE_WIDGET_SPECIAL(widget): 
+    widget.destroy()
+    INTERFACE.update()
 
 # Function to open filedialog to select the directory...
 def OPEN_FILEDIALOG(LABEL_OF_OUTPUT_DIRECTORY): 
@@ -1014,11 +1017,12 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
     TEMPERATURE_EXPERIMENT = IntVar()
     Checkbutton(SELECTING_EXP_WIDGET, text = "Resistance vs Temperature", fg = "white", bg = "#575757", highlightthickness = 0, variable = TEMPERATURE_EXPERIMENT, activebackground = "#575757", activeforeground = 'white', selectcolor = "black", font=("Arial", 10)).grid(row = 2, column = 0,  sticky = "w", pady = 10,padx=(60,0))
     
-
+    
     def confirm_settings():
         if TIME_EXPERIMENT.get() and not TEMPERATURE_EXPERIMENT.get():
             CONTROL_PANEL.hide(CURRENT_SOURCE_TAB)
             FRAME_OF_TEMPERATURE_CONTROLS.grid_forget()
+            FRAME_OF_TEMPERATURE_CONTROLS_2.grid(row=7, column=0, rowspan=1, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
             COMPLETE_CYCLE.set(0)  # Uncheck the checkbox
             COMPLETE_CYCLE_CHECKBUTTON.grid_forget()
             SELECTING_EXP_WIDGET.destroy()
@@ -1035,13 +1039,14 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
             SELECTING_EXP_WIDGET.destroy()
             SET_GRAPH_IN_TAB(right_frame)
         else:
+            # FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
             messagebox.showwarning("Alert", "Select options!")
           
     Button(SELECTING_EXP_WIDGET, text="Confirm", font=("Arial", 12, "bold"), bd=2, command=confirm_settings).grid(row=3, column=0, padx=(70,0), pady=20)
     
     # Setup the graph_tab...
     
-    SELECTING_EXP_WIDGET.protocol("WM_DELETE_WINDOW", lambda : CLOSE_WIDGET(SELECTING_EXP_WIDGET))
+    SELECTING_EXP_WIDGET.protocol("WM_DELETE_WINDOW", lambda : None)
     SELECTING_EXP_WIDGET.grab_set()
     SELECTING_EXP_WIDGET.mainloop()
 
@@ -1252,14 +1257,14 @@ if __name__=="__main__":
     progress_and_graph.pack(fill=tk.BOTH, expand=True)
    
     # Title   change the location :)
-    TITLE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Title", fg="white")
-    TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=300, pady=(60, 35))
+    TITLE_LFRAME = LabelFrame(CTC_TAB, text="Title", fg="white")
+    TITLE_LFRAME.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=135, pady=(30,10))
     ENTRY_OF_TITLE = Entry(TITLE_LFRAME, font=(10), width=20)
-    ENTRY_OF_TITLE.pack(pady=(0, 5), padx=10, ipady=5)
+    ENTRY_OF_TITLE.pack( pady=(0,5), ipady=5,ipadx=50)
 
     ## Creating Dropdowns for selecting input and output channels of CTC...
     FRAME_OF_CHANNELS_SELECTION = LabelFrame(CTC_TAB, text = "Input/Output Channel", bg = "#575757", fg = "white")
-    FRAME_OF_CHANNELS_SELECTION.grid(row = 0, column = 0, rowspan = 3, pady = (20, 10), padx = 120, sticky = 'nwes')
+    FRAME_OF_CHANNELS_SELECTION.grid(row = 1, column = 0, rowspan = 3, pady = (20, 10), padx = 120, sticky = 'nwes')
     
     # Input Channel
     LABEL_OF_INPUT_CHANNEL = Label(FRAME_OF_CHANNELS_SELECTION, text = 'Input Channel:', bg = "#575757", fg = 'white')
@@ -1286,7 +1291,7 @@ if __name__=="__main__":
 
     ## Creating entry fields for Power controls of CTC...
     FRAME_OF_POWER_CONTROLS = LabelFrame(CTC_TAB, text = 'Power Controls', fg = 'white', bg = "#575757")
-    FRAME_OF_POWER_CONTROLS.grid(row = 3, column = 0, rowspan = 2, pady = (20, 10), padx = 120, sticky = 'nwes')
+    FRAME_OF_POWER_CONTROLS.grid(row = 4, column = 0, rowspan = 2, pady = (20, 10), padx = 120, sticky = 'nwes')
 
     # Low Power Limit entry
     LABEL_OF_LOW_POWER_LIMIT = Label(FRAME_OF_POWER_CONTROLS, text = 'Low Limit(W) :', bg = "#575757", fg = 'white')
@@ -1314,7 +1319,7 @@ if __name__=="__main__":
 
     ## Creating entry fileds for PID values of CTC...
     FRAME_OF_PID = LabelFrame(CTC_TAB, text = "PID", fg = "white", bg = "#575757")
-    FRAME_OF_PID.grid(row = 5, column = 0, sticky = "nesw", padx = 120, pady = (20,10))
+    FRAME_OF_PID.grid(row = 6, column = 0, sticky = "nesw", padx = 120, pady = (20,10))
 
     # P value of CTC entry
     LABEL_OF_P_VALUE_OF_CTC = Label(FRAME_OF_PID, text = "P :", fg = "white", bg = "#575757")
@@ -1338,21 +1343,22 @@ if __name__=="__main__":
 
     ## Creating entry fileds for Temperature controls of CTC...
     FRAME_OF_TEMPERATURE_CONTROLS = LabelFrame(CTC_TAB, text = 'Temperature Controls', fg = 'white', bg="#575757")
-    FRAME_OF_TEMPERATURE_CONTROLS.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+    FRAME_OF_TEMPERATURE_CONTROLS.grid(row=7, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
     FRAME_OF_TEMPERATURE_CONTROLS_2 = LabelFrame(CTC_TAB, text = 'Temperature Controls', fg = 'white', bg="#575757")
-    FRAME_OF_TEMPERATURE_CONTROLS_2.grid(row=6, column=0, rowspan=2, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+    FRAME_OF_TEMPERATURE_CONTROLS_2.grid(row=7, column=0, rowspan=1, pady=(20, 10), padx=60, sticky='nwes', ipadx = 10)
+    FRAME_OF_TEMPERATURE_CONTROLS_2.grid_forget()
 
     # Threshold entry
     LABEL_OF_THRESHOLD_2 = Label(FRAME_OF_TEMPERATURE_CONTROLS_2, text = 'Threshold :', bg = "#575757", fg = 'white')
-    LABEL_OF_THRESHOLD_2.grid(row = 1, column = 0, padx = 30, pady = 5, sticky = 'ew')
+    LABEL_OF_THRESHOLD_2.grid(row = 1, column = 0, padx = 80, pady = 5)
     ENTRY_OF_THRESHOLD_2 = Entry(FRAME_OF_TEMPERATURE_CONTROLS_2, font = (10), width = 7)
-    ENTRY_OF_THRESHOLD_2.grid(row = 1, column = 1, pady = 10, ipady = 3, sticky = "ew")
+    ENTRY_OF_THRESHOLD_2.grid(row = 1, column = 1, pady = 10, ipady = 3,padx=10,ipadx=5)
 
     # Tolerance entry
     LABEL_OF_TOLERANCE_2 = Label(FRAME_OF_TEMPERATURE_CONTROLS_2, text = 'Tolerance :', bg = "#575757", fg = 'white')
-    LABEL_OF_TOLERANCE_2.grid(row = 1, column = 2, padx = 30, pady = 5, sticky = 'ew')
+    LABEL_OF_TOLERANCE_2.grid(row = 1, column = 2, padx = 90, pady = 5)
     ENTRY_OF_TOLERANCE_2 = Entry(FRAME_OF_TEMPERATURE_CONTROLS_2, font = (10), width = 7)
-    ENTRY_OF_TOLERANCE_2.grid(row = 1, column = 3, pady = 10, ipady = 3, sticky = "ew")
+    ENTRY_OF_TOLERANCE_2.grid(row = 1, column = 3, pady = 10, ipady = 3,padx=10,ipadx=5)
 
     # Start Temperature entry
     LABEL_OF_START_TEMPERATURE = Label(FRAME_OF_TEMPERATURE_CONTROLS, text = 'Start Temperature(K) :', bg = "#575757", fg = 'white')
@@ -1393,12 +1399,12 @@ if __name__=="__main__":
     # Complete Cycle entry
     COMPLETE_CYCLE = IntVar()
     COMPLETE_CYCLE_CHECKBUTTON=tb.Checkbutton(CTC_TAB, text = "Complete Cycle",  variable = COMPLETE_CYCLE, bootstyle="primary-round-toggle")
-    COMPLETE_CYCLE_CHECKBUTTON.grid(row = 8, column = 0, pady = (20,10),padx=50)
+    COMPLETE_CYCLE_CHECKBUTTON.grid(row = 9, column = 0, pady = (20,10),padx=50)
 
  
     # Drive
     DRIVE_LFRAME = LabelFrame(CURRENT_SOURCE_TAB, text="Current Controls", fg="white")
-    DRIVE_LFRAME.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=300, pady=30)
+    DRIVE_LFRAME.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=300, pady=90)
 
     CURRENT_START_LFRAME = LabelFrame(DRIVE_LFRAME, text="Current Start Value (A)", fg="white")
     CURRENT_START_LFRAME.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
