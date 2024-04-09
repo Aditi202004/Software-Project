@@ -9,7 +9,7 @@
 ####---------------------------------------- IMPORTS ----------------------------------------------####
 
 # Required imports for connecting the device
-# import pyvisa, telnetlib
+import pyvisa, telnetlib
 
 
 # Required imports for plotting the graph
