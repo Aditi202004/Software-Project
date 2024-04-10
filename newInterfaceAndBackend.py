@@ -333,7 +333,9 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     global HIGH_POWER_LIMIT_OF_CTC
 
     print("*************************************************************************")
-    print("===> Achieving", required_temperature, "K...")
+    HEADING.configure(text="Achieving"+str(required_temperature)+"K...")
+    PARAGRAPH.configure(text="")
+    print("===> Achieving", str(required_temperature), "K...")
 
 
     SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature))
@@ -353,10 +355,13 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
         if lower_bound <= present_temperature <= upper_bound :
+            HEADING.configure(text=str(required_temperature)+"K is achieved...")
+            PARAGRAPH.configure(text="Now stabilizing...")
             print(required_temperature, "K is achieved but not stabilized...")
             break
 
         else:
+            PARAGRAPH.configure(text="Current temperature is "+str(present_temperature)+"K...")
             print("Current Temperature is", present_temperature, "... Waiting to achieve required temperature ", required_temperature, "K...")
             if abs(present_temperature - temperature_before_stabilizing) < 0.03*time_elapsed:
                 retry_number += 1
@@ -371,6 +376,8 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
                     HIGH_POWER_LIMIT_OF_CTC += INCREASE_POWER_LIMIT_OF_CTC
                     SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
 
+                    HEADING.configure(text=str(required_temperature)+" K is not achieving...")
+                    PARAGRAPH.configure(text="Increasing high power limit of CTC...")
                     print(required_temperature," K is not achieving by current high power limit of CTC...")
                     print("So, Increased high power limit of CTC by "+str(INCREASE_POWER_LIMIT_OF_CTC)," W...")
                     print("New High power limit of CTC is ", HIGH_POWER_LIMIT_OF_CTC,"...")
@@ -386,7 +393,9 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
 
     print("______________________________________________________________________")
+    HEADING.configure(text="Stabilizing at "+str(required_temperature)+"K...")
     print("===> Stabilizing at", required_temperature, "K...")
+    PARAGRAPH.configure(text="")
 
     while not TO_ABORT:
 
@@ -398,6 +407,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
             present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC()
 
+            PARAGRAPH.configure(text="Current temperature is "+str(present_temperature)+"K...")
             print("Current temperature =", present_temperature, " K")
 
             if present_temperature > maximum_temperature: maximum_temperature = present_temperature
@@ -410,10 +420,14 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
         if TO_ABORT: return
 
         if maximum_temperature - minimum_temperature < TOLERANCE:
+            HEADING.configure(text=str(required_temperature)+" K is achieved and stabilized...")
+            PARAGRAPH.configure(text="")
             print(required_temperature, " K is achieved and stabilized...")
             break
 
         else:
+            HEADING.configure(text="Tempetaure is not stabilized...")
+            PARAGRAPH.configure(text="Retrying...")
             print("Temperature is not stabilized yet... Retrying...")
 
 def GET_RESISTANCES():
@@ -431,9 +445,11 @@ def GET_PRESENT_RESISTANCE():
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
     SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM")
 
+    NUMBER_OF_CURRENT_INTERVALS = (STOP_CURRENT-START_CURRENT)/INCREASING_INTERVAL_OF_CURRENT
     for i in range(int(NUMBER_OF_CURRENT_INTERVALS + 0.5)):
         if TO_ABORT:
             return -1
+        PARAGRAPH.configure(text=str(int(NUMBER_OF_CURRENT_INTERVALS+0.5-i))+" sec remaining..")
         time.sleep(1)
 
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
@@ -455,6 +471,7 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
             break
         present_time += 5
         time.sleep(5)
+        PARAGRAPH.configure(text=str(present_time)+"sec Completed...")
         resistance_readings, time_stamps = GET_RESISTANCES()
 
         WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
@@ -482,19 +499,31 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
         if TO_ABORT : break
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
+        HEADING.configure(text="Delaying for"+str(DELAY_OF_CTC)+" seconds...")
+        PARAGRAPH.configure(text="")
         for i in range(int(DELAY_OF_CTC)):
             if TO_ABORT: break  
+            PARAGRAPH.configure(text=str(DELAY_OF_CTC-i)+"s remaining...")
             time.sleep(1) 
 
         if TEMPERATURE_EXPERIMENT.get():
+            HEADING.configure(text="Getting present resistance of sample...")
+            PARAGRAPH.configure(text="Waiting...")
             present_resistance = GET_PRESENT_RESISTANCE()
+            HEADING.configure(text="Resistance of the sample is")
+            PARAGRAPH.configure(text=str(present_resistance)+"Ohms...")
             print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
             WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
             ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
+            HEADING.configure(text="Points are added to")
+            PARAGRAPH.configure(text="graph and CSV...")
 
         if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
+            HEADING.configure(text="Getting resistances vs Time...")
             GET_RESISTANCES_WITH_TIME_AT(present_temperature)
+            HEADING.configure(text="Completed!!")
+            PARAGRAPH.configure(text="at current Temperature")
     
 
     SEND_COMMAND_TO_CTC("outputEnable off")
@@ -745,6 +774,8 @@ def START_EXPERIMENT():
     
     if not TO_ABORT:
         SAVE_THE_GRAPH_INTO(DIRECTORY)
+        HEADING.configure("Experiment Completed!!!")
+        PARAGRAPH.configure("Graphs and CSVs are saved!!!")
         print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
 
 def TRIGGER():
@@ -756,7 +787,8 @@ def TRIGGER():
             os.makedirs(DIRECTORY)
             print(DIRECTORY)
             CONTROL_PANEL.set("Graph\nSetup")
-
+            PROGRESS_OPEN_BUTTON.place(relx=1, rely=0.22, anchor="ne")
+            HEADING.configure(text="Checking Devices...")
             print("Checking Devices....")
             Thread(target = START_EXPERIMENT).start()
 
@@ -767,8 +799,10 @@ def ABORT_TRIGGER():
     is_armed = int(SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?"))
     if is_armed:
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
-
+    HEADING.configure(text="ABORTED!!!!")
+    PARAGRAPH.configure(text="")
     TRIGGER_BUTTON.configure(text= "Trigger", command=TRIGGER)
+    PROGRESS_OPEN_BUTTON.place_forget()
     INTERFACE.update()
 
 def CONFIRM_TO_QUIT(): 
@@ -963,7 +997,9 @@ if __name__=="__main__":
     INTERFACE.title("Resistance Plotter")
     INTERFACE.columnconfigure(0, weight=6, uniform='a')
     INTERFACE.columnconfigure(1, weight=1, uniform='a')
-    INTERFACE.rowconfigure((0,1), weight=1, uniform='a')
+    INTERFACE.rowconfigure(0, weight=1, uniform='a')
+    INTERFACE.rowconfigure(1, weight=9, uniform='a')
+
     INTERFACE.attributes('-alpha', 0)
 
     MODE_IMAGE = ctk.CTkImage(light_image=Image.open('Software-Project\lightmode.png').resize((35,35)), dark_image=Image.open('Software-Project\darkmode.png').resize((35,35)))
@@ -974,13 +1010,44 @@ if __name__=="__main__":
         if mode: ctk.set_appearance_mode("dark")
         else: ctk.set_appearance_mode("light")
         mode = mode ^ 1
-    MODE_BUTTON = ctk.CTkButton(INTERFACE, text="", height=35, width=35, corner_radius=30, image=MODE_IMAGE, command=CHANGE_MODE)
-    MODE_BUTTON.place(relx=0.89, rely=0.05)
+        PROGRESS_FRAME.tkraise()
+        print(PROGRESS_FRAME.winfo_x())
 
-    SIDE_BAR = ctk.CTkFrame(INTERFACE, width=75)
+
+    MODE_BUTTON = ctk.CTkButton(INTERFACE, text="", height=35, width=35, corner_radius=30, image=MODE_IMAGE, command=CHANGE_MODE)
+    MODE_BUTTON.place(relx=0.875, rely=0.05)
+
+    SIDE_BAR = ctk.CTkFrame(INTERFACE, width=75, fg_color="transparent")
     SIDE_BAR.grid(row=1, column=1, padx=(5,20), pady=10, sticky="nsew")
-    SIDE_BAR.rowconfigure((0,1,2,3,4), weight=1, uniform='a')
-    SIDE_BAR.columnconfigure(0, weight=1)
+    SIDE_BAR.rowconfigure((0,1,2,3,4,5,6,7,8), weight=1, uniform='a')
+    SIDE_BAR.columnconfigure(0, weight=1, uniform='a')
+
+    
+
+    PROGRESS_FRAME = ctk.CTkFrame(INTERFACE, height=165, width=600)
+    PROGRESS_FRAME.place(relx=1, rely=0.22)
+    
+    PROGRESS_FRAME.rowconfigure((0,1,2), weight=1)
+    PROGRESS_FRAME.columnconfigure(0, weight=1)
+
+    def SHOW_PROGRESS_BAR():
+        PROGRESS_FRAME.place(relx=1, rely=0.22, anchor="ne")
+        PROGRESS_FRAME.tkraise()
+    PROGRESS_OPEN_BUTTON = ctk.CTkButton(INTERFACE, text="< ",height=126, width=0, command=SHOW_PROGRESS_BAR, corner_radius=0)
+    
+
+    def CLOSE_PROGRESS_BAR():
+        PROGRESS_FRAME.place(relx=0, rely=0.22)
+    PROGRESS_CLOSE_BUTTON = ctk.CTkButton(PROGRESS_FRAME, text="> ", width=0, command=CLOSE_PROGRESS_BAR, corner_radius=0)
+    PROGRESS_CLOSE_BUTTON.grid(row=0, column=0, rowspan=3, padx=(0,20), sticky="ns")
+
+    PROGRESS_LABEL = ctk.CTkLabel(PROGRESS_FRAME, text="------------Progress------------", font=("Times",20))
+    HEADING = ctk.CTkLabel(PROGRESS_FRAME, text="", font=("Times", 15))
+    PARAGRAPH = ctk.CTkLabel(PROGRESS_FRAME, text="", width=100, font=("Times", 15))
+    PROGRESS_LABEL.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
+    HEADING.grid(row=1, column=1, padx=20, pady=5, sticky="nsew")
+    PARAGRAPH.grid(row=2, column=1, padx=20, pady=5, sticky="nsew")
+
 
     TRIGGER_BUTTON = ctk.CTkButton(SIDE_BAR, text="Trigger", width=0, command=TRIGGER)
     SYNC_GET_BUTTON = ctk.CTkButton(SIDE_BAR, text="Sync\nGet", width=0, command=SYNC_GET)
@@ -988,11 +1055,11 @@ if __name__=="__main__":
     INFO_BUTTON = ctk.CTkButton(SIDE_BAR, text="Info", width=0, command=SHOW_INFO_OF_DEVICES)
     SETTINGS_BUTTON = ctk.CTkButton(SIDE_BAR, text="Settings", width=0, command=OPEN_SETTINGS_WIDGET)
 
-    TRIGGER_BUTTON.grid(row=0, column=0, sticky="nsew",pady=2.5)
-    SYNC_GET_BUTTON.grid(row=1, column=0, sticky="nsew",pady=2.5)
-    SYNC_SET_BUTTON.grid(row=2, column=0, sticky="nsew",pady=2.5)
-    INFO_BUTTON.grid(row=3, column=0, sticky="nsew",pady=2.5)
-    SETTINGS_BUTTON.grid(row=4, column=0, sticky="nsew",pady=2.5)
+    TRIGGER_BUTTON.grid(row=4, column=0, sticky="nsew",pady=2.5)
+    SYNC_GET_BUTTON.grid(row=5, column=0, sticky="nsew",pady=2.5)
+    SYNC_SET_BUTTON.grid(row=6, column=0, sticky="nsew",pady=2.5)
+    INFO_BUTTON.grid(row=7, column=0, sticky="nsew",pady=2.5)
+    SETTINGS_BUTTON.grid(row=8, column=0, sticky="nsew",pady=2.5)
 
     
     CONTROL_PANEL = ctk.CTkTabview(INTERFACE)
@@ -1201,17 +1268,8 @@ if __name__=="__main__":
 
     SYNC_SETTINGS()
 
-    # ### other ###
-    # INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
-    # INTERFACE.wait_visibility()
-    # INTERFACE.update()
+    INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     
-    # root_width=INTERFACE.winfo_width()
-    # root_height=INTERFACE.winfo_height()
-    # INTERFACE.geometry(CENTER_THE_WIDGET(root_width,root_height))
-    # INTERFACE.minsize(root_width,root_height)
-    
-    # DISPLAY_REQUIREMENTS()
     DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
 
     INTERFACE.mainloop()
