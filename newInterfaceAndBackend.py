@@ -959,6 +959,7 @@ if __name__=="__main__":
 
     INTERFACE = ctk.CTk()
     INTERFACE.geometry("700x600")
+    INTERFACE.minsize(650,450)
     INTERFACE.title("Resistance Plotter")
     INTERFACE.columnconfigure(0, weight=6, uniform='a')
     INTERFACE.columnconfigure(1, weight=1, uniform='a')
