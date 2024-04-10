@@ -1,9 +1,33 @@
-import customtkinter as ctk
+import matplotlib.pyplot as plt
+import numpy as np
 
-app = ctk.CTk()
+plt.style.use('dark_background')
 
-checkbox1 = ctk.CTkCheckBox(app, text="CB1")
-checkbox1.pack()
-checkbox2 = ctk.CTkCheckBox(app, text="CB2")
-checkbox2.pack()
-app.mainloop()
+fig, ax = plt.subplots()
+
+L = 6
+x = np.linspace(0, L)
+ncolors = len(plt.rcParams['axes.prop_cycle'])
+shift = np.linspace(0, L, ncolors, endpoint=False)
+for s in shift:
+    ax.plot(x, np.sin(x + s), 'o-')
+ax.set_xlabel('x-axis')
+ax.set_ylabel('y-axis')
+ax.set_title("'dark_background' style sheet")
+
+plt.show()
+
+plt.style.use('default')
+fig, ax = plt.subplots()
+
+L = 6
+x = np.linspace(0, L)
+ncolors = len(plt.rcParams['axes.prop_cycle'])
+shift = np.linspace(0, L, ncolors, endpoint=False)
+for s in shift:
+    ax.plot(x, np.sin(x + s), 'o-')
+ax.set_xlabel('x-axis')
+ax.set_ylabel('y-axis')
+ax.set_title("'dark_background' style sheet")
+
+plt.show()
