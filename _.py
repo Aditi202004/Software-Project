@@ -21,7 +21,7 @@ import os
 from os.path import exists
 
 ARRAY_OF_PLOTTING_LINES = [] 
-DATA = {"ResVsTemp": [[], []]}
+DATA = {"ResVsTemp": ([], [])}
 
 def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
     x, y = ARRAY_OF_PLOTTING_LINES.get_data()
@@ -69,14 +69,14 @@ def KEY_PRESS_HANDLER(event, canvas, toolbar):
     key_press_handler(event, canvas, toolbar)
 
 def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
-    global CANVAS_OF_GRAPH,DATA1
+    global CANVAS_OF_GRAPH,DATA
 
     if temp:
-        DATA[str(temp)][0].append(NEW_X_COORDINATES)
-        DATA[str(temp)][1].append(NEW_Y_COORDINATES)
+        DATA[str(temp)][0].extend(NEW_X_COORDINATES)
+        DATA[str(temp)][1].extend(NEW_Y_COORDINATES)
     else:
-        DATA["ResVsTemp"][0].append(NEW_X_COORDINATES)
-        DATA["ResVsTemp"][1].append(NEW_Y_COORDINATES)
+        DATA["ResVsTemp"][0].extend(NEW_X_COORDINATES)
+        DATA["ResVsTemp"][1].extend(NEW_Y_COORDINATES)
 
 
     if temp:
@@ -106,6 +106,7 @@ def SAVE_THE_GRAPH_INTO(directory):
         CANVAS_OF_GRAPH.draw_idle()
         IMAGE_FILE_NAME = "Plot at "+str(key)+ " K.png"
         GRAPH_IMAGE_PATH = os.path.join(directory, IMAGE_FILE_NAME)
+        time.sleep(1)
         CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
 
 def UPDATE_GRAPH(*args):
@@ -191,7 +192,7 @@ def UPDATE_TEMPERATURE_COMBOBOX():
 
     CHOOSE_TEMPERATURE_COMBOBOX.configure(values = numeric_values)
     CHOOSE_TEMPERATURE_COMBOBOX.configure(state="normal")
-    for key in numeric_values: DATA[str(key)] = [[], []]
+    for key in numeric_values: DATA[str(key)] = ([], [])
 
 def CONNECT_INSTRUMENTS(): 
     global CURRENT_SOURCE, CTC
@@ -336,7 +337,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     global HIGH_POWER_LIMIT_OF_CTC
 
     print("*************************************************************************")
-    HEADING.configure(text="Achieving"+str(required_temperature)+"K...")
+    HEADING.configure(text="Achieving "+str(required_temperature)+"K...")
     PARAGRAPH.configure(text="")
     print("===> Achieving", str(required_temperature), "K...")
 
@@ -353,7 +354,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
     while not TO_ABORT:
 
-        time.sleep(1)
+        time.sleep(3)
         time_elapsed+=3
         present_temperature = GET_PRESENT_TEMPERATURE_OF_CTC(required_temperature)
 
@@ -416,7 +417,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
             if present_temperature > maximum_temperature: maximum_temperature = present_temperature
             if present_temperature < minimum_temperature: minimum_temperature = present_temperature
             
-            time.sleep(1)
+            time.sleep(2)
 
             retry_number += 1
 
@@ -440,11 +441,9 @@ def GET_RESISTANCES():
     y = []
     for i in range(5):
         random_number = random.uniform(0, 2)
-        print("x ",random_number)
         x.append(random_number)
     for i in range(5):
         random_number = random.uniform(0, 2)
-        print("y ",random_number)
         y.append(random_number)
     resistance_readings = np.array(x, dtype=float)
     time_stamps = np.array(y, dtype=float)
@@ -471,33 +470,37 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF")
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
     SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM"))
-    time.sleep(1)
+    time.sleep(1.5)
 
     present_time = 0
     index_of_last_update = 0
 
     present_csvfile = "Resistance_vs_Time_at_" + str(temperature) + ".csv"
-    while present_time <= MEASURING_TIME:
+    WRITE_DATA_TO(present_csvfile, "Time(s)", "Resistance(Ohm)", 1)
+    while present_time < MEASURING_TIME:
         if TO_ABORT:
             break
         present_time += 5
-        time.sleep(1)
-        PARAGRAPH.configure(text=str(present_time)+"sec Completed...")
+        time.sleep(5)
+        PARAGRAPH.configure(text=str(present_time)+" sec Completed...")
         resistance_readings, time_stamps = GET_RESISTANCES()
 
-        WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
-        ADD_POINT_TO_GRAPH(time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:], str(temperature))
-        index_of_last_update = len(resistance_readings)
+        WRITE_DATA_TO(present_csvfile, time_stamps, resistance_readings)
+        ADD_POINT_TO_GRAPH(time_stamps, resistance_readings, str(temperature))
+        # index_of_last_update = len(resistance_readings)
 
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
 
-def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances):
+def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances, heading=0):
     filepath = os.path.join(DIRECTORY, filename)
-    
+
     with open(filepath, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        for TemperatureOrTime, resistance in zip(TemperatureOrTimes, resistances):
-            writer.writerow([TemperatureOrTime, resistance])
+        if heading:
+            writer.writerow([TemperatureOrTimes, resistances])
+        else:
+            for TemperatureOrTime, resistance in zip(TemperatureOrTimes, resistances):
+                writer.writerow([TemperatureOrTime, resistance])
 
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 
@@ -505,37 +508,37 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100")
 
     filename = "Resistance_vs_Temperature.csv" 
-
+    WRITE_DATA_TO(filename, "Temperature(K)", "Resistance(Ohm)", 1)
     for present_temperature in ARRAY_OF_ALL_TEMPERATURES[::direction]:
         if TO_ABORT : break
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
-        HEADING.configure(text="Delaying for"+str(DELAY_OF_CTC)+" seconds...")
+        HEADING.configure(text="Delaying for "+str(DELAY_OF_CTC)+" seconds...")
         PARAGRAPH.configure(text="")
         for i in range(int(DELAY_OF_CTC)):
             if TO_ABORT: break  
             PARAGRAPH.configure(text=str(DELAY_OF_CTC-i)+"s remaining...")
             time.sleep(1) 
 
+        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
+            HEADING.configure(text="Getting resistances vs Time...")
+            PARAGRAPH.configure(text="")
+            GET_RESISTANCES_WITH_TIME_AT(present_temperature)
+            HEADING.configure(text="Completed!!")
+            PARAGRAPH.configure(text="at current Temperature")
+
         if TEMPERATURE_EXPERIMENT.get():
             HEADING.configure(text="Getting present resistance of sample...")
             PARAGRAPH.configure(text="Waiting...")
             present_resistance = GET_PRESENT_RESISTANCE()
             HEADING.configure(text="Resistance of the sample is")
-            PARAGRAPH.configure(text=str(present_resistance)+"Ohms...")
+            PARAGRAPH.configure(text=str(present_resistance)+" Ohms...")
             print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
-            WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
-            ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
             HEADING.configure(text="Points are added to")
             PARAGRAPH.configure(text="graph and CSV...")
-
-        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
-            HEADING.configure(text="Getting resistances vs Time...")
-            GET_RESISTANCES_WITH_TIME_AT(present_temperature)
-            HEADING.configure(text="Completed!!")
-            PARAGRAPH.configure(text="at current Temperature")
-    
+            WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
+            ADD_POINT_TO_GRAPH([present_temperature], [present_resistance])
 
     SEND_COMMAND_TO_CTC("outputEnable off")
 
@@ -626,6 +629,9 @@ def CHECK_AND_SET_ALL_VALUES():
     #         messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
     #         return False
     
+    # else:
+    #     DELAY_OF_CTC = 0
+
     # try:
     #     THRESHOLD = float(ENTRY_OF_THRESHOLD.get())
     # except:
@@ -730,14 +736,15 @@ def CHECK_AND_SET_ALL_VALUES():
     INCREASING_INTERVAL_OF_TEMPERATURE = 5
     THRESHOLD = 1
     TOLERANCE = 1
-    DELAY_OF_CTC = 1
-    MEASURING_TIME = 1
+    DELAY_OF_CTC = 10
+    MEASURING_TIME = 5
+    # START_CURRENT = 1
+    # STOP_CURRENT = 2
+    # INCREASING_INTERVAL_OF_CURRENT = 1
 
     return True
 
 def MERGE_BOTH_TEMPERATURE_ARRAYS(arr1, arr2):
-    print(arr1)
-    print(arr2)
     final_arr = []
     n = len(arr1)
     m = len(arr2)
@@ -807,7 +814,6 @@ def TRIGGER():
         if CHECK_AND_SET_ALL_VALUES():
             DIRECTORY = os.path.join(SETTINGS["Directory"], TITLE)
             os.makedirs(DIRECTORY)
-            print(DIRECTORY)
             CONTROL_PANEL.set("Graph\nSetup")
             PROGRESS_OPEN_BUTTON.place(relx=1, rely=0.22, anchor="ne")
             HEADING.configure(text="Checking Devices...")
@@ -1013,6 +1019,7 @@ if __name__=="__main__":
     global INTERFACE, TO_ABORT
     TO_ABORT = False
     ctk.set_appearance_mode("light")
+
     INTERFACE = ctk.CTk()
     INTERFACE.geometry("700x600")
     INTERFACE.minsize(650,450)
@@ -1032,8 +1039,6 @@ if __name__=="__main__":
         if mode: ctk.set_appearance_mode("dark")
         else: ctk.set_appearance_mode("light")
         mode = mode ^ 1
-        PROGRESS_FRAME.tkraise()
-        print(PROGRESS_FRAME.winfo_x())
 
 
     MODE_BUTTON = ctk.CTkButton(INTERFACE, text="", height=35, width=35, corner_radius=30, image=MODE_IMAGE, command=CHANGE_MODE)

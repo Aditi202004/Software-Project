@@ -21,7 +21,7 @@ import os
 from os.path import exists
 
 ARRAY_OF_PLOTTING_LINES = [] 
-DATA = {"ResVsTemp": [[], []]}
+DATA = {"ResVsTemp": ([], [])}
 
 def UPDATE_ANNOTATION(ind, ARRAY_OF_PLOTTING_LINES, annotations):
     x, y = ARRAY_OF_PLOTTING_LINES.get_data()
@@ -69,14 +69,14 @@ def KEY_PRESS_HANDLER(event, canvas, toolbar):
     key_press_handler(event, canvas, toolbar)
 
 def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
-    global CANVAS_OF_GRAPH,DATA1
+    global CANVAS_OF_GRAPH,DATA
 
     if temp:
-        DATA[str(temp)][0].append(NEW_X_COORDINATES)
-        DATA[str(temp)][1].append(NEW_Y_COORDINATES)
+        DATA[str(temp)][0].extend(NEW_X_COORDINATES)
+        DATA[str(temp)][1].extend(NEW_Y_COORDINATES)
     else:
-        DATA["ResVsTemp"][0].append(NEW_X_COORDINATES)
-        DATA["ResVsTemp"][1].append(NEW_Y_COORDINATES)
+        DATA["ResVsTemp"][0].extend(NEW_X_COORDINATES)
+        DATA["ResVsTemp"][1].extend(NEW_Y_COORDINATES)
 
 
     if temp:
@@ -106,6 +106,7 @@ def SAVE_THE_GRAPH_INTO(directory):
         CANVAS_OF_GRAPH.draw_idle()
         IMAGE_FILE_NAME = "Plot at "+str(key)+ " K.png"
         GRAPH_IMAGE_PATH = os.path.join(directory, IMAGE_FILE_NAME)
+        time.sleep(1)
         CANVAS_OF_GRAPH.figure.savefig(GRAPH_IMAGE_PATH)
 
 def UPDATE_GRAPH(*args):
@@ -191,7 +192,7 @@ def UPDATE_TEMPERATURE_COMBOBOX():
 
     CHOOSE_TEMPERATURE_COMBOBOX.configure(values = numeric_values)
     CHOOSE_TEMPERATURE_COMBOBOX.configure(state="normal")
-    for key in numeric_values: DATA[str(key)] = [[], []]
+    for key in numeric_values: DATA[str(key)] = ([], [])
 
 def CONNECT_INSTRUMENTS(): 
     global CURRENT_SOURCE, CTC
@@ -333,7 +334,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
     global HIGH_POWER_LIMIT_OF_CTC
 
     print("*************************************************************************")
-    HEADING.configure(text="Achieving"+str(required_temperature)+"K...")
+    HEADING.configure(text="Achieving "+str(required_temperature)+"K...")
     PARAGRAPH.configure(text="")
     print("===> Achieving", str(required_temperature), "K...")
 
@@ -466,12 +467,13 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
     index_of_last_update = 0
 
     present_csvfile = "Resistance_vs_Time_at_" + str(temperature) + ".csv"
-    while present_time <= MEASURING_TIME:
+    WRITE_DATA_TO(present_csvfile, "Time(s)", "Resistance(Ohm)", 1)
+    while present_time < MEASURING_TIME:
         if TO_ABORT:
             break
         present_time += 5
         time.sleep(5)
-        PARAGRAPH.configure(text=str(present_time)+"sec Completed...")
+        PARAGRAPH.configure(text=str(present_time)+" sec Completed...")
         resistance_readings, time_stamps = GET_RESISTANCES()
 
         WRITE_DATA_TO(present_csvfile, time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:])
@@ -480,13 +482,16 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
 
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
 
-def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances):
+def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances, heading=0):
     filepath = os.path.join(DIRECTORY, filename)
     
     with open(filepath, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        for TemperatureOrTime, resistance in zip(TemperatureOrTimes, resistances):
-            writer.writerow([TemperatureOrTime, resistance])
+        if heading:
+            writer.writerow([TemperatureOrTimes, resistances])
+        else:
+            for TemperatureOrTime, resistance in zip(TemperatureOrTimes, resistances):
+                writer.writerow([TemperatureOrTime, resistance])
 
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
 
@@ -494,37 +499,37 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100")
 
     filename = "Resistance_vs_Temperature.csv" 
-
+    WRITE_DATA_TO(filename, "Temperature(K)", "Resistance(Ohm)", 1)
     for present_temperature in ARRAY_OF_ALL_TEMPERATURES[::direction]:
         if TO_ABORT : break
         ACHIEVE_AND_STABILIZE_TEMPERATURE(present_temperature) 
 
-        HEADING.configure(text="Delaying for"+str(DELAY_OF_CTC)+" seconds...")
+        HEADING.configure(text="Delaying for "+str(DELAY_OF_CTC)+" seconds...")
         PARAGRAPH.configure(text="")
         for i in range(int(DELAY_OF_CTC)):
             if TO_ABORT: break  
             PARAGRAPH.configure(text=str(DELAY_OF_CTC-i)+"s remaining...")
             time.sleep(1) 
 
+        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
+            HEADING.configure(text="Getting resistances vs Time...")
+            PARAGRAPH.configure(text="")
+            GET_RESISTANCES_WITH_TIME_AT(present_temperature)
+            HEADING.configure(text="Completed!!")
+            PARAGRAPH.configure(text="at current Temperature")
+
         if TEMPERATURE_EXPERIMENT.get():
             HEADING.configure(text="Getting present resistance of sample...")
             PARAGRAPH.configure(text="Waiting...")
             present_resistance = GET_PRESENT_RESISTANCE()
             HEADING.configure(text="Resistance of the sample is")
-            PARAGRAPH.configure(text=str(present_resistance)+"Ohms...")
+            PARAGRAPH.configure(text=str(present_resistance)+" Ohms...")
             print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
-            WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
-            ADD_POINT_TO_GRAPH(present_temperature, present_resistance)
             HEADING.configure(text="Points are added to")
             PARAGRAPH.configure(text="graph and CSV...")
-
-        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
-            HEADING.configure(text="Getting resistances vs Time...")
-            GET_RESISTANCES_WITH_TIME_AT(present_temperature)
-            HEADING.configure(text="Completed!!")
-            PARAGRAPH.configure(text="at current Temperature")
-    
+            WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
+            ADD_POINT_TO_GRAPH([present_temperature], [present_resistance])
 
     SEND_COMMAND_TO_CTC("outputEnable off")
 
@@ -597,20 +602,27 @@ def CHECK_AND_SET_ALL_VALUES():
             messagebox.showwarning("Alert","Invalid Input for Start Temp!")
             return False
     
-    if TEMPERATURE_EXPERIMENT.get():
         try:
             END_TEMPERATURE = float(ENTRY_OF_STOP_TEMPERATURE.get())
         except:
             messagebox.showwarning("Alert","Invalid Input for Stop Temp!")
             return False
     
-    if TEMPERATURE_EXPERIMENT.get():
         try:
             INCREASING_INTERVAL_OF_TEMPERATURE = float(ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE.get())
         except:
             messagebox.showwarning("Alert","Invalid Input for Interval Temp!")
             return False
     
+        try:
+            DELAY_OF_CTC = float(ENTRY_OF_DELAY_OF_CTC.get())
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
+            return False
+    
+    else:
+        DELAY_OF_CTC = 0
+
     try:
         THRESHOLD = float(ENTRY_OF_THRESHOLD.get())
     except:
@@ -623,83 +635,79 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showwarning("Alert","Invalid Input for Tolerance!")
         return False
     
+    
     if TEMPERATURE_EXPERIMENT.get():
+
         try:
-            DELAY_OF_CTC = float(ENTRY_OF_DELAY_OF_CTC.get())
+            START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
+            if START_CURRENT >= 1:
+                messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+                return False
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
+            return False
+        
+        try:
+            STOP_CURRENT = float(ENTRY_OF_STOP_CURRENT.get())
+            if not STOP_CURRENT < 1:
+                messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+                return False
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
+            return False
+
+        
+        try:
+            INCREASING_INTERVAL_OF_CURRENT = float(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.get())
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Increase Current Interval at a Temperature!")
+            return False
+
+        try:
+            DELAY_OF_CURRENT_SOURCE = float(ENTRY_OF_DELAY_OF_CURRENT_SOURCE.get())
         except:
             messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
             return False
 
+    if TIME_EXPERIMENT.get():
 
-
-    try:
-        START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
-        if START_CURRENT >= 1:
-            messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+        try:
+            HIGH_PULSE = float(ENTRY_OF_HIGH_PULSE.get())
+            if abs(HIGH_PULSE) > 105e-3:
+                messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
+                return False
+        except:
+            messagebox.showwarning("Alert","Invalid Input for High Pulse Value!")
             return False
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
-        return False
-    
-    try:
-        STOP_CURRENT = float(ENTRY_OF_STOP_CURRENT.get())
-        if not STOP_CURRENT < 1:
-            messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+        
+        try:
+            LOW_PULSE = float(ENTRY_OF_LOW_PULSE.get())
+            if abs(LOW_PULSE) > 105e-3:
+                messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
+                return False
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Low Pulse Value!")
             return False
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
-        return False
-
-    
-    try:
-        INCREASING_INTERVAL_OF_CURRENT = float(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Increase Current Interval at a Temperature!")
-        return False
-
-    try:
-        DELAY_OF_CURRENT_SOURCE = float(ENTRY_OF_DELAY_OF_CURRENT_SOURCE.get())
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
-        return False
-
-    try:
-        HIGH_PULSE = float(ENTRY_OF_HIGH_PULSE.get())
-        if abs(HIGH_PULSE) > 105e-3:
-            messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
+        
+        try:
+            PULSE_WIDTH = float(ENTRY_OF_PULSE_WIDTH.get())
+            if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
+                messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
+                return False
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
             return False
-    except:
-        messagebox.showwarning("Alert","Invalid Input for High Pulse Value!")
-        return False
-    
-    try:
-        LOW_PULSE = float(ENTRY_OF_LOW_PULSE.get())
-        if abs(LOW_PULSE) > 105e-3:
-            messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
+        
+        try:
+            NUMBER_OF_PULSES_PER_SECOND = float(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.get())
+            if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
+                messagebox.showwarning("Alert!", "Enter the Pulse Interval in range [1 to 12] A!")
+                return False
+        except:
+            messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
             return False
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Low Pulse Value!")
-        return False
-    
-    try:
-        PULSE_WIDTH = float(ENTRY_OF_PULSE_WIDTH.get())
-        if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
-            messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
-            return False
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
-        return False
-    
-    try:
-        NUMBER_OF_PULSES_PER_SECOND = float(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.get())
-        if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
-            messagebox.showwarning("Alert!", "Enter the Pulse Interval in range [1 to 12] A!")
-            return False
-    except:
-        messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
-        return False
-    
-    UPDATE_TEMPERATURE_COMBOBOX()
+        
+        UPDATE_TEMPERATURE_COMBOBOX()
 
     invalid_characters=['\\','/',':','*','?','"','<','>','|']
     TITLE = ENTRY_OF_TITLE.get() + " " + datetime.now().strftime('%H_%M_%S %d-%B-%Y')
@@ -714,8 +722,6 @@ def CHECK_AND_SET_ALL_VALUES():
     return True
 
 def MERGE_BOTH_TEMPERATURE_ARRAYS(arr1, arr2):
-    print(arr1)
-    print(arr2)
     final_arr = []
     n = len(arr1)
     m = len(arr2)
@@ -785,7 +791,6 @@ def TRIGGER():
         if CHECK_AND_SET_ALL_VALUES():
             DIRECTORY = os.path.join(SETTINGS["Directory"], TITLE)
             os.makedirs(DIRECTORY)
-            print(DIRECTORY)
             CONTROL_PANEL.set("Graph\nSetup")
             PROGRESS_OPEN_BUTTON.place(relx=1, rely=0.22, anchor="ne")
             HEADING.configure(text="Checking Devices...")
@@ -986,6 +991,7 @@ def SET_SETTINGS(key,val):
     SETTINGS[key] = val
     WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
 
+
 if __name__=="__main__":
     global INTERFACE, TO_ABORT
     TO_ABORT = False
@@ -1010,8 +1016,6 @@ if __name__=="__main__":
         if mode: ctk.set_appearance_mode("dark")
         else: ctk.set_appearance_mode("light")
         mode = mode ^ 1
-        PROGRESS_FRAME.tkraise()
-        print(PROGRESS_FRAME.winfo_x())
 
 
     MODE_BUTTON = ctk.CTkButton(INTERFACE, text="", height=35, width=35, corner_radius=30, image=MODE_IMAGE, command=CHANGE_MODE)
