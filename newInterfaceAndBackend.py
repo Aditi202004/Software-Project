@@ -643,6 +643,7 @@ def CHECK_AND_SET_ALL_VALUES():
             if START_CURRENT >= 1:
                 messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
                 return False
+            CURRENT_SOURCE.write(("SOUR:CURR:STAR " + str(START_CURRENT)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
             return False
@@ -652,6 +653,7 @@ def CHECK_AND_SET_ALL_VALUES():
             if not STOP_CURRENT < 1:
                 messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
                 return False
+            CURRENT_SOURCE.write(("SOUR:CURR:STOP " + str(STOP_CURRENT)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
             return False
@@ -659,12 +661,14 @@ def CHECK_AND_SET_ALL_VALUES():
         
         try:
             INCREASING_INTERVAL_OF_CURRENT = float(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.get())
+            CURRENT_SOURCE.write(("SOUR:CURR:STEP " + str(INCREASING_INTERVAL_OF_CURRENT)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Increase Current Interval at a Temperature!")
             return False
 
         try:
             DELAY_OF_CURRENT_SOURCE = float(ENTRY_OF_DELAY_OF_CURRENT_SOURCE.get())
+            CURRENT_SOURCE.write(("SOUR:DEL " + str(DELAY_OF_CURRENT_SOURCE)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
             return False
@@ -676,6 +680,7 @@ def CHECK_AND_SET_ALL_VALUES():
             if abs(HIGH_PULSE) > 105e-3:
                 messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
                 return False
+            CURRENT_SOURCE.write(("SOURce:PDELta:HIGH " + str(HIGH_PULSE)))
         except:
             messagebox.showwarning("Alert","Invalid Input for High Pulse Value!")
             return False
@@ -685,6 +690,7 @@ def CHECK_AND_SET_ALL_VALUES():
             if abs(LOW_PULSE) > 105e-3:
                 messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
                 return False
+            CURRENT_SOURCE.write(("SOURce:PDELta:LOW " + str(LOW_PULSE)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Low Pulse Value!")
             return False
@@ -694,6 +700,7 @@ def CHECK_AND_SET_ALL_VALUES():
             if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
                 messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
                 return False
+            CURRENT_SOURCE.write(("SOURce:PDELta:WIDTh " + str(PULSE_WIDTH)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
             return False
@@ -701,8 +708,9 @@ def CHECK_AND_SET_ALL_VALUES():
         try:
             NUMBER_OF_PULSES_PER_SECOND = float(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.get())
             if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
-                messagebox.showwarning("Alert!", "Enter the Pulse Interval in range [1 to 12] A!")
+                messagebox.showwarning("Alert!", "Enter the number of pulses in range [1 to 12] A!")
                 return False
+            CURRENT_SOURCE.write(("SOUR:PDEL:COUN " + str(NUMBER_OF_PULSES_PER_SECOND)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
             return False
@@ -1008,7 +1016,7 @@ if __name__=="__main__":
 
     INTERFACE.attributes('-alpha', 0)
 
-    MODE_IMAGE = ctk.CTkImage(light_image=Image.open('Software-Project\lightmode.png').resize((35,35)), dark_image=Image.open('Software-Project\darkmode.png').resize((35,35)))
+    MODE_IMAGE = ctk.CTkImage(light_image=Image.open('lightmode.png').resize((35,35)), dark_image=Image.open('darkmode.png').resize((35,35)))
 
     mode = 1
     def CHANGE_MODE():
@@ -1271,9 +1279,7 @@ if __name__=="__main__":
     ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.grid(padx=5, pady=5, row=2, column=3, sticky="w")
 
     SYNC_SETTINGS()
-
-    INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
-    
     DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
 
+    # INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     INTERFACE.mainloop()
