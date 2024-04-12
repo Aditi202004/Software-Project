@@ -11,13 +11,46 @@ change in temperature.
 
 ## Setting Up and Performing the Experiment
 - First, check if the connections are proper or not.
+  - Check if the RS-232 port, the GPIB port and the Telnet port are properly connected to the hardware.
 - Select the type of experiment you want to perform.
+  - Resistance vs Time
+  - Resistance vs Temperature
+  - Note: you can select both modes at the same time also.
 - Accordingly, input the values in the CTC setup.
+  - Title: the name of the file to be stored.
+  - Input channel: the channel through which input is provided.
+  - Output channel: the channel through which output will be recorded.
+  - Low limit: low limit of power (in Watts).
+  - High limit: high limit of power (in Watts).
+  - Increase by: the value by which power is to be increased (in Watts).
+  - Max limit: maximum power that CTC can supply to increase by any temperature (in Watts).
+  - P: P-value.
+  - I: I-value.
+  - D: D-value.
+  - Start temp: the temperature from which you wish to begin to take readings from (in Kelvin).
+  - Stop temp: the temperature at which you wish to stop the readings (in Kelvin).
+  - Increase temp by: interval by which temperature is to be increased (in Kelvin).
+  - Threshold: error allowed for achieving the final value of temperature at which reading is to be taken (in Kelvin).
+  - Tolerance: error allowed for stabilizing to the final value of temperature at which reading is to be taken (in Kelvin).
+  - Delay of CTC: delay after which CTC will start increasing the temperature (in seconds).
+  - Complete cycle: if this button is clicked, the experiment will perform both heating and cooling cycle.
 - Then, input the values in the resistance vs temperature setup.
+  - Required temperatures: temperatures at which resistance is to be plotted.
+  - High pulse: value of high pulse (in Ampere).
+  - Low pulse: value of low pulse (in Ampere).
+  - Total time: total time for which resistance is to be plotted.
+  - Pulse width: wavelength of a single pulse (in seconds).
+  - Number of pulses per second: number of pulses that will pass through in one second.
+- Then, input the values in the resistance vs time setup.
+  - Start current: minimum value of current that will be passed.
+  - Stop current: maximum value of current that will be passed.
+  - Increase current by: value by which current will be increased from start to stop current.
+  - Delay of current source: delay after which current source will start supplying current to the sample.
 - After that, click the Sync Set button to set all the values.
+  - Note: you may also click the Sync Get button to use values from the previous experiment.
 - Then, click the Trigger button to begin the experiment.
 
 ## Other Details
-- If you want to receive an email on completion of the experiment, click the corresponding button.
-- Click the Settings button to fill in your email.
-- An email will be sent by the system to you on this email after the experiment is completed.
+- If you wish to receive an email on completion of the experiment, click the corresponding button in the CTC tab.
+- Click the Settings button to fill in your email ID.
+- An email will be sent by the system to you on this email ID after the experiment is completed.
