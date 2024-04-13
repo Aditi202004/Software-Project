@@ -1,4 +1,4 @@
-import pyvisa, telnetlib
+# import pyvisa, telnetlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backend_bases import key_press_handler
@@ -14,7 +14,6 @@ import time
 from datetime import datetime
 import os
 from os.path import exists
-import pyautogui
 import smtplib
 import pygame
 
@@ -88,7 +87,7 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
         if TIME_EXPERIMENT.get(): CHOOSE_TEMPERATURE_COMBOBOX.set("ResVsTemp")
 
 
-    pyautogui.press("h")
+    GRAPH.set_autoscale_on(True)
     GRAPH.relim()
     GRAPH.autoscale_view()
     CANVAS_OF_GRAPH.draw_idle()
@@ -96,6 +95,7 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
 def SAVE_THE_GRAPH_INTO(directory):
     for key in DATA: 
         PLOTTING_LINE.set_data(np.array(DATA[key][0]),np.array(DATA[key][1]))
+        GRAPH.set_autoscale_on(True)
         GRAPH.relim()
         GRAPH.autoscale_view()
         CANVAS_OF_GRAPH.draw_idle()
@@ -120,6 +120,7 @@ def UPDATE_GRAPH(*args):
         GRAPH.set_xlabel("TIME")
         GRAPH.set_ylabel("RESISTANCE")
 
+    GRAPH.set_autoscale_on(True)
     GRAPH.relim()
     GRAPH.autoscale_view()
     CANVAS_OF_GRAPH.draw_idle()
@@ -127,7 +128,7 @@ def UPDATE_GRAPH(*args):
 def SET_GRAPH_IN_TAB(GRAPH_TAB):
     global FRAME_OF_GRAPH, GRAPH_TITLE_LABEL, FIGURE_OF_GRAPH, CANVAS_OF_GRAPH, GRAPH, ANNOTATION, TOOLBAR_OF_GRAPH, CHOOSE_TEMPERATURE_COMBOBOX,PLOTTING_LINE
 
-    FRAME_OF_GRAPH = ctk.CTkFrame(GRAPH_TAB, fg_color=("#979DA2", "#4A4A4A"))
+    FRAME_OF_GRAPH = ctk.CTkFrame(GRAPH_TAB, fg_color=("#b8dfff", "#4A4A4A"))
     FRAME_OF_GRAPH.pack(padx=10, pady=(5,10), fill="both", expand=True)
     
     GRAPH_TITLE_LABEL = ctk.CTkLabel(FRAME_OF_GRAPH, text = "Resistance Vs Temperature", font=('Times', 32), text_color=("black", "white"))
@@ -534,7 +535,7 @@ def UPDATE_TEMPERATURE_COMBOBOX():
     if TEMPERATURE_EXPERIMENT.get(): numeric_values.insert(0, "ResVsTemp")
 
     CHOOSE_TEMPERATURE_COMBOBOX.configure(values = numeric_values)
-    CHOOSE_TEMPERATURE_COMBOBOX.configure(state="normal")
+    CHOOSE_TEMPERATURE_COMBOBOX.configure(state="readonly")
     for key in numeric_values: DATA[str(key)] = ([], [])
     
 def CHECK_AND_SET_ALL_VALUES(): 
@@ -759,7 +760,7 @@ def CHECK_AND_SET_ALL_VALUES():
     INCREASE_POWER_LIMIT_OF_CTC = 1
     MAXIMUM_POWER_LIMIT_OF_CTC = 11
     START_TEMPERATURE = 0
-    END_TEMPERATURE = 0
+    END_TEMPERATURE = 15
     INCREASING_INTERVAL_OF_TEMPERATURE = 5
     THRESHOLD = 1
     TOLERANCE = 1
@@ -831,11 +832,10 @@ def START_EXPERIMENT():
         HEADING.configure("Experiment Completed!!!")
         PARAGRAPH.configure("Graphs and CSVs are saved!!!")
         print("Experiment is completed successfully! (Graph and data file are stored in the chosen directory)")
-        if END_MUSIC.get(): 
-            DISPLAY_STOP_MUSIC_BUTTON()
-            PLAY_MUSIC()
+        DISPLAY_STOP_MUSIC_BUTTON()
+        PLAY_MUSIC()
 
-        if EMAIL_SENT.get() : SEND_EMAIN_TO(SETTINGS["mail_id"])
+        if EMAIL_SEND.get() : SEND_EMAIN_TO(SETTINGS["mail_id"])
         
 
 
@@ -846,7 +846,6 @@ def TRIGGER():
         if CHECK_AND_SET_ALL_VALUES():
             TRIGGER_BUTTON.configure(text= "Abort", command=ABORT_TRIGGER)
             TO_ABORT = False
-            OPEN_CONFIRMATION_MAIL_AUDIO()
             DIRECTORY = os.path.join(SETTINGS["Directory"], TITLE)
             os.makedirs(DIRECTORY)
             CONTROL_PANEL.set("Graph\nSetup")
@@ -866,6 +865,7 @@ def ABORT_TRIGGER():
     HEADING.configure(text="ABORTED!!!!")
     PARAGRAPH.configure(text="")
     TRIGGER_BUTTON.configure(text= "Trigger", command=TRIGGER)
+    SET_GRAPH_IN_TAB(GRAPH_TAB)
     PROGRESS_OPEN_BUTTON.place_forget()
     INTERFACE.update()
 
@@ -903,6 +903,7 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
     SELECTING_EXP_WIDGET = ctk.CTkToplevel(INTERFACE)
     SELECTING_EXP_WIDGET_Temp_width = 350
     SELECTING_EXP_WIDGET_Temp_height = 200
+    
     SELECTING_EXP_WIDGET.title("Choose Experiment(s)")
     SELECTING_EXP_WIDGET.geometry(CENTER_THE_WIDGET(SELECTING_EXP_WIDGET_Temp_width, SELECTING_EXP_WIDGET_Temp_height))
     SELECTING_EXP_WIDGET.grid_rowconfigure((0,1,2,3), weight=1)
@@ -962,13 +963,13 @@ def OPEN_SETTINGS_WIDGET():
     SETTINGS_WIDGET.grid_rowconfigure((0,1,2,3,4,5,6,7),weight=1)
     SETTINGS_WIDGET.grid_columnconfigure((0,1),weight=1)
 
-    GPIB_LABEL = ctk.CTkLabel(SETTINGS_WIDGET, text = "Nanovoltmeter", text_color=("black", "white"))
+    GPIB_LABEL = ctk.CTkLabel(SETTINGS_WIDGET, text = "Current Source", text_color=("black", "white"))
     GPIB_LABEL.grid(row=0, column=0, padx=5, pady=5, sticky="e")
 
     ENTRY_OF_DEVICE = ctk.StringVar(value = SETTINGS["device_name"])
     cabels_available = pyvisa.ResourceManager().list_resources()
 
-    DROPDOWN_OF_GPIB_DEVICE = ctk.CTkComboBox(SETTINGS_WIDGET, variable = ENTRY_OF_DEVICE, values = cabels_available)
+    DROPDOWN_OF_GPIB_DEVICE = ctk.CTkComboBox(SETTINGS_WIDGET, variable = ENTRY_OF_DEVICE, values = cabels_available,state="readonly")
     DROPDOWN_OF_GPIB_DEVICE.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
 
@@ -1025,15 +1026,49 @@ def OPEN_SETTINGS_WIDGET():
 
 def SHOW_INFO_OF_DEVICES(): 
 
-    if CONNECT_INSTRUMENTS() :
-        SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND “*IDN?”')
-        info_of_nanovoltmeter = SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
-        info_of_current_source = str(SEND_COMMAND_TO_CURRENT_SOURCE("*IDN?"))
-        info_of_ctc = str(SEND_COMMAND_TO_CTC("description?"))
+    INFO_WIDGET = ctk.CTkToplevel(INTERFACE)
+    INFO_WIDGET.title("Info")
+    INFO_WIDGET_width = 430
+    INFO_WIDGET_height = 250
+    INFO_WIDGET.geometry(CENTER_THE_WIDGET(INFO_WIDGET_width, INFO_WIDGET_height))
+    INFO_WIDGET.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
+    INFO_WIDGET.grid_columnconfigure((0, 1), weight=1)
 
-        info_of_devices = "Nanovoltmeter :" + info_of_nanovoltmeter + "\nCurrent Source :" + info_of_current_source + "\n\nCTC Device: " + info_of_ctc
+    nanovoltmeter = "Nanovoltmeter: " 
+    nanovoltmeter_label = ctk.CTkLabel(INFO_WIDGET, text=nanovoltmeter, text_color=("black", "white"),fg_color=("#b8dfff", "#4A4A4A"),we)
+    nanovoltmeter_label.grid(row=0, column=0,  sticky="ew",padx=10,pady=5)
+    nanovoltmeter_info="info of nanovoltmetergbcfghbvfgbvcfghbvfthbvftyhbvtyunbvfghbjh7yg"
+    nanovoltmeter_entry = ctk.CTkLabel(INFO_WIDGET, text=nanovoltmeter_info, text_color=("black", "white"))
+    nanovoltmeter_entry.grid(row=1, column=0, sticky="w",padx=8)
 
-        messagebox.showinfo("Device Info", info_of_devices)
+    current_source = "Current Source: "
+    current_source_label = ctk.CTkLabel(INFO_WIDGET, text=current_source, text_color=("black", "white"),fg_color=("#b8dfff", "#4A4A4A"))
+    current_source_label.grid(row=2, column=0,  sticky="ew",padx=10)
+    current_source_info="info of nanovoltmetergbcfghbvfgbvcfghbvfthbvftyhbvtyunbvfghbjh7yg"
+    current_source_entry = ctk.CTkLabel(INFO_WIDGET, text=current_source_info, text_color=("black", "white"))
+    current_source_entry.grid(row=3, column=0,  sticky="w",padx=8)
+
+    ctc = "CTC: " 
+    ctc_label = ctk.CTkLabel(INFO_WIDGET, text=ctc, text_color=("black", "white"),fg_color=("#b8dfff", "#4A4A4A"))
+    ctc_label.grid(row=4, column=0, sticky="ew",padx=10)
+    ctc_info="info of nanovoltmetergbcfghbvfgbvcfghbvfthbvftyhbvtyunbvfghbjh7yg"
+    ctc_label = ctk.CTkLabel(INFO_WIDGET, text=ctc_info, text_color=("black", "white"))
+    ctc_label.grid(row=5, column=0, sticky="w",padx=8,pady=5)
+
+    def CONFIRM_TO_QUIT_INFO():
+        INFO_WIDGET.destroy()
+
+    INFO_WIDGET.grab_set()
+    INFO_WIDGET.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT_INFO)
+
+
+        # info_of_nanovoltmeter = "info of nanovoltmetergbcfghbvfgbvcfghbvfthbvftyhbvtyunbvfghbjh7yg"
+        # info_of_current_source = "str(SEND_COMMAND_TO_CURRENT_SOURCEhgbnhgbngv bv bhgvbnhgbnhgvbnjhbnj"
+        # info_of_ctc = "str(SEND_COMMAND_TO_CTC(jkiuyhjhujuyghytgvhuygbnhnjkiuhjkiuh"
+
+        # info_of_devices = "Nanovoltmeter :" + info_of_nanovoltmeter + "\nCurrent Source :" + info_of_current_source + "\n\nCTC Device: " + info_of_ctc
+
+        # messagebox.showinfo("Device Info", info_of_devices)
 
 def SYNC_SETTINGS():
     global SETTINGS, MAX_RETRY
@@ -1078,20 +1113,20 @@ def SEND_EMAIN_TO(email):
 
 def PLAY_MUSIC():
     pygame.mixer.init()
-    pygame.mixer.music.load("Software-Project\completed.mp3")
+    pygame.mixer.music.load("completed.mp3")
     pygame.mixer.music.play(-1)
 
 def DISPLAY_STOP_MUSIC_BUTTON():
     STOP_MUSIC_WIDGET = ctk.CTkToplevel(INTERFACE)
     STOP_MUSIC_WIDGET_Temp_width = 350
     STOP_MUSIC_WIDGET_Temp_height = 250
-    STOP_MUSIC_WIDGET.overrideredirect(True)
+    # STOP_MUSIC_WIDGET.overrideredirect(True)
     STOP_MUSIC_WIDGET.geometry(CENTER_THE_WIDGET(STOP_MUSIC_WIDGET_Temp_width, STOP_MUSIC_WIDGET_Temp_height))
     STOP_MUSIC_WIDGET.grid_rowconfigure((0,1,2), weight=1)
     STOP_MUSIC_WIDGET.grid_columnconfigure(0, weight=1)
 
     ctk.CTkLabel(STOP_MUSIC_WIDGET, text="Experiment is Completed!!", font=("",16), text_color=("black", "white")).grid(row=0, column=0, pady=5)
-    BELL_IMAGE = ctk.CTkImage(Image.open('Software-Project\comp.png'), size=(150,150))
+    BELL_IMAGE = ctk.CTkImage(Image.open('comp.png'), size=(150,150))
     ctk.CTkLabel(STOP_MUSIC_WIDGET, image=BELL_IMAGE, text="").grid(row=1, column=0, pady=5)
     def STOP_MUSIC():
         pygame.mixer.music.stop()
@@ -1101,36 +1136,6 @@ def DISPLAY_STOP_MUSIC_BUTTON():
 
     
 
-def OPEN_CONFIRMATION_MAIL_AUDIO():
-    global EMAIL_SENT, END_MUSIC
-
-    CONFIRMATION_WIDGET = ctk.CTkToplevel(INTERFACE)
-    CONFIRMATION_WIDGET_Temp_width = 350
-    CONFIRMATION_WIDGET_Temp_height = 200
-    CONFIRMATION_WIDGET.overrideredirect(True)
-    CONFIRMATION_WIDGET.geometry(CENTER_THE_WIDGET(CONFIRMATION_WIDGET_Temp_width, CONFIRMATION_WIDGET_Temp_height))
-    CONFIRMATION_WIDGET.grid_rowconfigure((0,1,2,3), weight=1)
-    CONFIRMATION_WIDGET.grid_columnconfigure(0, weight=1)
-
-
-    ctk.CTkLabel(CONFIRMATION_WIDGET, text="Select the required options", font=("",16), text_color=("black", "white")).grid(row=0, column=0, pady=10)
-    
-    EMAIL_SENT = IntVar(value=0)
-    END_MUSIC = IntVar(value=0)
-
-    EMAIL_CHECKBOX = ctk.CTkCheckBox(CONFIRMATION_WIDGET, text="Do you want to send Email?", variable=EMAIL_SENT, onvalue=1, offvalue=0)
-    EMAIL_CHECKBOX.grid(row=1, column=0, pady=10)
-
-    AUDIO_CHECKBOX = ctk.CTkCheckBox(CONFIRMATION_WIDGET, text="Do you want to play Audio\nafter experiment is done?", variable=END_MUSIC, onvalue=1, offvalue=0)
-    AUDIO_CHECKBOX.grid(row=2, column=0, pady = 10)
-    
-
-    def confirm_selections():
-        CONFIRMATION_WIDGET.destroy()
-
-    ctk.CTkButton(CONFIRMATION_WIDGET, text="Confirm", command=confirm_selections).grid(row=3, column=0, pady=10)
-    
-    CONFIRMATION_WIDGET.grab_set()
 
 if __name__=="__main__":
     global INTERFACE, TO_ABORT
@@ -1138,8 +1143,8 @@ if __name__=="__main__":
     ctk.set_appearance_mode("light")
 
     INTERFACE = ctk.CTk()
-    INTERFACE.geometry("700x600")
-    INTERFACE.minsize(650,450)
+    # INTERFACE.geometry("700x600")
+    # INTERFACE.minsize(650,450)
     INTERFACE.title("Resistance Plotter")
     INTERFACE.columnconfigure(0, weight=6, uniform='a')
     INTERFACE.columnconfigure(1, weight=1, uniform='a')
@@ -1148,7 +1153,7 @@ if __name__=="__main__":
 
     INTERFACE.attributes('-alpha', 0)
 
-    MODE_IMAGE = ctk.CTkImage(light_image=Image.open('Software-Project\lightmode.png').resize((35,35)), dark_image=Image.open('Software-Project\darkmode.png').resize((35,35)))
+    MODE_IMAGE = ctk.CTkImage(light_image=Image.open('lightmode.png').resize((35,35)), dark_image=Image.open('darkmode.png').resize((35,35)))
 
     mode = 1
     def CHANGE_MODE():
@@ -1192,12 +1197,13 @@ if __name__=="__main__":
     HEADING.grid(row=1, column=1, padx=20, pady=5, sticky="nsew")
     PARAGRAPH.grid(row=2, column=1, padx=20, pady=5, sticky="nsew")
 
+    my_font = ctk.CTkFont(size=18, weight='bold')
 
-    TRIGGER_BUTTON = ctk.CTkButton(SIDE_BAR, text="Trigger", width=0, command=TRIGGER)
-    SYNC_GET_BUTTON = ctk.CTkButton(SIDE_BAR, text="Sync\nGet", width=0, command=SYNC_GET)
-    SYNC_SET_BUTTON = ctk.CTkButton(SIDE_BAR, text="Sync\nSet", width=0, command=CHECK_AND_SET_ALL_VALUES)
-    INFO_BUTTON = ctk.CTkButton(SIDE_BAR, text="Info", width=0, command=SHOW_INFO_OF_DEVICES)
-    SETTINGS_BUTTON = ctk.CTkButton(SIDE_BAR, text="Settings", width=0, command=OPEN_SETTINGS_WIDGET)
+    TRIGGER_BUTTON = ctk.CTkButton(SIDE_BAR, text="Trigger", width=0, command=TRIGGER,font=my_font)
+    SYNC_GET_BUTTON = ctk.CTkButton(SIDE_BAR, text="Sync\nGet", width=0, command=SYNC_GET,font=my_font)
+    SYNC_SET_BUTTON = ctk.CTkButton(SIDE_BAR, text="Sync\nSet", width=0, command=CHECK_AND_SET_ALL_VALUES,font=my_font)
+    INFO_BUTTON = ctk.CTkButton(SIDE_BAR, text="Info", width=0, command=SHOW_INFO_OF_DEVICES,font=my_font)
+    SETTINGS_BUTTON = ctk.CTkButton(SIDE_BAR, text="Settings", width=0, command=OPEN_SETTINGS_WIDGET,font=my_font)
 
     TRIGGER_BUTTON.grid(row=4, column=0, sticky="nsew",pady=2.5)
     SYNC_GET_BUTTON.grid(row=5, column=0, sticky="nsew",pady=2.5)
@@ -1206,46 +1212,47 @@ if __name__=="__main__":
     SETTINGS_BUTTON.grid(row=8, column=0, sticky="nsew",pady=2.5)
 
     
-    CONTROL_PANEL = ctk.CTkTabview(INTERFACE)
+    CONTROL_PANEL = ctk.CTkTabview(INTERFACE,fg_color="transparent",segmented_button_fg_color="white",segmented_button_selected_color="#58aff5",segmented_button_unselected_color="white",text_color="black")
     CONTROL_PANEL.grid(row=0, column=0,rowspan=2, padx=(20,5), pady=10, sticky="nsew")
 
     CTC_TAB = CONTROL_PANEL.add("CTC\nSetup")
-    CURRENT_SOURCE_TAB = CONTROL_PANEL.add("Resistance Vs Temp\nSetup")
+    CURRENT_SOURCE_TAB = CONTROL_PANEL.add("Current Source\nSetup")
     GRAPH_TAB = CONTROL_PANEL.add("Graph\nSetup")
-
    
-    FRAME_OF_TITLE = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#979DA2", "#4A4A4A"))
+    text_font = ctk.CTkFont(size=15,weight='bold')
+     
+    FRAME_OF_TITLE = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#b8dfff", "#4A4A4A"))
     FRAME_OF_TITLE.pack(padx=5, pady=5, fill="both", expand=True)
     FRAME_OF_TITLE.columnconfigure((0,1), weight=1)
     FRAME_OF_TITLE.rowconfigure(0, weight=1)
 
-    LABEL_OF_TITLE = ctk.CTkLabel(FRAME_OF_TITLE, text="Title", text_color=("black", "white"))
+    LABEL_OF_TITLE = ctk.CTkLabel(FRAME_OF_TITLE, text="Title", text_color=("black", "white"),font=text_font)
     ENTRY_OF_TITLE = ctk.CTkEntry(FRAME_OF_TITLE, placeholder_text="Title...")
 
     LABEL_OF_TITLE.grid(row=0, column=0, sticky="e",padx=5)
     ENTRY_OF_TITLE.grid(row=0, column=1, sticky="w",padx=5)
 
 
-    FRAME_OF_CHANNELS_SELECTION = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#979DA2", "#4A4A4A"))
+    FRAME_OF_CHANNELS_SELECTION = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#b8dfff", "#4A4A4A"))
     FRAME_OF_CHANNELS_SELECTION.pack(padx=5, pady=5, fill="both", expand=True)
     FRAME_OF_CHANNELS_SELECTION.columnconfigure((0,1,2,3), weight=1)
     FRAME_OF_CHANNELS_SELECTION.rowconfigure(0, weight=1)
 
 
-    LABEL_OF_INPUT_CHANNEL = ctk.CTkLabel(FRAME_OF_CHANNELS_SELECTION, text="Input Channel", text_color=("black", "white"))
-    LABEL_OF_OUTPUT_CHANNEL = ctk.CTkLabel(FRAME_OF_CHANNELS_SELECTION, text="Output Channel", text_color=("black", "white"))
+    LABEL_OF_INPUT_CHANNEL = ctk.CTkLabel(FRAME_OF_CHANNELS_SELECTION, text="Input Channel", text_color=("black", "white"),font=text_font)
+    LABEL_OF_OUTPUT_CHANNEL = ctk.CTkLabel(FRAME_OF_CHANNELS_SELECTION, text="Output Channel", text_color=("black", "white"),font=text_font)
 
     input_options = ['In 1', 'In 2', 'In 3', 'In 4']
     ENTRY_OF_INPUT_CHANNEL = ctk.StringVar(value="In 1")
 
-    DROPDOWN_OF_INPUT_CHANNEL = ctk.CTkComboBox(FRAME_OF_CHANNELS_SELECTION, values=input_options, variable=ENTRY_OF_INPUT_CHANNEL)
+    DROPDOWN_OF_INPUT_CHANNEL = ctk.CTkComboBox(FRAME_OF_CHANNELS_SELECTION, values=input_options, variable=ENTRY_OF_INPUT_CHANNEL,state="readonly")
     ENTRY_OF_INPUT_CHANNEL.set("In 1")
 
 
     output_options = ['Out 1', 'Out 2']
     ENTRY_OF_OUTPUT_CHANNEL = ctk.StringVar(value="Out 2")
 
-    DROPDOWN_OF_OUTPUT_CHANNEL = ctk.CTkComboBox(FRAME_OF_CHANNELS_SELECTION, values=output_options, variable=ENTRY_OF_OUTPUT_CHANNEL)
+    DROPDOWN_OF_OUTPUT_CHANNEL = ctk.CTkComboBox(FRAME_OF_CHANNELS_SELECTION, values=output_options, variable=ENTRY_OF_OUTPUT_CHANNEL,state="readonly")
     ENTRY_OF_OUTPUT_CHANNEL.set("Out 2")
     
     LABEL_OF_INPUT_CHANNEL.grid(row=0, column=0, sticky="e",padx=5)
@@ -1254,15 +1261,15 @@ if __name__=="__main__":
     DROPDOWN_OF_OUTPUT_CHANNEL.grid(row=0, column=3, sticky="w",padx=5)
 
 
-    FRAME_OF_POWER_CONTROLS = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#979DA2", "#4A4A4A"),)
+    FRAME_OF_POWER_CONTROLS = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#b8dfff", "#4A4A4A"),)
     FRAME_OF_POWER_CONTROLS.pack(padx=5, pady=5, fill="both", expand=True)
     FRAME_OF_POWER_CONTROLS.columnconfigure((0,1,2,3), weight=1)
     FRAME_OF_POWER_CONTROLS.rowconfigure((0,1), weight=1)
 
-    LABEL_OF_LOW_POWER_LIMIT = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="Low Limit", text_color=("black", "white"))
-    LABEL_OF_HIGH_POWER_LIMIT = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="High Limit", text_color=("black", "white"))
-    LABEL_OF_MAXIMUM_POWER_LIMIT = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="Max Limit", text_color=("black", "white"))
-    LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="Increase by", text_color=("black", "white"))
+    LABEL_OF_LOW_POWER_LIMIT = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="Low Limit", text_color=("black", "white"),font=text_font)
+    LABEL_OF_HIGH_POWER_LIMIT = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="High Limit", text_color=("black", "white"),font=text_font)
+    LABEL_OF_MAXIMUM_POWER_LIMIT = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="Max Limit", text_color=("black", "white"),font=text_font)
+    LABEL_OF_INCREASE_POWER_LIMIT_OF_CTC = ctk.CTkLabel(FRAME_OF_POWER_CONTROLS, text="Increase by", text_color=("black", "white"),font=text_font)
     ENTRY_OF_LOW_POWER_LIMIT = ctk.CTkEntry(FRAME_OF_POWER_CONTROLS, placeholder_text="in Watts...", text_color=("black", "white"))
     ENTRY_OF_HIGH_POWER_LIMIT = ctk.CTkEntry(FRAME_OF_POWER_CONTROLS, placeholder_text="in Watts...", text_color=("black", "white"))
     ENTRY_OF_MAXIMUM_POWER_LIMIT = ctk.CTkEntry(FRAME_OF_POWER_CONTROLS, placeholder_text="in Watts...", text_color=("black", "white"))
@@ -1279,15 +1286,15 @@ if __name__=="__main__":
 
 
 
-    FRAME_OF_PID = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#979DA2", "#4A4A4A"))
+    FRAME_OF_PID = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#b8dfff", "#4A4A4A"))
     FRAME_OF_PID.pack(padx=5, pady=5, fill="both", expand=True)
 
     FRAME_OF_PID.columnconfigure((0,1,2,3,4,5), weight=1)
     FRAME_OF_PID.rowconfigure(0, weight=1)
 
-    LABEL_OF_P_VALUE_OF_CTC = ctk.CTkLabel(FRAME_OF_PID, text="P", text_color=("black", "white"))
-    LABEL_OF_I_VALUE_OF_CTC = ctk.CTkLabel(FRAME_OF_PID, text="I", text_color=("black", "white"))
-    LABEL_OF_D_VALUE_OF_CTC = ctk.CTkLabel(FRAME_OF_PID, text="D", text_color=("black", "white"))
+    LABEL_OF_P_VALUE_OF_CTC = ctk.CTkLabel(FRAME_OF_PID, text="P", text_color=("black", "white"),font=text_font)
+    LABEL_OF_I_VALUE_OF_CTC = ctk.CTkLabel(FRAME_OF_PID, text="I", text_color=("black", "white"),font=text_font)
+    LABEL_OF_D_VALUE_OF_CTC = ctk.CTkLabel(FRAME_OF_PID, text="D", text_color=("black", "white"),font=text_font)
     ENTRY_OF_P_VALUE_OF_CTC = ctk.CTkEntry(FRAME_OF_PID)
     ENTRY_OF_I_VALUE_OF_CTC = ctk.CTkEntry(FRAME_OF_PID)
     ENTRY_OF_D_VALUE_OF_CTC = ctk.CTkEntry(FRAME_OF_PID)
@@ -1301,19 +1308,19 @@ if __name__=="__main__":
 
     
 
-    FRAME_OF_TEMPERATURE_CONTROLS = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#979DA2", "#4A4A4A"))
+    FRAME_OF_TEMPERATURE_CONTROLS = ctk.CTkFrame(CTC_TAB, height=10, fg_color=("#b8dfff", "#4A4A4A"))
     FRAME_OF_TEMPERATURE_CONTROLS.pack(padx=5, pady=5, fill="both", expand=True)
 
     FRAME_OF_TEMPERATURE_CONTROLS.columnconfigure((0,1,2,3), weight=1)
-    FRAME_OF_TEMPERATURE_CONTROLS.rowconfigure((0,1,2,3), weight=1)
+    FRAME_OF_TEMPERATURE_CONTROLS.rowconfigure((0,1,2), weight=1)
 
     
-    LABEL_OF_START_TEMPERATURE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Start\nTemperature", text_color=("black", "white"))
-    LABEL_OF_STOP_TEMPERATURE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Stop\nTemperature", text_color=("black", "white"))
-    LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Increase\nTemperature by", text_color=("black", "white"))
-    LABEL_OF_THRESHOLD = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Threshold", text_color=("black", "white"))
-    LABEL_OF_TOLERANCE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Tolerance", text_color=("black", "white"))
-    LABEL_OF_DELAY_OF_CTC = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Delay of CTC", text_color=("black", "white"))
+    LABEL_OF_START_TEMPERATURE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Start\nTemperature", text_color=("black", "white"),font=text_font)
+    LABEL_OF_STOP_TEMPERATURE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Stop\nTemperature", text_color=("black", "white"),font=text_font)
+    LABEL_OF_INCREASING_INTERVAL_OF_TEMPERATURE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Increase\nTemperature by", text_color=("black", "white"),font=text_font)
+    LABEL_OF_THRESHOLD = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Threshold", text_color=("black", "white"),font=text_font)
+    LABEL_OF_TOLERANCE = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Tolerance", text_color=("black", "white"),font=text_font)
+    LABEL_OF_DELAY_OF_CTC = ctk.CTkLabel(FRAME_OF_TEMPERATURE_CONTROLS, text="Delay of CTC", text_color=("black", "white"),font=text_font)
 
     ENTRY_OF_START_TEMPERATURE = ctk.CTkEntry(FRAME_OF_TEMPERATURE_CONTROLS, placeholder_text="in Kelvin...")
     ENTRY_OF_STOP_TEMPERATURE = ctk.CTkEntry(FRAME_OF_TEMPERATURE_CONTROLS, placeholder_text="in Kelvin...")
@@ -1321,9 +1328,14 @@ if __name__=="__main__":
     ENTRY_OF_THRESHOLD = ctk.CTkEntry(FRAME_OF_TEMPERATURE_CONTROLS, placeholder_text="in Kelvin...")
     ENTRY_OF_TOLERANCE = ctk.CTkEntry(FRAME_OF_TEMPERATURE_CONTROLS, placeholder_text="in Kelvin...")
     ENTRY_OF_DELAY_OF_CTC = ctk.CTkEntry(FRAME_OF_TEMPERATURE_CONTROLS, placeholder_text="in Seconds...")
-
+    FRAME_OPTIONS = ctk.CTkFrame(CTC_TAB, height=6)
+    FRAME_OPTIONS.pack(padx=5, pady=5, fill="both", expand=True)
+    FRAME_OPTIONS.columnconfigure((0,1,2,3), weight=1)
+    FRAME_OPTIONS.rowconfigure(0, weight=1)
     COMPLETE_CYCLE = IntVar(value=0)
-    COMPLETE_CYCLE_CHECKBUTTON = ctk.CTkSwitch(FRAME_OF_TEMPERATURE_CONTROLS, text="Complete Cycle", variable=COMPLETE_CYCLE, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4")
+    COMPLETE_CYCLE_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Complete Cycle", variable=COMPLETE_CYCLE, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4",font=text_font)
+    EMAIL_SEND = IntVar(value=0)
+    SEND_EMAIL_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Send Email", variable=EMAIL_SEND, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4",font=text_font)
 
     def DISPLAY_TEMPERATURE_INPUTS():
         LABEL_OF_START_TEMPERATURE.grid(row=0, column=0, sticky="e",padx=5, pady=5)
@@ -1334,7 +1346,8 @@ if __name__=="__main__":
         ENTRY_OF_STOP_TEMPERATURE.grid(row=1, column=1, sticky="w",padx=5, pady=5)
         ENTRY_OF_INCREASING_INTERVAL_OF_TEMPERATURE.grid(row=2, column=1, sticky="w",padx=5, pady=5)
         ENTRY_OF_DELAY_OF_CTC.grid(row=2, column=3, sticky="w",padx=5, pady=5)
-        COMPLETE_CYCLE_CHECKBUTTON.grid(row=3,column=0,columnspan=4)
+        COMPLETE_CYCLE_CHECKBUTTON.grid(row=0,column=0,columnspan=2)
+        SEND_EMAIL_CHECKBUTTON.grid(row=0,column=2,columnspan=2)
         LABEL_OF_THRESHOLD.grid(row=0, column=2, sticky="e",padx=5, pady=5)
         LABEL_OF_TOLERANCE.grid(row=1, column=2, sticky="e",padx=5, pady=5)
         ENTRY_OF_THRESHOLD.grid(row=0, column=3, sticky="w",padx=5, pady=5)
@@ -1345,20 +1358,21 @@ if __name__=="__main__":
         LABEL_OF_TOLERANCE.grid(row=1, column=0, columnspan=2, sticky="e",padx=5, pady=5)
         ENTRY_OF_THRESHOLD.grid(row=0, column=2, columnspan=2, sticky="w",padx=5, pady=5)
         ENTRY_OF_TOLERANCE.grid(row=1, column=2, columnspan=2, sticky="w",padx=5, pady=5)
+        SEND_EMAIL_CHECKBUTTON.grid(row=0,column=2,columnspan=5, sticky="w")
 
  
     CURRENT_SOURCE_TAB.rowconfigure(0, weight=2)
     CURRENT_SOURCE_TAB.rowconfigure(1, weight=3)
     CURRENT_SOURCE_TAB.columnconfigure((0), weight=1, uniform='a')
 
-    CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME = ctk.CTkFrame(CURRENT_SOURCE_TAB, fg_color=("#979DA2", "#4A4A4A"))
+    CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME = ctk.CTkFrame(CURRENT_SOURCE_TAB, fg_color=("#b8dfff", "#4A4A4A"))
     CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME.rowconfigure((0,1), weight=1)
     CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME.columnconfigure((0,1,2,3), weight=1)
 
-    START_CURRENT_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Start Current", text_color=("black", "white"))
-    STOP_CURRENT_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Stop Current", text_color=("black", "white"))
-    INCREASE_CURRENT_BY_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Increase\nCurrent by", text_color=("black", "white"))
-    CURRENT_SOURCE_DELAY_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Delay of\nCurrent Source", text_color=("black", "white"))
+    START_CURRENT_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Start Current", text_color=("black", "white"),font=text_font)
+    STOP_CURRENT_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Stop Current", text_color=("black", "white"),font=text_font)
+    INCREASE_CURRENT_BY_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Increase\nCurrent by", text_color=("black", "white"),font=text_font)
+    CURRENT_SOURCE_DELAY_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, text="Delay of\nCurrent Source", text_color=("black", "white"),font=text_font)
 
     ENTRY_OF_START_CURRENT = ctk.CTkEntry(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, placeholder_text="in Ampere...")
     ENTRY_OF_STOP_CURRENT = ctk.CTkEntry(CURRENT_SOURCE_TEMPERATURE_INPUTS_FRAME, placeholder_text="in Ampere...")
@@ -1375,20 +1389,20 @@ if __name__=="__main__":
     ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.grid(row=0, column=3, sticky="w", padx=5, pady=5)
     ENTRY_OF_DELAY_OF_CURRENT_SOURCE.grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
-    CURRENT_SOURCE_TIME_INPUTS_FRAME = ctk.CTkFrame(CURRENT_SOURCE_TAB, fg_color=("#979DA2", "#4A4A4A"))
+    CURRENT_SOURCE_TIME_INPUTS_FRAME = ctk.CTkFrame(CURRENT_SOURCE_TAB, fg_color=("#b8dfff", "#4A4A4A"))
     CURRENT_SOURCE_TIME_INPUTS_FRAME.rowconfigure((0,1,2,3), weight=1)
     CURRENT_SOURCE_TIME_INPUTS_FRAME.columnconfigure((0,1,2,3,4,5), weight=1)
 
-    SELECTED_TEMPERATURES_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Required\nTemperatures", text_color=("black", "white"))
-    MEASURING_TIME_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Total Time", text_color=("black", "white"))
-    HIGH_PULSE_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="High Pulse", text_color=("black", "white"))
-    LOW_PULSE_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Low Pulse", text_color=("black", "white"))
-    PULSE_WIDTH_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Pulse Width", text_color=("black", "white"))
-    NUMBER_OF_PULSES_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="No. of Pulses\nper second", text_color=("black", "white")) 
+    SELECTED_TEMPERATURES_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Required\nTemperatures", text_color=("black", "white"),font=text_font)
+    MEASURING_TIME_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Total Time", text_color=("black", "white"),font=text_font)
+    HIGH_PULSE_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="High Pulse", text_color=("black", "white"),font=text_font)
+    LOW_PULSE_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Low Pulse", text_color=("black", "white"),font=text_font)
+    PULSE_WIDTH_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="Pulse Width", text_color=("black", "white"),font=text_font)
+    NUMBER_OF_PULSES_LABEL = ctk.CTkLabel(CURRENT_SOURCE_TIME_INPUTS_FRAME, text="No. of Pulses\nper second", text_color=("black", "white"),font=text_font) 
    
 
     TEMPERATURES_ENTRY = ctk.CTkEntry(CURRENT_SOURCE_TIME_INPUTS_FRAME,placeholder_text="eg. 234,456,600")
-    MEASURING_TIME_ENTRY = ctk.CTkEntry(CURRENT_SOURCE_TIME_INPUTS_FRAME,placeholder_text="in Ampere...")
+    MEASURING_TIME_ENTRY = ctk.CTkEntry(CURRENT_SOURCE_TIME_INPUTS_FRAME,placeholder_text="in seconds...")
     ENTRY_OF_HIGH_PULSE = ctk.CTkEntry(CURRENT_SOURCE_TIME_INPUTS_FRAME,placeholder_text="in Ampere...")
     ENTRY_OF_LOW_PULSE = ctk.CTkEntry(CURRENT_SOURCE_TIME_INPUTS_FRAME,placeholder_text="in Ampere...")
     ENTRY_OF_PULSE_WIDTH = ctk.CTkEntry(CURRENT_SOURCE_TIME_INPUTS_FRAME,placeholder_text="in Ampere...")
@@ -1412,5 +1426,19 @@ if __name__=="__main__":
 
     SYNC_SETTINGS()
     DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
+    root_width = 1
+    root_height = 1
+
+    def get_actual_dimensions():
+        global root_width, root_height
+        INTERFACE.update()  # Force update to ensure window is displayed
+        root_width = INTERFACE.winfo_width()
+        root_height = INTERFACE.winfo_height()
+        INTERFACE.geometry(CENTER_THE_WIDGET(root_width, root_height))
+
+    get_actual_dimensions()  # Call immediately to get dimensions after window is displayed
+
+
+    # INTERFACE.minsize(root_width,root_height)
     INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
     INTERFACE.mainloop()
