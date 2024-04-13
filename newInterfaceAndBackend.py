@@ -14,7 +14,6 @@ import time
 from datetime import datetime
 import os
 from os.path import exists
-import pyautogui
 import smtplib
 import pygame
 
@@ -24,7 +23,7 @@ DATA = {"ResVsTemp": ([], [])}
 def UPDATE_ANNOTATION(ind, annotations):
     x, y = PLOTTING_LINE.get_data()
     annotations.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
-    annotations.set_text("T : {}\nR : {} Ω".format(x[ind["ind"][0]], y[ind["ind"][0]]))
+    annotations.set_text("T : {}\nR : {} Ohm".format(x[ind["ind"][0]], y[ind["ind"][0]]))
     annotations.get_bbox_patch().set_alpha(0.4)
 
 def DISPLAY_ANNOTATION_WHEN_HOVER(event, annotations):
@@ -87,8 +86,7 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
         GRAPH.set_ylabel("RESISTANCE")
         if TIME_EXPERIMENT.get(): CHOOSE_TEMPERATURE_COMBOBOX.set("ResVsTemp")
 
-
-    pyautogui.press("h")
+    GRAPH.set_autoscale_on(True)
     GRAPH.relim()
     GRAPH.autoscale_view()
     CANVAS_OF_GRAPH.draw_idle()
@@ -96,6 +94,7 @@ def ADD_POINT_TO_GRAPH(NEW_X_COORDINATES, NEW_Y_COORDINATES, temp=None):
 def SAVE_THE_GRAPH_INTO(directory):
     for key in DATA: 
         PLOTTING_LINE.set_data(np.array(DATA[key][0]),np.array(DATA[key][1]))
+        GRAPH.set_autoscale_on(True)
         GRAPH.relim()
         GRAPH.autoscale_view()
         CANVAS_OF_GRAPH.draw_idle()
@@ -120,6 +119,7 @@ def UPDATE_GRAPH(*args):
         GRAPH.set_xlabel("TIME")
         GRAPH.set_ylabel("RESISTANCE")
 
+    GRAPH.set_autoscale_on(True)
     GRAPH.relim()
     GRAPH.autoscale_view()
     CANVAS_OF_GRAPH.draw_idle()
@@ -284,7 +284,7 @@ def SEND_COMMAND_TO_CURRENT_SOURCE(command):
             if command[-1] == '?':
                 return CURRENT_SOURCE.query(command)
             else:
-                SEND_COMMAND_TO_CURRENT_SOURCE(command)
+                CURRENT_SOURCE.write(command)
                 return
 
         except Exception as e:
@@ -411,7 +411,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
 def GET_RESISTANCES():
     data = SEND_COMMAND_TO_CURRENT_SOURCE("TRACE:DATA?")[:-1]
-
+    print(data)
     try:
         data = list(map(float, data.split(",")))
     except:
@@ -423,6 +423,8 @@ def GET_RESISTANCES():
     return resistance_readings, time_stamps
 
 def GET_PRESENT_RESISTANCE():
+    if TO_ABORT: return
+
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE ON")
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
     SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM")
@@ -439,6 +441,8 @@ def GET_PRESENT_RESISTANCE():
     return np.mean(resistance_readings)
 
 def GET_RESISTANCES_WITH_TIME_AT(temperature):
+    if TO_ABORT: return
+
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF")
     SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
     SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM"))
@@ -475,6 +479,7 @@ def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances, heading=0):
                 writer.writerow([TemperatureOrTime, resistance])
 
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
+    if TO_ABORT: return
 
     SEND_COMMAND_TO_CTC("outputEnable on")
 
@@ -491,20 +496,20 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
             PARAGRAPH.configure(text=str(DELAY_OF_CTC-i)+"s remaining...")
             time.sleep(1) 
 
-        if direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
+        if not TO_ABORT and direction==1 and (float(present_temperature) in ARRAY_OF_SELECTED_TEMPERATURES):
             HEADING.configure(text="Getting resistances vs Time...")
             PARAGRAPH.configure(text="")
             GET_RESISTANCES_WITH_TIME_AT(present_temperature)
             HEADING.configure(text="Completed!!")
             PARAGRAPH.configure(text="at current Temperature")
 
-        if TEMPERATURE_EXPERIMENT.get():
+        if not TO_ABORT and TEMPERATURE_EXPERIMENT.get():
             HEADING.configure(text="Getting present resistance of sample...")
             PARAGRAPH.configure(text="Waiting...")
             present_resistance = GET_PRESENT_RESISTANCE()
             HEADING.configure(text="Resistance of the sample is")
-            PARAGRAPH.configure(text=str(present_resistance)+" Ω...")
-            print("Resistance of the sample is", present_resistance, "Ω, at temperature", present_temperature, "K...")
+            PARAGRAPH.configure(text=str(present_resistance)+" Ohm...")
+            print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
 
             HEADING.configure(text="Points are added to")
             PARAGRAPH.configure(text="graph and CSV...")
@@ -814,7 +819,7 @@ def START_EXPERIMENT():
             DISPLAY_STOP_MUSIC_BUTTON()
             PLAY_MUSIC()
 
-        if EMAIL_SENT.get() : SEND_EMAIN_TO(SETTINGS["mail_id"])
+        if EMAIL_SENT.get() : SEND_EMAIL_TO(SETTINGS["mail_id"])
         
 
 
@@ -839,6 +844,7 @@ def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
     print("ABORTED!!")
+    SEND_COMMAND_TO_CTC("outputEnable off")
     is_armed = int(SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?"))
     if is_armed:
         SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
@@ -846,6 +852,7 @@ def ABORT_TRIGGER():
     PARAGRAPH.configure(text="")
     TRIGGER_BUTTON.configure(text= "Trigger", command=TRIGGER)
     PROGRESS_OPEN_BUTTON.place_forget()
+    CLOSE_PROGRESS_BAR()
     INTERFACE.update()
 
 def CONFIRM_TO_QUIT(): 
@@ -1007,7 +1014,7 @@ def OPEN_SETTINGS_WIDGET():
 def SHOW_INFO_OF_DEVICES(): 
 
     if CONNECT_INSTRUMENTS() :
-        SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND “*IDN?”')
+        SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND "*IDN?"')
         info_of_nanovoltmeter = SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
         info_of_current_source = str(SEND_COMMAND_TO_CURRENT_SOURCE("*IDN?"))
         info_of_ctc = str(SEND_COMMAND_TO_CTC("description?"))
@@ -1038,7 +1045,7 @@ def SET_SETTINGS(key,val):
     SETTINGS[key] = val
     WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
 
-def SEND_EMAIN_TO(email):
+def SEND_EMAIL_TO(email):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     message = """From: From System
@@ -1050,7 +1057,7 @@ def SEND_EMAIN_TO(email):
     Yours System.
     """
     try:
-        server.login('saipranaydeepjonnalagadda2888@gmail.com', 'password') # If your password doesn't work. Create an app password and then try that
+        server.login('saipranaydeepjonnalagadda2888@gmail.com', 'nrtjwumgsagpsmrc') # If your password doesn't work. Create an app password and then try that
 
         server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', email, message)
     except:
@@ -1058,7 +1065,7 @@ def SEND_EMAIN_TO(email):
 
 def PLAY_MUSIC():
     pygame.mixer.init()
-    pygame.mixer.music.load("Software-Project\completed.mp3")
+    pygame.mixer.music.load("completed.mp3")
     pygame.mixer.music.play(-1)
 
 def DISPLAY_STOP_MUSIC_BUTTON():
@@ -1071,7 +1078,7 @@ def DISPLAY_STOP_MUSIC_BUTTON():
     STOP_MUSIC_WIDGET.grid_columnconfigure(0, weight=1)
 
     ctk.CTkLabel(STOP_MUSIC_WIDGET, text="Experiment is Completed!!", font=("",16), text_color=("black", "white")).grid(row=0, column=0, pady=5)
-    BELL_IMAGE = ctk.CTkImage(Image.open('Software-Project\comp.png'), size=(150,150))
+    BELL_IMAGE = ctk.CTkImage(Image.open('comp.png'), size=(150,150))
     ctk.CTkLabel(STOP_MUSIC_WIDGET, image=BELL_IMAGE, text="").grid(row=1, column=0, pady=5)
     def STOP_MUSIC():
         pygame.mixer.music.stop()
