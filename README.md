@@ -11,7 +11,14 @@ change in temperature.
 
 ## Setting Up and Performing the Experiment
 - First, check if the connections are proper or not.
-  - Check if the RS-232 port, the GPIB port and the Telnet port are properly connected to the hardware.
+  - GPIB: current source to CPU
+  - RS-232: male-to-male between current source and nanovoltmeter
+  - Trigger link cable: between current source and nanovoltmeter
+  - Telnet: CTC to CPU
+  - GPIB interface is set for current source
+  - RS-232 interface is set for nanovoltmeter
+  - Baudrate of nanovoltmeter and current source should be 19.2 K
+  - Flow control on nanovoltmeter should be set to NONE 
 - Select the type of experiment you want to perform.
   - Resistance vs Time
   - Resistance vs Temperature
