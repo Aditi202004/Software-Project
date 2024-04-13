@@ -16,39 +16,56 @@ change in temperature.
   - Resistance vs Time
   - Resistance vs Temperature
   - Note: you can select both modes at the same time also.
-- Accordingly, input the values in the CTC setup.
-  - Title: the name of the file to be stored.
-  - Input channel: the channel through which input is provided.
-  - Output channel: the channel through which output will be recorded.
-  - Low limit: low limit of power (in Watts).
-  - High limit: high limit of power (in Watts).
-  - Increase by: the value by which power is to be increased (in Watts).
-  - Max limit: maximum power that CTC can supply to increase by any temperature (in Watts).
-  - P: P-value.
-  - I: I-value.
-  - D: D-value.
-  - Start temp: the temperature from which you wish to begin to take readings from (in Kelvin).
-  - Stop temp: the temperature at which you wish to stop the readings (in Kelvin).
-  - Increase temp by: interval by which temperature is to be increased (in Kelvin).
-  - Threshold: error allowed for achieving the final value of temperature at which reading is to be taken (in Kelvin).
-  - Tolerance: error allowed for stabilizing to the final value of temperature at which reading is to be taken (in Kelvin).
-  - Delay of CTC: delay after which CTC will start increasing the temperature (in seconds).
-  - Complete cycle: if this button is clicked, the experiment will perform both heating and cooling cycle.
-- Then, input the values in the resistance vs temperature setup.
+- Resistance vs Time mode
+  - Input for the CTC:
+    - Title: the name of the file to be stored.
+    - Input channel: the channel through which input is provided.
+    - Output channel: the channel through which output will be recorded.
+    - Low limit: low limit of power (in Watts).
+    - High limit: high limit of power (in Watts).
+    - Increase by: the value by which power is to be increased (in Watts).
+    - Max limit: maximum power that CTC can supply to increase by any temperature (in Watts).
+    - P: P-value.
+    - I: I-value.
+    - D: D-value.
+    - Threshold: error allowed for achieving the final value of temperature at which reading is to be taken (in Kelvin).
+    - Tolerance: error allowed for stabilizing to the final value of temperature at which reading is to be taken (in Kelvin).
+  - Input for current source:
+    - High pulse: value of high pulse (in Ampere).
+    - Low pulse: value of low pulse (in Ampere).
+    - Total time: total time for which resistance is to be plotted.
+    - Pulse width: wavelength of a single pulse (in seconds).
+    - Number of pulses per second: number of pulses that will pass through in one second.
   - Required temperatures: temperatures at which resistance is to be plotted.
-  - High pulse: value of high pulse (in Ampere).
-  - Low pulse: value of low pulse (in Ampere).
-  - Total time: total time for which resistance is to be plotted.
-  - Pulse width: wavelength of a single pulse (in seconds).
-  - Number of pulses per second: number of pulses that will pass through in one second.
-- Then, input the values in the resistance vs time setup.
-  - Start current: minimum value of current that will be passed.
-  - Stop current: maximum value of current that will be passed.
-  - Increase current by: value by which current will be increased from start to stop current.
-  - Delay of current source: delay after which current source will start supplying current to the sample.
+- Resistance vs Temperature mode
+  - Input for the CTC:
+    - Title: the name of the file to be stored.
+    - Input channel: the channel through which input is provided.
+    - Output channel: the channel through which output will be recorded.
+    - Low limit: low limit of power (in Watts).
+    - High limit: high limit of power (in Watts).
+    - Increase by: the value by which power is to be increased (in Watts).
+    - Max limit: maximum power that CTC can supply to increase by any temperature (in Watts).
+    - P: P-value.
+    - I: I-value.
+    - D: D-value.
+    - Start temp: the temperature from which you wish to begin to take readings from (in Kelvin).
+    - Stop temp: the temperature at which you wish to stop the readings (in Kelvin).
+    - Increase temp by: interval by which temperature is to be increased (in Kelvin).
+    - Threshold: error allowed for achieving the final value of temperature at which reading is to be taken (in Kelvin).
+    - Tolerance: error allowed for stabilizing to the final value of temperature at which reading is to be taken (in Kelvin).
+    - Delay of CTC: delay after which CTC will start increasing the temperature (in seconds).
+    - Complete cycle: if this button is clicked, the experiment will perform both heating and cooling cycle.
+  - Input for the current source:
+    - Start current: minimum value of current that will be passed.
+    - Stop current: maximum value of current that will be passed.
+    - Increase current by: value by which current will be increased from start to stop current.
+    - Delay of current source: delay after which current source will start supplying current to the sample.
+  - If both the modes are selected, give the inputs accordingly as stated above.
 - After that, click the Sync Set button to set all the values.
   - Note: you may also click the Sync Get button to use values from the previous experiment.
 - Then, click the Trigger button to begin the experiment.
+- If you wish to stop the experiment while it is still running, you can click the Abort button.
 
 ## Other Details
 - If you wish to receive an email on completion of the experiment, click the corresponding button in the CTC tab.
