@@ -25,10 +25,10 @@ change in temperature.
 
 ## Setting Up and Performing the Experiment
 - First, check if the connections are proper or not.
-  - GPIB: current source to CPU
-  - RS-232: male-to-male between current source and nanovoltmeter
-  - Trigger link cable: between current source and nanovoltmeter
-  - Telnet: CTC to CPU
+  - **GPIB**: current source to CPU
+  - **RS-232 (male-to-male)** cable between current source and nanovoltmeter
+  - **Trigger link cable**: between current source and nanovoltmeter
+  - **Telnet cable**: CTC to CPU
   - GPIB interface is set for current source
   - RS-232 interface is set for nanovoltmeter
   - Baudrate of nanovoltmeter and current source should be 19.2 K
@@ -36,8 +36,8 @@ change in temperature.
 - Select the type of experiment you want to perform.
   - Resistance vs Time
   - Resistance vs Temperature
-  - Note: you can select both modes at the same time also.
-- The different modes of the experiment have been explained further.
+  - Note: you can select both modes at the same time also. <br>
+  ( The different modes of the experiment have been explained further )
 - You may click the Info button to get information about all the three devices and to check if they are connected or not.
 - After that, click the Sync Set button to set all the values.
   - Note: you may also click the Sync Get button to use values from the previous experiment.
@@ -52,7 +52,7 @@ change in temperature.
 ## What are the different modes of the experiment?
 
 - Resistance vs Time mode
-  - Input for the CTC:
+  - Inputs for the CTC:
     - Title: the name of the file to be stored.
     - Input channel: the channel through which input is provided.
     - Output channel: the channel through which output will be recorded.
@@ -65,7 +65,7 @@ change in temperature.
     - D: D-value.
     - Threshold: error allowed for achieving the final value of temperature at which reading is to be taken (in Kelvin).
     - Tolerance: error allowed for stabilizing to the final value of temperature at which reading is to be taken (in Kelvin).
-  - Input for current source:
+  - Inputs for current source:
     - High pulse: value of high pulse (in Ampere).
     - Low pulse: value of low pulse (in Ampere).
     - Total time: total time for which resistance is to be plotted.
@@ -73,14 +73,14 @@ change in temperature.
     - Number of pulses per second: number of pulses that will pass through in one second.
   - Required temperatures: temperatures at which resistance is to be plotted.
 - Resistance vs Temperature mode
-  - Input for the CTC:
+  - Inputs for the CTC:
     - The input fields will be the same as resistance vs time mode, with the following extra input fields:
       - Start temp: the temperature from which you wish to begin to take readings from (in Kelvin).
       - Stop temp: the temperature at which you wish to stop the readings (in Kelvin).
       - Increase temp by: interval by which temperature is to be increased (in Kelvin).
       - Delay of CTC: delay after which CTC will start increasing the temperature (in seconds).
       - Complete cycle: if this button is clicked, the experiment will perform both heating and cooling cycle.
-  - Input for the current source:
+  - Inputs for the current source:
     - Start current: minimum value of current that will be passed.
     - Stop current: maximum value of current that will be passed.
     - Increase current by: value by which current will be increased from start to stop current.
