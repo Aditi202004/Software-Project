@@ -11,11 +11,11 @@ change in temperature.
 
 First, clone this repository on your device, using this command.
 
-git clone https://github.com/Aditi202004/Software-Project.git
+`git clone https://github.com/Aditi202004/Software-Project.git`
 
 Then, install the required python libraries using the following command.
 
-pip install requirements.txt
+`pip install requirements.txt`
 
 Then, run the file titled newInterfaceAndBackend.py
 
