@@ -411,7 +411,6 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature):
 
 def GET_RESISTANCES():
     data = SEND_COMMAND_TO_CURRENT_SOURCE("TRACE:DATA?")[:-1]
-    print(data)
     try:
         data = list(map(float, data.split(",")))
     except:
@@ -1080,22 +1079,25 @@ def SET_SETTINGS(key,val):
     WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE()
 
 def SEND_EMAIL_TO(email):
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    message = """From: From System
-    To: To Person <sir/madam@iiti.ac.in>
-    Subject: Experiment is Completed!!!
-
-    Master! Your Experiment is completed. Please Check it once!
-    Thank You,
-    Yours System.
-    """
     try:
-        server.login('saipranaydeepjonnalagadda2888@gmail.com', 'nrtjwumgsagpsmrc') # If your password doesn't work. Create an app password and then try that
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        message = """From: From System
+        To: To Person <sir/madam@iiti.ac.in>
+        Subject: Experiment is Completed!!!
 
-        server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', email, message)
+        Master! Your Experiment is completed. Please Check it once!
+        Thank You,
+        Yours System.
+        """
+        try:
+            server.login('saipranaydeepjonnalagadda2888@gmail.com', 'nrtjwumgsagpsmrc') # If your password doesn't work. Create an app password and then try that
+
+            server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', email, message)
+        except:
+            print("Mail not sent because of bad credentials...")
     except:
-        print("Mail does not send because of bad credentials...")
+        print("Mail not sent due to an unexpected error :(")
 
 def PLAY_MUSIC():
     pygame.mixer.init()

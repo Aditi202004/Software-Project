@@ -9,9 +9,9 @@ Subject: Experiment is Completed!!!
 
 Master! Your Experiment is completed... 
 """
-server.login('saipranaydeepjonnalagadda2888@gmail.com', 'password')
+server.login('saipranaydeepjonnalagadda2888@gmail.com', 'nrtjwumgsagpsmrc')
 
-server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', 'saipranaydeepjonnalagadda2888@gmail.com', message)
+server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', 'cse220001003@iiti.ac.in', message)
 
 
 
