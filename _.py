@@ -1035,7 +1035,7 @@ def SHOW_INFO_OF_DEVICES():
     INFO_WIDGET.grid_columnconfigure((0, 1), weight=1)
 
     nanovoltmeter = "Nanovoltmeter: " 
-    nanovoltmeter_label = ctk.CTkLabel(INFO_WIDGET, text=nanovoltmeter, text_color=("black", "white"),fg_color=("#b8dfff", "#4A4A4A"),we)
+    nanovoltmeter_label = ctk.CTkLabel(INFO_WIDGET, text=nanovoltmeter, text_color=("black", "white"),fg_color=("#b8dfff", "#4A4A4A"))
     nanovoltmeter_label.grid(row=0, column=0,  sticky="ew",padx=10,pady=5)
     nanovoltmeter_info="info of nanovoltmetergbcfghbvfgbvcfghbvfthbvftyhbvtyunbvfghbjh7yg"
     nanovoltmeter_entry = ctk.CTkLabel(INFO_WIDGET, text=nanovoltmeter_info, text_color=("black", "white"))
