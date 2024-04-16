@@ -9,6 +9,10 @@ precision in data collection. The resistance vs time mode plots the graph betwee
 with increasing time at a particular temperature. The resistance vs temperature mode plots the graph between resistance varying with
 change in temperature.
 
+First, clone this repository on your device, using this command.
+
+'git clone https://github.com/Aditi202004/Software-Project.git'
+
 ## Setting Up and Performing the Experiment
 - First, check if the connections are proper or not.
   - GPIB: current source to CPU
