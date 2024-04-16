@@ -5,12 +5,12 @@
 
 
 
-
+import random
 ####---------------------------------------- IMPORTS ----------------------------------------------####
 
 # Required imports for connecting the device
 
-import pyvisa, telnetlib
+# import pyvisa, telnetlib
 
 # Required imports for plotting the graph
 import matplotlib.pyplot as plt
@@ -47,7 +47,7 @@ DATA = {"ResVsTemp": ([], [])}
 def UPDATE_ANNOTATION(ind, annotations):
     x, y = PLOTTING_LINE.get_data()
     annotations.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
-    annotations.set_text("T : {}\nR : {} Ohm".format(x[ind["ind"][0]], y[ind["ind"][0]]))
+    annotations.set_text("T : {}\nR : {} Ω".format(x[ind["ind"][0]], y[ind["ind"][0]]))
     annotations.get_bbox_patch().set_alpha(0.4)
 
 # Function used to display the annotation when hover...
@@ -208,154 +208,95 @@ def SET_GRAPH_IN_TAB(GRAPH_TAB):
 
 # Function to check whether all the instruments are connected or not...
 def CONNECT_INSTRUMENTS(): 
-    global CURRENT_SOURCE, CTC
-
-    number_of_connected_devices = 0
-    retry_number = 0
-
-    while True:
-        try:
-            rm = pyvisa.ResourceManager()
-            CURRENT_SOURCE = rm.open_resource(SETTINGS["device_name"])
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","CURRENT_SOURCE(6221) is not connected to PC... Check its connections!!")
-                retry_number = 0
-                break
-            retry_number += 1
-
-    while True:
-        try:
-            CTC = telnetlib.Telnet(host = SETTINGS["CTC_Address"], port = int(SETTINGS["Telnet_Port"]), timeout = 10)
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","CTC is not connected to PC... Check its connections!")
-                retry_number = 0
-                break
-            retry_number += 1
-    
-    while True:
-        try:
-            SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
-            retry_number = 0
-            number_of_connected_devices += 1
-            break
-        except:
-            if retry_number == MAX_RETRY:
-                messagebox.showerror("Alert","NANOVOLTMETER(2182A) is not connected to CURRENT SOURCE(6221)... Check its connections!")
-                retry_number = 0
-                break
-            retry_number += 1
-
-    
-    if number_of_connected_devices == 3: 
-        return True 
-    else: 
-        return False
+    return True
 
 
 # Function to take data from all the instruments, display it on the GUI...
 def SYNC_GET():
     HEADING.text="Syncing Get..."
+    time.sleep(2)
     SHOW_PROGRESS_BAR()
     if CONNECT_INSTRUMENTS():
         input_channels_of_ctc = ['In 1', 'In 2', 'In 3', 'In 4']
         output_channels_of_ctc = ['Out 1', 'Out 2']
 
-        CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
+        # CHANNELS_LIST = SEND_COMMAND_TO_CTC('channel.list?').split("., ")
 
-        input_channels_of_ctc.clear() 
-        output_channels_of_ctc.clear()
+        # input_channels_of_ctc.clear() 
+        # output_channels_of_ctc.clear()
 
-        input_channels_of_ctc = [channel for channel in CHANNELS_LIST if channel.startswith('I')]
-        output_channels_of_ctc = [channel for channel in CHANNELS_LIST if not channel.startswith('I')]
+        # input_channels_of_ctc = [channel for channel in CHANNELS_LIST if channel.startswith('I')]
+        # output_channels_of_ctc = [channel for channel in CHANNELS_LIST if not channel.startswith('I')]
 
         if ENTRY_OF_INPUT_CHANNEL.get() == "":
             ENTRY_OF_INPUT_CHANNEL.set(input_channels_of_ctc[0])
         if ENTRY_OF_OUTPUT_CHANNEL.get() == "":
             ENTRY_OF_OUTPUT_CHANNEL.set(output_channels_of_ctc[0])
 
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.LowLmt?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_POWER_LIMIT, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get()+'.HiLmt?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_POWER_LIMIT, 0)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_POWER_LIMIT, 4)
 
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_P_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.P?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_I_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.I?"'))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_D_VALUE_OF_CTC, SEND_COMMAND_TO_CTC('"' + ENTRY_OF_OUTPUT_CHANNEL.get() + '.PID.D?"'))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_P_VALUE_OF_CTC, 1)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_I_VALUE_OF_CTC, 1)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_D_VALUE_OF_CTC, 1)
 
 
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:HIGH?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_PULSE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:LOW?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_WIDTH, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:WIDT?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:INT?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_HIGH_PULSE, 0.001)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_LOW_PULSE, 0)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_PULSE_WIDTH, 1)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND, 5)
 
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_START_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STAR?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_STOP_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STOP?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STEP?"))
-        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_DELAY_OF_CURRENT_SOURCE, SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:DEL?"))
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_START_CURRENT, 0.001)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_STOP_CURRENT, 0.0015)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT, 0.0001)
+        DISPLAY_VALUE_IN_ENTRY_BOX(ENTRY_OF_DELAY_OF_CURRENT_SOURCE, 1)
     
     CLOSE_PROGRESS_BAR()
 
 
 # Function to convert the command to correct format, which CTC will understand and sends it to CTC...
-def SEND_COMMAND_TO_CTC(command): 
-    retry_number = 0 
+# def SEND_COMMAND_TO_CTC(command): 
+#     retry_number = 0 
 
-    while(retry_number < MAX_RETRY):
+#     while(retry_number < MAX_RETRY):
 
-        try:
-            CTC.write((command+'\n').encode())
-            return CTC.read_until(b"\n",1).decode('ascii')
+#         try:
+#             CTC.write((command+'\n').encode())
+#             return CTC.read_until(b"\n",1).decode('ascii')
 
-        except Exception as e:
-            print(f"Error occurred while sending command to CTC: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5)
+#         except Exception as e:
+#             print(f"Error occurred while sending command to CTC: {e}... Retrying")
+#             retry_number += 1
+#             time.sleep(0.5)
             
-    raise Exception("OOPS!!! Couldn't send command to CTC even after maximun number of tries")
+#     raise Exception("OOPS!!! Couldn't send command to CTC even after maximun number of tries")
 
 
 # Function to convert the command to correct format, which Current Source will understand and sends it to Current Source...
-def SEND_COMMAND_TO_CURRENT_SOURCE(command):
+# def SEND_COMMAND_TO_CURRENT_SOURCE(command):
 
-    retry_number = 0 
-    while(retry_number < MAX_RETRY):
+#     retry_number = 0 
+#     while(retry_number < MAX_RETRY):
 
-        try:
-            if command[-1] == '?':
-                return CURRENT_SOURCE.query(command)
-            else:
-                CURRENT_SOURCE.write(command)
-                return
+#         try:
+#             if command[-1] == '?':
+#                 return CURRENT_SOURCE.query(command)
+#             else:
+#                 CURRENT_SOURCE.write(command)
+#                 return
 
-        except Exception as e:
-            print(f"Error occurred while sending command to Current Source: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5)
+#         except Exception as e:
+#             print(f"Error occurred while sending command to Current Source: {e}... Retrying")
+#             retry_number += 1
+#             time.sleep(0.5)
             
-    raise Exception("OOPS!!! Couldn't send command to Current Source even after maximum number of tries")
+#     raise Exception("OOPS!!! Couldn't send command to Current Source even after maximum number of tries")
 
 
 # Function to get the current temperature of sample from ctc...
 def GET_PRESENT_TEMPERATURE_OF_CTC():  
-    retry_number = 0
-    while(retry_number < MAX_RETRY):
-
-        try:
-            return float(SEND_COMMAND_TO_CTC('"channel.'+INPUT_CHANNEL_OF_CTC+'?"'))
-        
-        except Exception as e:
-            print(f"Error occurred while getting temperature of CTC: {e}... Retrying")
-            retry_number += 1
-            time.sleep(0.5)
-
-    raise Exception("Couldn't get temperature from ctc!") 
-
+    inp = input("enter curr temp: ")
+    return float(inp)
 
 # Function to Achieve and Stabilize required temperature...
 def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature, direction): 
@@ -367,7 +308,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature, direction):
     print("===> Achieving", str(required_temperature), "K...")
 
 
-    SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature))
+    # SEND_COMMAND_TO_CTC('"'+OUTPUT_CHANNEL_OF_CTC+'.PID.Setpoint" '+str(required_temperature))
 
     retry_number = 0
     temperature_before_stabilizing = GET_PRESENT_TEMPERATURE_OF_CTC()
@@ -403,20 +344,17 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature, direction):
                 time.sleep(5)
 
             elif HIGH_POWER_LIMIT_OF_CTC + INCREASE_POWER_LIMIT_OF_CTC <= MAXIMUM_POWER_LIMIT_OF_CTC :
+                HIGH_POWER_LIMIT_OF_CTC += INCREASE_POWER_LIMIT_OF_CTC
+                # SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
 
-                if present_temperature <= temperature_before_stabilizing :
+                HEADING.configure(text=str(required_temperature)+" K is not achieving...")
+                PARAGRAPH.configure(text="Increasing high power limit of CTC...")
+                print(required_temperature," K is not achieving by current high power limit of CTC...")
+                print("So, Increased high power limit of CTC by "+str(INCREASE_POWER_LIMIT_OF_CTC)," W...")
+                print("New High power limit of CTC is ", HIGH_POWER_LIMIT_OF_CTC,"...")
 
-                    HIGH_POWER_LIMIT_OF_CTC += INCREASE_POWER_LIMIT_OF_CTC
-                    SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC))
-
-                    HEADING.configure(text=str(required_temperature)+" K is not achieving...")
-                    PARAGRAPH.configure(text="Increasing high power limit of CTC...")
-                    print(required_temperature," K is not achieving by current high power limit of CTC...")
-                    print("So, Increased high power limit of CTC by "+str(INCREASE_POWER_LIMIT_OF_CTC)," W...")
-                    print("New High power limit of CTC is ", HIGH_POWER_LIMIT_OF_CTC,"...")
-
-                    retry_number = 0 
-                    temperature_before_stabilizing = present_temperature
+                retry_number = 0 
+                temperature_before_stabilizing = present_temperature
 
             else:
                 messagebox.showwarning("Alert","Cannot Achieve all the temperatures by given Maximum limit of Power!!")
@@ -446,7 +384,7 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature, direction):
             if present_temperature > maximum_temperature: maximum_temperature = present_temperature
             if present_temperature < minimum_temperature: minimum_temperature = present_temperature
             
-            time.sleep(10)
+            # time.sleep(10)
 
             retry_number += 1
 
@@ -466,14 +404,14 @@ def ACHIEVE_AND_STABILIZE_TEMPERATURE(required_temperature, direction):
 
 # Function to get resistance at a particular instant...
 def GET_RESISTANCES():
-    data = SEND_COMMAND_TO_CURRENT_SOURCE("TRACE:DATA?")[:-1]
-    try:
-        data = list(map(float, data.split(",")))
-    except:
-        HEADING.configure(text="Not retrieved in last 5 seconds...")
-        return [],[]
-    resistance_readings = data[::2]
-    time_stamps = data[1::2]
+    # data = SEND_COMMAND_TO_CURRENT_SOURCE("TRACE:DATA?")[:-1]
+    # try:
+    #     data = list(map(float, data.split(",")))
+    # except:
+    #     HEADING.configure(text="Not retrieved in last 5 seconds...")
+    #     return [],[]
+    resistance_readings = random.sample(range(10, 30), 10)
+    time_stamps = random.sample(range(10, 30), 10)
 
     return resistance_readings, time_stamps
 
@@ -482,9 +420,12 @@ def GET_RESISTANCES():
 def GET_PRESENT_RESISTANCE():
     if TO_ABORT: return
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE ON")
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
-    SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE ON")
+    print("sweep mode on")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
+    print("armed")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("INIT:IMM")
+    print("triggered")
 
     NUMBER_OF_CURRENT_INTERVALS = (STOP_CURRENT-START_CURRENT)/INCREASING_INTERVAL_OF_CURRENT
     for i in range(int(NUMBER_OF_CURRENT_INTERVALS + 0.5)):
@@ -493,7 +434,9 @@ def GET_PRESENT_RESISTANCE():
         PARAGRAPH.configure(text=str(int(NUMBER_OF_CURRENT_INTERVALS+0.5-i))+" sec remaining..")
         time.sleep(1)
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+    print("aborted")
+    time.sleep(1)
     resistance_readings, _ = GET_RESISTANCES()
     return np.mean(resistance_readings)
 
@@ -502,9 +445,10 @@ def GET_PRESENT_RESISTANCE():
 def GET_RESISTANCES_WITH_TIME_AT(temperature):
     if TO_ABORT: return
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF")
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
-    SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM"))
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SWE OFF")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM")
+    # SEND_COMMAND_TO_CURRENT_SOURCE(("INIT:IMM"))
+    print("armed and triggered")
     time.sleep(1.5)
 
     present_time = 0
@@ -524,7 +468,9 @@ def GET_RESISTANCES_WITH_TIME_AT(temperature):
         ADD_POINT_TO_GRAPH(time_stamps[index_of_last_update:], resistance_readings[index_of_last_update:], str(temperature))
         index_of_last_update = len(resistance_readings)
 
-    SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+    print("sweep aborted")
+    time.sleep(1)
 
 
 # Function to write the temperature and resistance values into csv file
@@ -544,7 +490,8 @@ def WRITE_DATA_TO(filename, TemperatureOrTimes, resistances, heading=0):
 def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
     if TO_ABORT: return
 
-    SEND_COMMAND_TO_CTC("outputEnable on")
+    # SEND_COMMAND_TO_CTC("outputEnable on")
+    print("enable on")
 
     filename = "Resistance_vs_Temperature.csv" 
     WRITE_DATA_TO(filename, "Temperature(K)", "Resistance(Ohm)", 1)
@@ -571,15 +518,17 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
             PARAGRAPH.configure(text="Waiting...")
             present_resistance = GET_PRESENT_RESISTANCE()
             HEADING.configure(text="Resistance of the sample is")
-            PARAGRAPH.configure(text=str(present_resistance)+" Ohm...")
-            print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
+            PARAGRAPH.configure(text=str(present_resistance)+" Ω...")
+            print("Resistance of the sample is", present_resistance, "Ω, at temperature", present_temperature, "K...")
 
             HEADING.configure(text="Points are added to")
             PARAGRAPH.configure(text="graph and CSV...")
             WRITE_DATA_TO(filename, [present_temperature], [present_resistance])
             ADD_POINT_TO_GRAPH([present_temperature], [present_resistance])
 
-    SEND_COMMAND_TO_CTC("outputEnable off")
+    # SEND_COMMAND_TO_CTC("outputEnable off")
+    print("enable off")
+    time.sleep(1)
 
 
 # Function to update the combobox with temperature values in Time vs Resistance experiment as they are added by the user...
@@ -623,14 +572,14 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         HIGH_POWER_LIMIT_OF_CTC = float(ENTRY_OF_HIGH_POWER_LIMIT.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC)) 
+        # SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.HiLmt" ' + str(HIGH_POWER_LIMIT_OF_CTC)) 
     except:
         messagebox.showwarning("Alert","Invalid Input for: High Limit !")
         return False
 
     try:
         LOW_POWER_LIMIT_OF_CTC = float(ENTRY_OF_LOW_POWER_LIMIT.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.LowLmt" ' + str(LOW_POWER_LIMIT_OF_CTC))
+        # SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.LowLmt" ' + str(LOW_POWER_LIMIT_OF_CTC))
     except:
         messagebox.showwarning("Alert","Invalid Input for: Low Limit !")
         return False
@@ -649,21 +598,21 @@ def CHECK_AND_SET_ALL_VALUES():
 
     try:
         P_VALUE_OF_CTC = float(ENTRY_OF_P_VALUE_OF_CTC.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.PID.P" ' + str(P_VALUE_OF_CTC))
+        # SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.PID.P" ' + str(P_VALUE_OF_CTC))
     except:
         messagebox.showwarning("Alert","Invalid Input for P !")
         return False
     
     try:
         I_VALUE_OF_CTC = float(ENTRY_OF_I_VALUE_OF_CTC.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.PID.I" ' + str(I_VALUE_OF_CTC))
+        # SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.PID.I" ' + str(I_VALUE_OF_CTC))
     except:
         messagebox.showwarning("Alert","Invalid Input for I !")
         return False
     
     try:
         D_VALUE_OF_CTC = float(ENTRY_OF_D_VALUE_OF_CTC.get())
-        SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.PID.D" ' + str(D_VALUE_OF_CTC))
+        # SEND_COMMAND_TO_CTC('"' + OUTPUT_CHANNEL_OF_CTC + '.PID.D" ' + str(D_VALUE_OF_CTC))
     except:
         messagebox.showwarning("Alert","Invalid Input for D !")
         return False
@@ -708,33 +657,33 @@ def CHECK_AND_SET_ALL_VALUES():
         messagebox.showwarning("Alert","Invalid Input for Tolerance!")
         return False
     
-    SEND_COMMAND_TO_CURRENT_SOURCE("TRAC:CLE")
-    SEND_COMMAND_TO_CURRENT_SOURCE("UNIT:VOLT:DC OHMS")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("TRAC:CLE")
+    # SEND_COMMAND_TO_CURRENT_SOURCE("UNIT:VOLT:DC ΩS")
 
     if TEMPERATURE_EXPERIMENT.get():
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR 1e-4")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:COUN 1")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:RANG BEST")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:CAB OFF")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:SPAC LIN")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR 1e-4")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:COUN 1")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:RANG BEST")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:CAB OFF")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:SPAC LIN")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:COMP 100")
 
         try:
             START_CURRENT = float(ENTRY_OF_START_CURRENT.get())
-            if START_CURRENT >= 1:
-                messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
-                return False
-            SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STAR " + str(START_CURRENT))
+            # if START_CURRENT >= 1:
+            #     messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+            #     return False
+            # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STAR " + str(START_CURRENT))
         except:
             messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
             return False
         
         try:
             STOP_CURRENT = float(ENTRY_OF_STOP_CURRENT.get())
-            if not STOP_CURRENT < 1:
-                messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
-                return False
-            SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STOP " + str(STOP_CURRENT))
+            # if not STOP_CURRENT < 1:
+            #     messagebox.showwarning("Alert!", "Enter the Current value less than 1 Ampere !")
+            #     return False
+            # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STOP " + str(STOP_CURRENT))
         except:
             messagebox.showwarning("Alert","Invalid Input for Start Current Value!")
             return False
@@ -742,14 +691,14 @@ def CHECK_AND_SET_ALL_VALUES():
         
         try:
             INCREASING_INTERVAL_OF_CURRENT = float(ENTRY_OF_INCREASING_INTERVAL_OF_CURRENT.get())
-            SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STEP " + str(INCREASING_INTERVAL_OF_CURRENT))
+            # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:CURR:STEP " + str(INCREASING_INTERVAL_OF_CURRENT))
         except:
             messagebox.showwarning("Alert","Invalid Input for Increase Current Interval at a Temperature!")
             return False
 
         try:
             DELAY_OF_CURRENT_SOURCE = float(ENTRY_OF_DELAY_OF_CURRENT_SOURCE.get())
-            SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:DEL " + str(DELAY_OF_CURRENT_SOURCE))
+            # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:DEL " + str(DELAY_OF_CURRENT_SOURCE))
         except:
             messagebox.showwarning("Alert","Invalid Input for Avg Delay!")
             return False
@@ -758,48 +707,48 @@ def CHECK_AND_SET_ALL_VALUES():
 
     if TIME_EXPERIMENT.get():
 
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SDEL 16e-6")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:COUN INF")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:RANG BEST")
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:LME 2")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:SDEL 16e-6")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:COUN INF")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:RANG BEST")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:LME 2")
 
         try:
             HIGH_PULSE = float(ENTRY_OF_HIGH_PULSE.get())
-            if abs(HIGH_PULSE) > 105e-3:
-                messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
-                return False
-            SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:HIGH " + str(HIGH_PULSE)))
+            # if abs(HIGH_PULSE) > 105e-3:
+            #     messagebox.showwarning("Alert!", "Enter the High Pulse in range [-105e-3 to 105e-3] A!")
+            #     return False
+            # SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:HIGH " + str(HIGH_PULSE)))
         except:
             messagebox.showwarning("Alert","Invalid Input for High Pulse Value!")
             return False
         
         try:
             LOW_PULSE = float(ENTRY_OF_LOW_PULSE.get())
-            if abs(LOW_PULSE) > 105e-3:
-                messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
-                return False
-            SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:LOW " + str(LOW_PULSE)))
+            # if abs(LOW_PULSE) > 105e-3:
+            #     messagebox.showwarning("Alert!", "Enter the Low Pulse in range [-105e-3 to 105e-3] A!")
+            #     return False
+            # SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:LOW " + str(LOW_PULSE)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Low Pulse Value!")
             return False
         
         try:
             PULSE_WIDTH = float(ENTRY_OF_PULSE_WIDTH.get())
-            if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
-                messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
-                return False
-            SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:WIDT " + str(PULSE_WIDTH)))
+            # if PULSE_WIDTH > 12e-3 or PULSE_WIDTH < 50e-6:
+            #     messagebox.showwarning("Alert!", "Enter the Pulse Width in range [50e-6 to 12e-3] A!")
+            #     return False
+            # SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:WIDT " + str(PULSE_WIDTH)))
         except:
             messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
             return False
         
         try:
             NUMBER_OF_PULSES_PER_SECOND = float(ENTRY_OF_NUMBER_OF_PULSES_PER_SECOND.get())
-            if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
-                messagebox.showwarning("Alert!", "Enter the number of pulses in range [1 to 12] A!")
-                return False
+            # if NUMBER_OF_PULSES_PER_SECOND > 12 or NUMBER_OF_PULSES_PER_SECOND < 1:
+            #     messagebox.showwarning("Alert!", "Enter the number of pulses in range [1 to 12] A!")
+            #     return False
             
-            SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:INT " + str(int(50/NUMBER_OF_PULSES_PER_SECOND))))
+            # SEND_COMMAND_TO_CURRENT_SOURCE(("SOUR:PDEL:INT " + str(int(50/NUMBER_OF_PULSES_PER_SECOND))))
         except:
             messagebox.showwarning("Alert","Invalid Input for Pulse Width Value!")
             return False
@@ -889,7 +838,7 @@ def START_EXPERIMENT():
         DISPLAY_STOP_MUSIC_BUTTON()
         PLAY_MUSIC()
 
-        if EMAIL_SENT.get() : SEND_EMAIL_TO(SETTINGS["mail_id"])
+        if EMAIL_SEND.get() : SEND_EMAIL_TO(SETTINGS["mail_id"])
         
 
 # Function to trigger the Experiment... 
@@ -915,10 +864,12 @@ def ABORT_TRIGGER():
     global TO_ABORT
     TO_ABORT = True
     print("ABORTED!!")
-    SEND_COMMAND_TO_CTC("outputEnable off")
-    is_armed = int(SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:PDEL:ARM?"))
+    # SEND_COMMAND_TO_CTC("outputEnable off")
+    print("output off")
+    is_armed = 1
     if is_armed:
-        SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+        # SEND_COMMAND_TO_CURRENT_SOURCE("SOUR:SWE:ABOR")
+        print("arming off")
     HEADING.configure(text="ABORTED!!!!")
     PARAGRAPH.configure(text="")
     TRIGGER_BUTTON.configure(text= "Trigger", command=TRIGGER)
@@ -1040,7 +991,7 @@ def OPEN_SETTINGS_WIDGET():
     GPIB_LABEL.grid(row=0, column=0, padx=5, pady=5, sticky="e")
 
     ENTRY_OF_DEVICE = ctk.StringVar(value = SETTINGS["device_name"])
-    cabels_available = pyvisa.ResourceManager().list_resources()
+    cabels_available = ["hi1", "hi2", "hi3"]
 
     DROPDOWN_OF_GPIB_DEVICE = ctk.CTkComboBox(SETTINGS_WIDGET, variable = ENTRY_OF_DEVICE, values = cabels_available, state="readonly")
     DROPDOWN_OF_GPIB_DEVICE.grid(row=0, column=1, padx=5, pady=5, sticky="w")
@@ -1114,12 +1065,12 @@ def SHOW_INFO_OF_DEVICES():
     ctc_info=""
 
     if CONNECT_INSTRUMENTS():
-        SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND "*IDN?"')
-        nanovoltmeter_info = SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')
+        # SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:SEND "*IDN?"')
+        nanovoltmeter_info = "SEND_COMMAND_TO_CURRENT_SOURCE('SYST:COMM:SER:ENT?')"
 
-        current_source_info = str(SEND_COMMAND_TO_CURRENT_SOURCE("*IDN?"))
+        current_source_info = "str(SEND_COMMAND_TO_CURRENT_SOURCE())"
 
-        ctc_info = str(SEND_COMMAND_TO_CTC("description?"))
+        ctc_info = "str(SEND_COMMAND_TO_CTC())"
 
     nanovoltmeter = "Nanovoltmeter: " 
     nanovoltmeter_label = ctk.CTkLabel(INFO_WIDGET, text=nanovoltmeter, text_color=("black", "white"),fg_color=("#b8dfff", "#4A4A4A"))
@@ -1186,8 +1137,10 @@ def SEND_EMAIL_TO(email):
         Yours System.
         """
         try:
-            server.login('saipranaydeepjonnalagadda2888@gmail.com', 'nrtjwumgsagpsmrc') # If your password doesn't work. Create an app password and then try that
-
+            try:
+                server.login('saipranaydeepjonnalagadda2888@gmail.com', 'password') # If your password doesn't work. Create an app password and then try that
+            except:
+                print("please enter your password in the function SEND_EMAIL_TO(email)")
             server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', email, message)
         except:
             print("Mail not sent because of bad credentials...")
@@ -1419,8 +1372,8 @@ if __name__=="__main__":
     FRAME_OPTIONS.rowconfigure(0, weight=1)
     COMPLETE_CYCLE = IntVar(value=0)
     COMPLETE_CYCLE_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Complete Cycle", variable=COMPLETE_CYCLE, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4",font=text_font)
-    EMAIL_SENT = IntVar(value=0)
-    SEND_EMAIL_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Send Email", variable=EMAIL_SENT, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4", font=text_font)
+    EMAIL_SEND = IntVar(value=0)
+    SEND_EMAIL_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Send Email", variable=EMAIL_SEND, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4", font=text_font)
 
     def DISPLAY_TEMPERATURE_INPUTS():
         LABEL_OF_START_TEMPERATURE.grid(row=0, column=0, sticky="e",padx=5, pady=5)
