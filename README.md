@@ -9,15 +9,19 @@ precision in data collection. The resistance vs time mode plots the graph betwee
 with increasing time at a particular temperature. The resistance vs temperature mode plots the graph between resistance varying with
 change in temperature.
 
-First, clone this repository on your device, using this command.
+## How to Get This Software on Your Device?
 
-`git clone https://github.com/Aditi202004/Software-Project.git`
+- First, clone this repository on your device, using this command.
 
-Then, install the required python libraries using the following command.
+  `git clone https://github.com/Aditi202004/Software-Project.git`
 
-`pip install requirements.txt`
+- Then, install the required python libraries using the following command.
 
-Then, run the file titled `newInterfaceAndBackend.py`
+  `pip install requirements.txt`
+
+- Then, run the file titled 
+
+  `newInterfaceAndBackend.py`
 
 ## Setting Up and Performing the Experiment
 - First, check if the connections are proper or not.
