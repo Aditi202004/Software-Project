@@ -10,7 +10,7 @@
 
 # Required imports for connecting the device
 
-# import pyvisa, telnetlib
+import pyvisa, telnetlib
 
 # Required imports for plotting the graph
 import matplotlib.pyplot as plt
@@ -1186,9 +1186,9 @@ def SEND_EMAIL_TO(email):
         Yours System.
         """
         try:
-            server.login('saipranaydeepjonnalagadda2888@gmail.com', 'nrtjwumgsagpsmrc') # If your password doesn't work. Create an app password and then try that
+            server.login('email', 'password') # If your password doesn't work. Create an app password and then try that
 
-            server.sendmail('saipranaydeepjonnalagadda2888@gmail.com', email, message)
+            server.sendmail('email', email, message)
         except:
             print("Mail not sent because of bad credentials...")
     except:
@@ -1416,9 +1416,9 @@ if __name__=="__main__":
     FRAME_OPTIONS.columnconfigure((0,1,2,3), weight=1)
     FRAME_OPTIONS.rowconfigure(0, weight=1)
     COMPLETE_CYCLE = IntVar(value=0)
-    COMPLETE_CYCLE_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Complete Cycle", variable=COMPLETE_CYCLE, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4",font=text_font)
+    COMPLETE_CYCLE_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Complete Cycle", variable=COMPLETE_CYCLE, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="white", progress_color="#1F69A4",font=text_font)
     EMAIL_SENT = IntVar(value=0)
-    SEND_EMAIL_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Send Email", variable=EMAIL_SENT, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="#297399", progress_color="#1F69A4", font=text_font)
+    SEND_EMAIL_CHECKBUTTON = ctk.CTkSwitch(FRAME_OPTIONS, text="Send Email", variable=EMAIL_SENT, onvalue=1, offvalue=1, button_color=("black", "white"), fg_color="white", progress_color="#1F69A4", font=text_font)
 
     def DISPLAY_TEMPERATURE_INPUTS():
         LABEL_OF_START_TEMPERATURE.grid(row=0, column=0, sticky="e",padx=5, pady=5)
@@ -1510,12 +1510,9 @@ if __name__=="__main__":
     SYNC_SETTINGS()
     DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
 
-    width_percent = 0.5
-    height_percent = 0.65
-
     # INTERFACE.update()  # Force update to ensure window is displayed
 
-    INTERFACE.geometry(CENTER_THE_WIDGET(width_percent,height_percent))
+    INTERFACE.geometry(CENTER_THE_WIDGET(0.55,0.775))
 
 
     INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)

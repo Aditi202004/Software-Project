@@ -982,13 +982,15 @@ def WRITE_CHANGES_IN_SETTINGS_TO_SETTINGS_FILE():
 
 
 # Function to get the geometry of the widget to set at the center...
-def CENTER_THE_WIDGET(window_width,window_height): 
-
+def CENTER_THE_WIDGET(width_percent, height_percent):
     screen_width = INTERFACE.winfo_screenwidth()
     screen_height = INTERFACE.winfo_screenheight()
 
-    x_coordinate = int((screen_width/2) - (window_width/2))
-    y_coordinate = int((screen_height/2) - (window_height/2))
+    window_width = int(screen_width * width_percent)
+    window_height = int(screen_height * height_percent)
+
+    x_coordinate = int((screen_width - window_width) / 1.5)
+    y_coordinate = int((screen_height - window_height) / 2)
 
     return "{}x{}+{}+{}".format(window_width, window_height, x_coordinate, y_coordinate)
 
@@ -1005,8 +1007,8 @@ def DISPLAY_SELECTING_EXPERIMENTS_WIDGET():
     global TIME_EXPERIMENT, TEMPERATURE_EXPERIMENT
 
     SELECTING_EXP_WIDGET = ctk.CTkToplevel(INTERFACE)
-    SELECTING_EXP_WIDGET_Temp_width = 350
-    SELECTING_EXP_WIDGET_Temp_height = 200
+    SELECTING_EXP_WIDGET_Temp_width = 0.3
+    SELECTING_EXP_WIDGET_Temp_height = 0.3
     SELECTING_EXP_WIDGET.title("Choose Experiment(s)")
     SELECTING_EXP_WIDGET.geometry(CENTER_THE_WIDGET(SELECTING_EXP_WIDGET_Temp_width, SELECTING_EXP_WIDGET_Temp_height))
     SELECTING_EXP_WIDGET.grid_rowconfigure((0,1,2,3), weight=1)
@@ -1063,8 +1065,8 @@ def OPEN_SETTINGS_WIDGET():
 
     SETTINGS_WIDGET = ctk.CTkToplevel(INTERFACE)
     SETTINGS_WIDGET.title("Settings")
-    SETTINGS_WIDGET_width=325
-    SETTINGS_WIDGET_height=350
+    SETTINGS_WIDGET_width=0.3
+    SETTINGS_WIDGET_height=0.33
     SETTINGS_WIDGET.geometry(CENTER_THE_WIDGET(SETTINGS_WIDGET_width,SETTINGS_WIDGET_height))
     SETTINGS_WIDGET.grid_rowconfigure((0,1,2,3,4,5,6,7),weight=1)
     SETTINGS_WIDGET.grid_columnconfigure((0,1),weight=1)
@@ -1136,8 +1138,8 @@ def SHOW_INFO_OF_DEVICES():
 
     INFO_WIDGET = ctk.CTkToplevel(INTERFACE)
     INFO_WIDGET.title("Info")
-    INFO_WIDGET_width = 430
-    INFO_WIDGET_height = 250
+    INFO_WIDGET_width = 0.4
+    INFO_WIDGET_height = 0.3
     INFO_WIDGET.geometry(CENTER_THE_WIDGET(INFO_WIDGET_width, INFO_WIDGET_height))
     INFO_WIDGET.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
     INFO_WIDGET.grid_columnconfigure((0, 1), weight=1)
@@ -1238,8 +1240,8 @@ def PLAY_MUSIC():
 # Function to stop the display of music button...
 def DISPLAY_STOP_MUSIC_BUTTON():
     STOP_MUSIC_WIDGET = ctk.CTkToplevel(INTERFACE)
-    STOP_MUSIC_WIDGET_Temp_width = 350
-    STOP_MUSIC_WIDGET_Temp_height = 250
+    STOP_MUSIC_WIDGET_Temp_width = 0.3
+    STOP_MUSIC_WIDGET_Temp_height = 0.25
     STOP_MUSIC_WIDGET.overrideredirect(True)
     STOP_MUSIC_WIDGET.geometry(CENTER_THE_WIDGET(STOP_MUSIC_WIDGET_Temp_width, STOP_MUSIC_WIDGET_Temp_height))
     STOP_MUSIC_WIDGET.grid_rowconfigure((0,1,2), weight=1)
@@ -1263,7 +1265,6 @@ if __name__=="__main__":
 
     INTERFACE = ctk.CTk()
 
-    INTERFACE.geometry("700x600")
     INTERFACE.minsize(675, 480)
     INTERFACE.title("Resistance Plotter")
     INTERFACE.columnconfigure(0, weight=6, uniform='a')
@@ -1544,12 +1545,11 @@ if __name__=="__main__":
 
     SYNC_SETTINGS()
     DISPLAY_SELECTING_EXPERIMENTS_WIDGET()
-    root_width = 1
-    root_height = 1
+    
+    width_percent = 0.5
+    height_percent = 0.65
 
-
-    INTERFACE.update()  # Force update to ensure window is displayed
-    INTERFACE.geometry(CENTER_THE_WIDGET(700, 600))
+    INTERFACE.geometry(CENTER_THE_WIDGET(width_percent,height_percent))
 
 
     INTERFACE.protocol("WM_DELETE_WINDOW", CONFIRM_TO_QUIT)
