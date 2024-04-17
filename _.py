@@ -47,7 +47,7 @@ DATA = {"ResVsTemp": ([], [])}
 def UPDATE_ANNOTATION(ind, annotations):
     x, y = PLOTTING_LINE.get_data()
     annotations.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
-    annotations.set_text("T : {}\nR : {} Ohm".format(x[ind["ind"][0]], y[ind["ind"][0]]))
+    annotations.set_text("T : {}\nR : {} Ω".format(x[ind["ind"][0]], y[ind["ind"][0]]))
     annotations.get_bbox_patch().set_alpha(0.4)
 
 # Function used to display the annotation when hover...
@@ -571,8 +571,8 @@ def GET_RESISTANCE_AT_ALL_TEMPERATURES(direction):
             PARAGRAPH.configure(text="Waiting...")
             present_resistance = GET_PRESENT_RESISTANCE()
             HEADING.configure(text="Resistance of the sample is")
-            PARAGRAPH.configure(text=str(present_resistance)+" Ohm...")
-            print("Resistance of the sample is", present_resistance, "Ohm, at temperature", present_temperature, "K...")
+            PARAGRAPH.configure(text=str(present_resistance)+" Ω...")
+            print("Resistance of the sample is", present_resistance, "Ω, at temperature", present_temperature, "K...")
 
             HEADING.configure(text="Points are added to")
             PARAGRAPH.configure(text="graph and CSV...")
